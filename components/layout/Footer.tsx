@@ -1,13 +1,11 @@
 import Link from "next/link";
 
 export function Footer() {
+  // The footer's `border-radius: 50% 50% 0 0 / 60px 60px 0 0` carves an
+  // arc out of its top edge; whatever section sits directly above shows
+  // through that arc, so the transition tints itself to the section's bg.
   return (
     <>
-      {/* Wave top */}
-      <div
-        className="h-[60px] -mb-[1px]"
-        style={{ background: "#ffffff" }}
-      />
       <footer
         className="bg-ch font-sans"
         style={{ borderRadius: "50% 50% 0 0 / 60px 60px 0 0" }}

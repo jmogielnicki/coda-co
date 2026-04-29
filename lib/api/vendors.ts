@@ -11,7 +11,8 @@ export interface VendorFilters {
 }
 
 export async function getVendors(filters: VendorFilters = {}): Promise<Vendor[]> {
-  let results = vendors;
+  // Default scope: actual service providers (excludes shop sellers).
+  let results = vendors.filter((v) => v.isServiceProvider !== false);
   if (filters.type) results = results.filter((v) => v.type === filters.type);
   if (filters.minRating != null) results = results.filter((v) => v.rating >= filters.minRating!);
   if (filters.accepting != null) results = results.filter((v) => v.accepting === filters.accepting);

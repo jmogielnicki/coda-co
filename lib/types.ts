@@ -77,6 +77,9 @@ export interface Vendor {
   specializations: string[];
   verified: boolean;
   memberSince?: string;
+  // Excludes product-only sellers (ceramics studios, jewelers, etc.) from
+  // service-provider listings. Defaults to true; set false on shop sellers.
+  isServiceProvider?: boolean;
 }
 
 export interface Review {

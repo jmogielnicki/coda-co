@@ -19,6 +19,20 @@ const RATINGS = [
   { value: "5", label: "5 only" },
 ];
 
+const SPECIALIZATIONS = [
+  "EOL planning",
+  "Grief support",
+  "LGBTQ+ affirming",
+  "Bilingual (Spanish)",
+  "Perinatal loss",
+];
+
+const VERIFIED_OPTIONS = [
+  "Background checked",
+  "Certified provider",
+  "CodaCo verified",
+];
+
 export function ServiceFilters() {
   const router = useRouter();
   const pathname = usePathname();
@@ -26,13 +40,15 @@ export function ServiceFilters() {
 
   function setParam(key: string, value: string) {
     const next = new URLSearchParams(params.toString());
-    if (value) next.set(key, value); else next.delete(key);
+    if (value) next.set(key, value);
+    else next.delete(key);
     router.push(`${pathname}?${next.toString()}`);
   }
 
   function toggleBool(key: string) {
     const next = new URLSearchParams(params.toString());
-    if (next.get(key) === "1") next.delete(key); else next.set(key, "1");
+    if (next.get(key) === "1") next.delete(key);
+    else next.set(key, "1");
     router.push(`${pathname}?${next.toString()}`);
   }
 
@@ -41,39 +57,43 @@ export function ServiceFilters() {
   const activeRating = params.get("minRating") ?? "";
 
   return (
-    <div className="bg-white rounded-[10px] border border-[rgba(44,40,37,.09)] p-5 w-[220px] flex-shrink-0">
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-[14px] font-medium text-ch">Filters</span>
+    <div className="pt-6 pr-5 pb-8 border-r border-[rgba(44,40,37,.08)]">
+      <div className="flex items-center justify-between mb-5">
+        <span className="text-[13px] font-medium text-ch">Filters</span>
         <button
           onClick={() => router.push(pathname)}
-          className="text-[12px] text-tr cursor-pointer"
+          className="text-[12px] text-cl bg-transparent border-0 font-sans cursor-pointer underline hover:text-tr"
         >
           Clear all
         </button>
       </div>
 
       <FilterSection heading="Service type">
-        {SERVICE_TYPES.map((t) => (
-          <FilterPill
-            key={t.value}
-            label={t.label}
-            active={activeType === t.value}
-            onClick={() => setParam("type", activeType === t.value ? "" : t.value)}
-          />
-        ))}
+        <Pills>
+          {SERVICE_TYPES.map((t) => (
+            <FilterPill
+              key={t.value}
+              label={t.label}
+              active={activeType === t.value}
+              onClick={() => setParam("type", activeType === t.value ? "" : t.value)}
+            />
+          ))}
+        </Pills>
       </FilterSection>
 
       <Divider />
 
       <FilterSection heading="Distance">
-        {DISTANCES.map((d) => (
-          <FilterPill
-            key={d}
-            label={d}
-            active={activeDist === d}
-            onClick={() => setParam("distance", activeDist === d ? "" : d)}
-          />
-        ))}
+        <Pills>
+          {DISTANCES.map((d) => (
+            <FilterPill
+              key={d}
+              label={d}
+              active={activeDist === d}
+              onClick={() => setParam("distance", activeDist === d ? "" : d)}
+            />
+          ))}
+        </Pills>
       </FilterSection>
 
       <Divider />
@@ -84,6 +104,7 @@ export function ServiceFilters() {
           checked={params.get("accepting") === "1"}
           onChange={() => toggleBool("accepting")}
         />
+        <FilterCheck label="Available this month" checked={false} onChange={() => {}} />
         <FilterCheck
           label="Virtual sessions"
           checked={params.get("virtual") === "1"}
@@ -99,47 +120,80 @@ export function ServiceFilters() {
       <Divider />
 
       <FilterSection heading="Minimum rating">
-        {RATINGS.map((r) => (
-          <FilterPill
-            key={r.value}
-            label={r.label}
-            active={activeRating === r.value}
-            onClick={() => setParam("minRating", r.value)}
-          />
+        <Pills>
+          {RATINGS.map((r) => (
+            <FilterPill
+              key={r.value}
+              label={r.label}
+              active={activeRating === r.value}
+              onClick={() => setParam("minRating", r.value)}
+            />
+          ))}
+        </Pills>
+      </FilterSection>
+
+      <Divider />
+
+      <FilterSection heading="Specializations">
+        {SPECIALIZATIONS.map((s, i) => (
+          <FilterCheck key={s} label={s} checked={i === 0} onChange={() => {}} />
         ))}
       </FilterSection>
 
       <Divider />
 
       <FilterSection heading="Verified & vetted">
-        <FilterCheck
-          label="CodaCo verified"
-          checked={params.get("verified") === "1"}
-          onChange={() => toggleBool("verified")}
-        />
+        {VERIFIED_OPTIONS.map((s, i) => (
+          <FilterCheck
+            key={s}
+            label={s}
+            checked={s === "CodaCo verified" ? params.get("verified") === "1" : i === 0}
+            onChange={s === "CodaCo verified" ? () => toggleBool("verified") : () => {}}
+          />
+        ))}
       </FilterSection>
     </div>
   );
 }
 
-function FilterSection({ heading, children }: { heading: string; children: React.ReactNode }) {
+function FilterSection({
+  heading,
+  children,
+}: {
+  heading: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="mb-4">
-      <h4 className="text-[12px] font-medium text-ch mb-2">{heading}</h4>
-      <div className="flex flex-wrap gap-1.5">{children}</div>
+    <div className="mb-[1.4rem]">
+      <h4 className="text-[11px] tracking-[.1em] uppercase text-cl font-medium mb-[.65rem]">
+        {heading}
+      </h4>
+      {children}
     </div>
   );
 }
 
-function FilterPill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+function Pills({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-wrap gap-[5px]">{children}</div>;
+}
+
+function FilterPill({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       onClick={onClick}
       className={[
-        "px-3 py-1 rounded-full text-[12px] border transition-all cursor-pointer",
+        "px-[11px] py-[5px] rounded-[14px] text-[12px] font-sans cursor-pointer transition-colors",
         active
-          ? "bg-tr text-white border-tr"
-          : "bg-white text-cm border-[rgba(44,40,37,.2)] hover:border-tr hover:text-tr",
+          ? "bg-tr text-white border border-tr"
+          : "bg-pl text-cm border border-[rgba(44,40,37,.12)] hover:bg-tr hover:text-white hover:border-tr",
       ].join(" ")}
     >
       {label}
@@ -157,12 +211,12 @@ function FilterCheck({
   onChange: () => void;
 }) {
   return (
-    <label className="flex items-center gap-2 cursor-pointer w-full mb-1.5">
+    <label className="flex items-center gap-2 cursor-pointer mb-2">
       <input
         type="checkbox"
         checked={checked}
         onChange={onChange}
-        className="accent-tr"
+        className="accent-tr w-[13px] h-[13px]"
       />
       <span className="text-[12px] text-cm">{label}</span>
     </label>
@@ -170,5 +224,5 @@ function FilterCheck({
 }
 
 function Divider() {
-  return <div className="border-t border-[rgba(44,40,37,.08)] my-3" />;
+  return <div className="h-px bg-[rgba(44,40,37,.07)] my-[1.1rem]" />;
 }

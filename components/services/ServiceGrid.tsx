@@ -12,7 +12,7 @@ export function ServiceGrid({ vendors }: { vendors: Vendor[] }) {
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div>
       {vendors.map((vendor) => (
         <ServiceSearchCard key={vendor.id} vendor={vendor} />
       ))}

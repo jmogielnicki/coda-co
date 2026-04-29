@@ -16,6 +16,7 @@ export const vendors: Vendor[] = [
     specializations: ["Handmade ceramics", "Custom glazes", "Made to order"],
     verified: true,
     memberSince: "2021",
+    isServiceProvider: false,
   },
   {
     id: "maria-rosales",
@@ -124,6 +125,7 @@ export const vendors: Vendor[] = [
     specializations: ["Ash jewelry", "Memorial keepsakes", "Custom orders"],
     verified: true,
     memberSince: "2022",
+    isServiceProvider: false,
   },
   {
     id: "gentle-passage",
@@ -189,6 +191,7 @@ export const vendors: Vendor[] = [
     specializations: ["Memorial art", "Custom portraits", "Illustration"],
     verified: true,
     memberSince: "2024",
+    isServiceProvider: false,
   },
   {
     id: "sunlight-leaving",

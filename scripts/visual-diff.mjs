@@ -1,4 +1,4 @@
-// Pixel-diffs the live homepage against the prototype baseline.
+// Pixel-diffs the live webapp against the prototype baseline.
 //
 // Prereqs:
 //   - `npm run dev` running on http://localhost:3000 (or set BASE_URL)
@@ -6,7 +6,7 @@
 //     ~/.cache/cft/chrome-linux64/chrome if present)
 //
 // Usage:
-//   node scripts/visual-diff.mjs                 # full page + per-section
+//   node scripts/visual-diff.mjs                 # all sections
 //   node scripts/visual-diff.mjs hero            # just the named section
 //
 // Output: writes baseline.png / actual.png / diff.png per section to
@@ -28,36 +28,53 @@ const DEFAULT_CHROME = path.join(
 );
 const executablePath = process.env.CHROMIUM_PATH || DEFAULT_CHROME;
 
-// Sections defined by an anchor selector + optional index inside each
-// frame. Prototype (#p0) is a .hero block followed by alternating .wd/.wu
-// pairs; actual page is <WaveDivider/> + <section> pairs inside <main>.
-// We anchor on the content-bearing wrapper in each so screenshots cover
-// equivalent regions. nth is 0-based.
+// Each section says which page to load on each side and what selector to
+// screenshot. The prototype is one HTML file with multiple `.pg` panes;
+// `protoPage` switches which pane is `.on` before screenshotting.
+//
+// Homepage sections target the prototype's `#p0` (default-on) and the
+// webapp's `/`. Services-page sections target `#p1` and `/services`.
 const sections = [
-  { name: "full",       baseline: "#p0",       actual: "main" },
-  { name: "hero",       baseline: "#p0 .hero", actual: "main > section", actualNth: 0 },
-  { name: "categories", baseline: "#p0 .wu", baselineNth: 0, actual: "main > section", actualNth: 1 },
-  { name: "services",   baseline: "#p0 .wu", baselineNth: 1, actual: "main > section", actualNth: 2 },
-  { name: "products",   baseline: "#p0 .wu", baselineNth: 2, actual: "main > section", actualNth: 3 },
-  { name: "books",      baseline: "#p0 .wu", baselineNth: 3, actual: "main > section", actualNth: 4 },
-  { name: "humor",      baseline: "#p0 .wu", baselineNth: 4, actual: "main > section", actualNth: 5 },
-  { name: "vendor",     baseline: "#p0 .wu", baselineNth: 5, actual: "main > section", actualNth: 6 },
+  // Homepage
+  { name: "full",       protoPage: "p0", baseline: "#p0",       actualPath: "/", actual: "main" },
+  { name: "hero",       protoPage: "p0", baseline: "#p0 .hero", actualPath: "/", actual: "main > section", actualNth: 0 },
+  { name: "categories", protoPage: "p0", baseline: "#p0 .wu", baselineNth: 0, actualPath: "/", actual: "main > section", actualNth: 1 },
+  { name: "services",   protoPage: "p0", baseline: "#p0 .wu", baselineNth: 1, actualPath: "/", actual: "main > section", actualNth: 2 },
+  { name: "products",   protoPage: "p0", baseline: "#p0 .wu", baselineNth: 2, actualPath: "/", actual: "main > section", actualNth: 3 },
+  { name: "books",      protoPage: "p0", baseline: "#p0 .wu", baselineNth: 3, actualPath: "/", actual: "main > section", actualNth: 4 },
+  { name: "humor",      protoPage: "p0", baseline: "#p0 .wu", baselineNth: 4, actualPath: "/", actual: "main > section", actualNth: 5 },
+  { name: "vendor",     protoPage: "p0", baseline: "#p0 .wu", baselineNth: 5, actualPath: "/", actual: "main > section", actualNth: 6 },
+  // Services page
+  { name: "services-page",      protoPage: "p1", baseline: "#p1",         actualPath: "/services?type=doula", actual: "main" },
+  { name: "services-header",    protoPage: "p1", baseline: "#p1 .svc-ph-hd", actualPath: "/services?type=doula", actual: "main > section", actualNth: 0 },
+  { name: "services-results",   protoPage: "p1", baseline: "#p1 .wu",     actualPath: "/services?type=doula", actual: "main > section", actualNth: 1 },
 ];
 
-async function snap(page, url, selector, nth, file) {
+async function setProtoPage(page, pageId) {
+  // Toggle the prototype's `.pg.on` so we can screenshot any pane (#p0..#p9).
+  await page.evaluate((id) => {
+    document.querySelectorAll(".pg").forEach((p) => p.classList.remove("on"));
+    const target = document.getElementById(id);
+    if (target) target.classList.add("on");
+    window.scrollTo(0, 0);
+  }, pageId);
+}
+
+async function snap(page, url, opts, file) {
   await page.goto(url, { waitUntil: "networkidle" });
   // Hide Next.js dev overlay/floater so it doesn't pollute diffs.
   await page.addStyleTag({
     content:
       'nextjs-portal, [data-nextjs-toast], [data-next-badge-root], [data-next-mark-loading] { display: none !important; visibility: hidden !important; }',
   });
+  if (opts.protoPage) await setProtoPage(page, opts.protoPage);
   await page.evaluate(() => document.fonts && document.fonts.ready);
   await page.waitForTimeout(400); // settle
-  if (selector === "main" || selector === "#p0") {
+  if (opts.selector === "main" || opts.selector === "#p0" || opts.selector === "#p1") {
     await page.screenshot({ path: file, fullPage: true });
     return;
   }
-  const handle = page.locator(selector).nth(nth ?? 0);
+  const handle = page.locator(opts.selector).nth(opts.nth ?? 0);
   await handle.scrollIntoViewIfNeeded();
   await page.waitForTimeout(150);
   await handle.screenshot({ path: file });
@@ -117,20 +134,28 @@ async function main() {
   console.log(`viewport: ${VIEWPORT.width}x${VIEWPORT.height}`);
   console.log(`base URL: ${BASE_URL}\n`);
 
-  const results = [];
   for (const s of list) {
     const baselineFile = path.join(OUT_DIR, `${s.name}.baseline.png`);
     const actualFile = path.join(OUT_DIR, `${s.name}.actual.png`);
     try {
-      await snap(page, `${BASE_URL}/__prototype__/index.html`, s.baseline, s.baselineNth, baselineFile);
-      await snap(page, `${BASE_URL}/`, s.actual, s.actualNth, actualFile);
+      await snap(
+        page,
+        `${BASE_URL}/__prototype__/index.html`,
+        { selector: s.baseline, nth: s.baselineNth, protoPage: s.protoPage },
+        baselineFile
+      );
+      await snap(
+        page,
+        `${BASE_URL}${s.actualPath ?? "/"}`,
+        { selector: s.actual, nth: s.actualNth },
+        actualFile
+      );
       const r = await diff(s.name);
-      results.push({ name: s.name, ...r });
       console.log(
-        `${s.name.padEnd(11)} ${r.w}x${r.h}  ${String(r.mismatch).padStart(8)} px  ${r.pct.padStart(5)}%`
+        `${s.name.padEnd(18)} ${r.w}x${r.h}  ${String(r.mismatch).padStart(8)} px  ${r.pct.padStart(5)}%`
       );
     } catch (e) {
-      console.log(`${s.name.padEnd(11)} ERROR: ${e.message}`);
+      console.log(`${s.name.padEnd(18)} ERROR: ${e.message}`);
     }
   }
 

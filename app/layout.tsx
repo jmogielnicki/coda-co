@@ -31,10 +31,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${serif.variable} ${sans.variable}`}>
-      <body className="flex flex-col min-h-screen">
+      <body>
         <CartProvider>
           <Nav />
-          <main className="flex-1">{children}</main>
+          <main>{children}</main>
           <Footer />
         </CartProvider>
       </body>
