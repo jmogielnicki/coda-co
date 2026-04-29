@@ -105,7 +105,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
       <WaveDivider topColor="#ffffff" bottomColor="#FCF4F1" />
 
       {/* Results section */}
-      <section className="bg-tr-vp px-10 pb-12 pt-2">
+      <section className="bg-tr-vp px-10 pb-12 pt-10">
         <div className="max-w-[880px] mx-auto grid grid-cols-[210px_1fr] gap-0">
           {/* Filter column */}
           <Suspense>
@@ -161,10 +161,10 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
 
             <ServiceGrid vendors={vendors} />
 
-            {filtered > 3 && (
+            {total > filtered && (
               <div className="text-center pt-2">
                 <a className="inline-block text-[13px] text-tr border-b border-dotted border-tr-l cursor-pointer hover:text-tr-d">
-                  Show {Math.max(0, filtered - 3)} more results →
+                  Show {total - filtered} more results →
                 </a>
               </div>
             )}

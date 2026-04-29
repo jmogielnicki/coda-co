@@ -45,9 +45,9 @@ const sections = [
   { name: "humor",      protoPage: "p0", baseline: "#p0 .wu", baselineNth: 4, actualPath: "/", actual: "main > section", actualNth: 5 },
   { name: "vendor",     protoPage: "p0", baseline: "#p0 .wu", baselineNth: 5, actualPath: "/", actual: "main > section", actualNth: 6 },
   // Services page
-  { name: "services-page",      protoPage: "p1", baseline: "#p1",         actualPath: "/services?type=doula", actual: "main" },
-  { name: "services-header",    protoPage: "p1", baseline: "#p1 .svc-ph-hd", actualPath: "/services?type=doula", actual: "main > section", actualNth: 0 },
-  { name: "services-results",   protoPage: "p1", baseline: "#p1 .wu",     actualPath: "/services?type=doula", actual: "main > section", actualNth: 1 },
+  { name: "services-page",      protoPage: "p1", baseline: "#p1",         actualPath: "/services?type=doula&distance=15%20mi&minRating=4", actual: "main" },
+  { name: "services-header",    protoPage: "p1", baseline: "#p1 .svc-ph-hd", actualPath: "/services?type=doula&distance=15%20mi&minRating=4", actual: "main > section", actualNth: 0 },
+  { name: "services-results",   protoPage: "p1", baseline: "#p1 .wu",     actualPath: "/services?type=doula&distance=15%20mi&minRating=4", actual: "main > section", actualNth: 1 },
 ];
 
 async function setProtoPage(page, pageId) {
