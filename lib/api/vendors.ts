@@ -34,3 +34,19 @@ export async function getVendor(id: string): Promise<Vendor | null> {
 export async function getFeaturedVendors(limit = 4): Promise<Vendor[]> {
   return vendors.filter((v) => v.verified && v.accepting).slice(0, limit);
 }
+
+// Curated set of vendors shown in the home page's "Support in your area"
+// section, in the order the prototype displays them.
+const HOME_VENDOR_IDS = [
+  "maria-rosales",
+  "james-thornton",
+  "sunlight-leaving",
+  "alma-park-celebrations",
+] as const;
+
+export async function getHomeFeaturedVendors(): Promise<Vendor[]> {
+  const byId = new Map(vendors.map((v) => [v.id, v]));
+  return HOME_VENDOR_IDS.map((id) => byId.get(id)).filter(
+    (v): v is Vendor => v != null
+  );
+}

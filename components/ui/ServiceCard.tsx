@@ -11,32 +11,38 @@ const typeLabels: Record<string, string> = {
   "home-funeral": "Home funeral guide",
 };
 
+function locationSuffix(vendor: Vendor): string {
+  const parts: string[] = [vendor.location];
+  if (vendor.inHome && vendor.virtual) parts.push("In-home & virtual");
+  else if (vendor.inHome) parts.push("In-home");
+  else if (vendor.virtual) parts.push("Virtual");
+  return parts.join(" · ");
+}
+
+function ratingLine(rating: number, reviewCount: number): string {
+  const filled = Math.round(rating);
+  const empty = Math.max(0, 5 - filled);
+  const stars = "★".repeat(filled) + "☆".repeat(empty);
+  return `${stars} · ${reviewCount} reviews`;
+}
+
 export function ServiceCard({ vendor }: { vendor: Vendor }) {
   return (
-    <div className="bg-white border border-[rgba(44,40,37,.09)] rounded-[10px] p-5 cursor-pointer transition-all duration-200 hover:border-sg-l">
-      <div className="flex gap-3 mb-3">
-        <div className="w-10 h-10 rounded-full bg-sg-p border border-[1.5px] border-sg-l flex items-center justify-center font-serif text-[16px] text-sg-d flex-shrink-0">
-          {vendor.initials}
-        </div>
-        <div>
-          <div className="text-[14px] font-medium text-ch">{vendor.name}</div>
-          <div className="text-[10px] tracking-[.08em] uppercase text-cl">
-            {typeLabels[vendor.type] ?? vendor.type}
-          </div>
-        </div>
+    <div className="bg-white border border-[rgba(44,40,37,.09)] rounded-[10px] p-5 cursor-pointer transition-colors duration-200 hover:border-sg-l">
+      <div className="w-10 h-10 rounded-full bg-sg-p border-[1.5px] border-sg-l flex items-center justify-center font-serif text-[16px] text-sg-d mb-3">
+        {vendor.initials}
       </div>
-
-      <div className="text-[12px] text-cm mb-2">{vendor.location}</div>
-      <div className="text-[12px] text-cm mb-3 line-clamp-2">{vendor.bio}</div>
-
-      <div className="flex items-center gap-1">
-        <StarRating rating={vendor.rating} className="text-[12px]" />
-        <span className="text-[12px] text-cl">({vendor.reviewCount})</span>
-        {vendor.verified && (
-          <span className="ml-auto text-[10px] bg-sg-p text-sg-d px-2 py-0.5 rounded-full">
-            Verified
-          </span>
-        )}
+      <div className="text-[14px] font-medium text-ch mb-[2px]">
+        {vendor.name}
+      </div>
+      <div className="text-[10px] tracking-[.08em] uppercase text-cl mb-[7px]">
+        {typeLabels[vendor.type] ?? vendor.type}
+      </div>
+      <div className="text-[12px] text-cm mb-[5px]">
+        {locationSuffix(vendor)}
+      </div>
+      <div className="text-[12px] text-tr">
+        {ratingLine(vendor.rating, vendor.reviewCount)}
       </div>
     </div>
   );
@@ -46,7 +52,7 @@ export function ServiceSearchCard({ vendor }: { vendor: Vendor }) {
   return (
     <div className="bg-white border border-[rgba(44,40,37,.08)] rounded-[10px] p-5 flex gap-4">
       {/* Avatar */}
-      <div className="w-10 h-10 rounded-full bg-sg-p border border-[1.5px] border-sg-l flex items-center justify-center font-serif text-[16px] text-sg-d flex-shrink-0">
+      <div className="w-10 h-10 rounded-full bg-sg-p border-[1.5px] border-sg-l flex items-center justify-center font-serif text-[16px] text-sg-d flex-shrink-0">
         {vendor.initials}
       </div>
 

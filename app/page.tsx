@@ -5,7 +5,7 @@ import { ProductCard } from "@/components/ui/ProductCard";
 import { ServiceCard } from "@/components/ui/ServiceCard";
 import { WaveDivider } from "@/components/ui/WaveDivider";
 import { getFeaturedProducts } from "@/lib/api/products";
-import { getFeaturedVendors } from "@/lib/api/vendors";
+import { getHomeFeaturedVendors } from "@/lib/api/vendors";
 
 export const metadata: Metadata = {
   title: "CodaCo — A curated marketplace for death and dying",
@@ -189,7 +189,7 @@ const vendorSteps = [
 export default async function LandingPage() {
   const [featuredProducts, featuredVendors] = await Promise.all([
     getFeaturedProducts(4),
-    getFeaturedVendors(4),
+    getHomeFeaturedVendors(),
   ]);
 
   return (
