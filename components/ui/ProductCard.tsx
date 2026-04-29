@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { Product } from "@/lib/types";
 import { Badge } from "@/components/ui/Badge";
-import { StarRating } from "@/components/ui/StarRating";
 
 export function ProductCard({ product }: { product: Product }) {
   return (
@@ -28,10 +27,6 @@ export function ProductCard({ product }: { product: Product }) {
         <div className="text-[14px] font-medium text-tr flex items-center flex-wrap gap-1">
           ${product.price}
           {product.badge && <Badge badge={product.badge} />}
-        </div>
-        <div className="flex items-center gap-1 mt-1">
-          <StarRating rating={product.rating} className="text-[11px]" />
-          <span className="text-[11px] text-cl">({product.reviewCount})</span>
         </div>
       </div>
     </Link>

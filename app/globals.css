@@ -29,23 +29,17 @@
   --font-sans:   'DM Sans', system-ui, sans-serif;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
 
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  font-family: var(--font-sans);
-  background: #ffffff;
-  color: var(--color-ch);
-  font-size: 15px;
-  line-height: 1.6;
-  overflow-x: hidden;
+  body {
+    font-family: var(--font-sans);
+    background: #ffffff;
+    color: var(--color-ch);
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
 }

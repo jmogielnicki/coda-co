@@ -28,35 +28,39 @@ const DEFAULT_CHROME = path.join(
 );
 const executablePath = process.env.CHROMIUM_PATH || DEFAULT_CHROME;
 
-// Sections defined by an anchor selector inside each frame. We screenshot
-// the bounding rect of each selector. The matching baseline selector lives
-// in the prototype's nested `.pg#p0` page-0 wrapper.
+// Sections defined by an anchor selector + optional index inside each
+// frame. Prototype (#p0) is a .hero block followed by alternating .wd/.wu
+// pairs; actual page is <WaveDivider/> + <section> pairs inside <main>.
+// We anchor on the content-bearing wrapper in each so screenshots cover
+// equivalent regions. nth is 0-based.
 const sections = [
-  { name: "full",       baseline: "#p0",                 actual: "main, body" },
-  { name: "hero",       baseline: "#p0 .hero",           actual: "section:nth-of-type(1)" },
-  { name: "categories", baseline: "#p0 .cat-g",          actual: "section:nth-of-type(2)" },
-  { name: "services",   baseline: "#p0 .sv-g",           actual: "section:nth-of-type(3)" },
-  { name: "products",   baseline: "#p0 .pr-g",           actual: "section:nth-of-type(4)" },
-  { name: "books",      baseline: "#p0 .bk-g",           actual: "section:nth-of-type(5)" },
-  { name: "humor",      baseline: "#p0 .hm-g",           actual: "section:nth-of-type(6)" },
-  { name: "vendor",     baseline: "#p0 .vd-steps",       actual: "section:nth-of-type(7)" },
+  { name: "full",       baseline: "#p0",       actual: "main" },
+  { name: "hero",       baseline: "#p0 .hero", actual: "main > section", actualNth: 0 },
+  { name: "categories", baseline: "#p0 .wu", baselineNth: 0, actual: "main > section", actualNth: 1 },
+  { name: "services",   baseline: "#p0 .wu", baselineNth: 1, actual: "main > section", actualNth: 2 },
+  { name: "products",   baseline: "#p0 .wu", baselineNth: 2, actual: "main > section", actualNth: 3 },
+  { name: "books",      baseline: "#p0 .wu", baselineNth: 3, actual: "main > section", actualNth: 4 },
+  { name: "humor",      baseline: "#p0 .wu", baselineNth: 4, actual: "main > section", actualNth: 5 },
+  { name: "vendor",     baseline: "#p0 .wu", baselineNth: 5, actual: "main > section", actualNth: 6 },
 ];
 
-async function snap(page, url, selector, file) {
+async function snap(page, url, selector, nth, file) {
   await page.goto(url, { waitUntil: "networkidle" });
+  // Hide Next.js dev overlay/floater so it doesn't pollute diffs.
+  await page.addStyleTag({
+    content:
+      'nextjs-portal, [data-nextjs-toast], [data-next-badge-root], [data-next-mark-loading] { display: none !important; visibility: hidden !important; }',
+  });
   await page.evaluate(() => document.fonts && document.fonts.ready);
   await page.waitForTimeout(400); // settle
-  if (selector === "main, body" || selector === "#p0") {
+  if (selector === "main" || selector === "#p0") {
     await page.screenshot({ path: file, fullPage: true });
     return;
   }
-  const handle = await page.locator(selector).first();
+  const handle = page.locator(selector).nth(nth ?? 0);
   await handle.scrollIntoViewIfNeeded();
   await page.waitForTimeout(150);
-  // Screenshot the section in the surrounding section element so wave
-  // dividers/backgrounds are included.
-  const target = handle;
-  await target.screenshot({ path: file });
+  await handle.screenshot({ path: file });
 }
 
 function pad(img, w, h) {
@@ -118,8 +122,8 @@ async function main() {
     const baselineFile = path.join(OUT_DIR, `${s.name}.baseline.png`);
     const actualFile = path.join(OUT_DIR, `${s.name}.actual.png`);
     try {
-      await snap(page, `${BASE_URL}/__prototype__/index.html`, s.baseline, baselineFile);
-      await snap(page, `${BASE_URL}/`, s.actual, actualFile);
+      await snap(page, `${BASE_URL}/__prototype__/index.html`, s.baseline, s.baselineNth, baselineFile);
+      await snap(page, `${BASE_URL}/`, s.actual, s.actualNth, actualFile);
       const r = await diff(s.name);
       results.push({ name: s.name, ...r });
       console.log(
