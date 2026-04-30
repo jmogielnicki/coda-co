@@ -48,6 +48,16 @@ const sections = [
   { name: "services-page",      protoPage: "p1", baseline: "#p1",         actualPath: "/services?type=doula&distance=15%20mi&minRating=4", actual: "main" },
   { name: "services-header",    protoPage: "p1", baseline: "#p1 .svc-ph-hd", actualPath: "/services?type=doula&distance=15%20mi&minRating=4", actual: "main > section", actualNth: 0 },
   { name: "services-results",   protoPage: "p1", baseline: "#p1 .wu",     actualPath: "/services?type=doula&distance=15%20mi&minRating=4", actual: "main > section", actualNth: 1 },
+  // Other prototype pages — full-page diffs only for now; per-section
+  // breakdowns can be added when chasing drift on a specific page.
+  { name: "product-detail",     protoPage: "p2", baseline: "#p2", actualPath: "/shop/urn-sage-001",         actual: "main" },
+  { name: "shop",               protoPage: "p3", baseline: "#p3", actualPath: "/shop",                      actual: "main" },
+  { name: "list-with-us",       protoPage: "p4", baseline: "#p4", actualPath: "/list-with-us",              actual: "main" },
+  { name: "list-goods",         protoPage: "p5", baseline: "#p5", actualPath: "/list-with-us/goods",        actual: "main" },
+  { name: "list-services",      protoPage: "p6", baseline: "#p6", actualPath: "/list-with-us/services",     actual: "main" },
+  { name: "plan",               protoPage: "p7", baseline: "#p7", actualPath: "/list-with-us/plan?type=goods", actual: "main" },
+  { name: "confirm",            protoPage: "p8", baseline: "#p8", actualPath: "/list-with-us/confirm",      actual: "main" },
+  { name: "where-to-start",     protoPage: "p9", baseline: "#p9", actualPath: "/where-to-start",            actual: "main" },
 ];
 
 async function setProtoPage(page, pageId) {
@@ -70,7 +80,7 @@ async function snap(page, url, opts, file) {
   if (opts.protoPage) await setProtoPage(page, opts.protoPage);
   await page.evaluate(() => document.fonts && document.fonts.ready);
   await page.waitForTimeout(400); // settle
-  if (opts.selector === "main" || opts.selector === "#p0" || opts.selector === "#p1") {
+  if (opts.selector === "main" || /^#p\d+$/.test(opts.selector)) {
     await page.screenshot({ path: file, fullPage: true });
     return;
   }
