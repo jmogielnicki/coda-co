@@ -10,6 +10,11 @@ prototype. The prototype lives at `index.html.reference` and is the source of
 truth for visual design and copy. See `PLAN.md` for architecture and
 `TASKS.md` for current implementation status.
 
+> **In-flight refactor:** there is a multi-stage modularization in progress.
+> Before adding components or styles, read `MODULAR_REFACTOR.md` — it has a
+> live status table and tells you which primitives to reuse (or whether the
+> primitive you need is the next stage to build).
+
 ## Stack
 
 - Next.js 16.2.4 (App Router, Turbopack)
