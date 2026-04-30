@@ -45,10 +45,10 @@ export function AddToCart({ product }: AddToCartProps) {
           <div className="flex gap-2 flex-wrap">
             {product.glazeOptions.map((glaze, i) => {
               const colors: Record<string, string> = {
-                Sage: "#8B9E8D",
-                Terra: "#C1634F",
-                Cream: "#E8E0D5",
-                Charcoal: "#4A4030",
+                Sage:     "var(--color-sg)",
+                Terra:    "var(--color-tr)",
+                Cream:    "var(--color-pl2)",
+                Charcoal: "var(--color-ch)",
               };
               return (
                 <button
@@ -157,8 +157,8 @@ export function AddToCart({ product }: AddToCartProps) {
         ].map((item) => (
           <div key={item} className="flex items-center gap-2 text-[12px] text-cm">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-              <circle cx="8" cy="8" r="5.5" stroke="#7A9E82" strokeWidth="1.1" />
-              <path d="M5.5 8 L7.5 10 L11 6" stroke="#7A9E82" strokeWidth="1.2" strokeLinecap="round" />
+              <circle cx="8" cy="8" r="5.5" stroke="var(--color-sg)" strokeWidth="1.1" />
+              <path d="M5.5 8 L7.5 10 L11 6" stroke="var(--color-sg)" strokeWidth="1.2" strokeLinecap="round" />
             </svg>
             {item}
           </div>

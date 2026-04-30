@@ -6,10 +6,7 @@ export function Footer() {
   // through that arc, so the transition tints itself to the section's bg.
   return (
     <>
-      <footer
-        className="bg-ch font-sans"
-        style={{ borderRadius: "50% 50% 0 0 / 60px 60px 0 0" }}
-      >
+      <footer className="bg-ch font-sans arc-top">
         <div className="max-w-[880px] mx-auto px-10 pt-12 pb-8 grid grid-cols-[1fr_auto_auto_auto] gap-10">
           {/* Brand */}
           <div>

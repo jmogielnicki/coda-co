@@ -43,12 +43,7 @@ export function FilterStrip() {
         <button
           key={cat.value}
           onClick={() => setParam("category", cat.value)}
-          className={[
-            "px-4 py-1.5 rounded-full text-[13px] border transition-all cursor-pointer",
-            activeCategory === cat.value
-              ? "bg-tr text-white border-tr"
-              : "bg-white text-cm border-[rgba(44,40,37,.2)] hover:border-tr hover:text-tr",
-          ].join(" ")}
+          className={`filter-pill ${activeCategory === cat.value ? "filter-pill-on" : "filter-pill-off"}`}
         >
           {cat.label}
         </button>

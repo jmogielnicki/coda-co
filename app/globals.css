@@ -16,6 +16,7 @@
   --color-sg-vp: #B5C9AB;
 
   /* Neutral warm whites */
+  --color-white: #ffffff;
   --color-pl:    #FAF9F7;
   --color-pl2:   #F3F1EE;
 
@@ -38,10 +39,123 @@
 
   body {
     font-family: var(--font-sans);
-    background: #ffffff;
+    background: var(--color-white);
     color: var(--color-ch);
     font-size: 15px;
     line-height: 1.6;
     overflow-x: hidden;
+  }
+}
+
+@layer components {
+  /*
+   * Buttons — compose variant + size: `btn-primary btn-sm`
+   *
+   * Variants: btn-primary, btn-secondary, btn-ghost
+   * Sizes:    btn-sm (12px/6px 16px), btn-md (13px/10px 20px), btn-lg (15px/14px 24px)
+   */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-tr);
+    color: var(--color-white);
+    border: 0;
+    border-radius: 9999px;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 150ms;
+    text-decoration: none;
+  }
+  .btn-primary:hover { background: var(--color-tr-d); }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-sg);
+    color: var(--color-white);
+    border: 0;
+    border-radius: 9999px;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 150ms;
+    text-decoration: none;
+  }
+  .btn-secondary:hover { background: var(--color-sg-d); }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: var(--color-cm);
+    border: 1px solid rgba(44,40,37,.2);
+    border-radius: 9999px;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: color 150ms, border-color 150ms;
+    text-decoration: none;
+  }
+  .btn-ghost:hover { color: var(--color-tr); border-color: var(--color-tr); }
+
+  .btn-sm { font-size: 12px; padding: 6px 16px; }
+  .btn-md { font-size: 13px; padding: 10px 20px; }
+  .btn-lg { font-size: 15px; padding: 14px 24px; }
+
+  /*
+   * Filter pills — compose state: `filter-pill filter-pill-on` / `filter-pill filter-pill-off`
+   */
+  .filter-pill {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    padding: 6px 16px;
+    border-radius: 9999px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background-color 150ms, color 150ms, border-color 150ms;
+  }
+  .filter-pill-on {
+    background: var(--color-tr);
+    color: var(--color-white);
+    border-color: var(--color-tr);
+  }
+  .filter-pill-off {
+    background: var(--color-pl);
+    color: var(--color-cm);
+    border-color: rgba(44,40,37,.12);
+  }
+  .filter-pill-off:hover {
+    background: var(--color-tr);
+    color: var(--color-white);
+    border-color: var(--color-tr);
+  }
+
+  /* Card surface */
+  .card {
+    background: var(--color-white);
+    border: 1px solid rgba(44,40,37,.09);
+    border-radius: 10px;
+  }
+
+  /* Label / overline text (caps + tracking) */
+  .text-overline {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+
+  /*
+   * Arc shape — elliptical top border-radius used on the footer and wave dividers.
+   * Cannot be expressed as a standard Tailwind border-radius utility.
+   */
+  .arc-top {
+    border-radius: 50% 50% 0 0 / 60px 60px 0 0;
   }
 }

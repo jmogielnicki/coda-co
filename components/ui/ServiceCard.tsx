@@ -91,10 +91,10 @@ export function ServiceSearchCard({ vendor }: { vendor: Vendor }) {
       <div className="text-right">
         <div className="text-[13px] text-tr whitespace-nowrap">{stars}</div>
         <div className="text-[11px] text-cl mb-[10px]">{vendor.reviewCount} reviews</div>
-        <button className="bg-tr text-white border-0 px-4 py-2 rounded-[18px] text-[12px] font-sans cursor-pointer w-full transition-colors hover:bg-tr-d">
+        <button className="btn-primary btn-sm w-full">
           Contact ↗
         </button>
-        <button className="bg-transparent text-cl border border-[rgba(44,40,37,.15)] px-3.5 py-[7px] rounded-[18px] text-[12px] font-sans cursor-pointer w-full mt-1.5 transition-colors hover:border-tr hover:text-tr">
+        <button className="btn-ghost btn-sm w-full mt-1.5">
           Save
         </button>
       </div>

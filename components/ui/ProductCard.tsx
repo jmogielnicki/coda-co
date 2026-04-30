@@ -39,18 +39,18 @@ function ProductThumbnail({ id, category }: { id: string; category: string }) {
       <svg width="48" height="58" viewBox="0 0 60 70" fill="none">
         <path
           d="M30 8 C18 8 10 20 10 38 C10 52 18 62 30 62 C42 62 50 52 50 38 C50 20 42 8 30 8Z"
-          stroke="#C1634F"
+          stroke="var(--color-tr)"
           strokeWidth="1.8"
           fill="none"
         />
         <path
           d="M20 38 C20 28 24 22 30 22 C36 22 40 28 40 38"
-          stroke="#C1634F"
+          stroke="var(--color-tr)"
           strokeWidth="1.5"
           fill="none"
         />
-        <line x1="30" y1="8" x2="30" y2="2" stroke="#C1634F" strokeWidth="2" strokeLinecap="round" />
-        <ellipse cx="30" cy="2" rx="7" ry="3.5" stroke="#C1634F" strokeWidth="1.5" fill="none" />
+        <line x1="30" y1="8" x2="30" y2="2" stroke="var(--color-tr)" strokeWidth="2" strokeLinecap="round" />
+        <ellipse cx="30" cy="2" rx="7" ry="3.5" stroke="var(--color-tr)" strokeWidth="1.5" fill="none" />
       </svg>
     );
   }
@@ -59,7 +59,7 @@ function ProductThumbnail({ id, category }: { id: string; category: string }) {
       <svg width="44" height="44" viewBox="0 0 60 60" fill="none">
         <path
           d="M30 10 L33 22 L44 22 L35 28 L38 38 L30 32 L22 38 L25 28 L16 22 L27 22 Z"
-          stroke="#5A534C"
+          stroke="var(--color-cm)"
           strokeWidth="1.6"
           fill="none"
           strokeLinejoin="round"
@@ -72,7 +72,7 @@ function ProductThumbnail({ id, category }: { id: string; category: string }) {
       <svg width="44" height="50" viewBox="0 0 60 62" fill="none">
         <path
           d="M18 58 L18 22 L30 14 L42 22 L42 58"
-          stroke="#7A9E82"
+          stroke="var(--color-sg)"
           strokeWidth="1.8"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -84,10 +84,10 @@ function ProductThumbnail({ id, category }: { id: string; category: string }) {
   if (category === "planning") {
     return (
       <svg width="44" height="54" viewBox="0 0 60 70" fill="none">
-        <rect x="12" y="8" width="36" height="52" rx="3" stroke="#C1634F" strokeWidth="1.8" fill="none" />
-        <line x1="18" y1="22" x2="42" y2="22" stroke="#C1634F" strokeWidth="1.4" />
-        <line x1="18" y1="30" x2="42" y2="30" stroke="#C1634F" strokeWidth="1.4" />
-        <line x1="18" y1="38" x2="36" y2="38" stroke="#C1634F" strokeWidth="1.4" />
+        <rect x="12" y="8" width="36" height="52" rx="3" stroke="var(--color-tr)" strokeWidth="1.8" fill="none" />
+        <line x1="18" y1="22" x2="42" y2="22" stroke="var(--color-tr)" strokeWidth="1.4" />
+        <line x1="18" y1="30" x2="42" y2="30" stroke="var(--color-tr)" strokeWidth="1.4" />
+        <line x1="18" y1="38" x2="36" y2="38" stroke="var(--color-tr)" strokeWidth="1.4" />
       </svg>
     );
   }
@@ -96,18 +96,18 @@ function ProductThumbnail({ id, category }: { id: string; category: string }) {
       <svg width="44" height="40" viewBox="0 0 60 54" fill="none">
         <path
           d="M10 44 C10 44 10 28 30 22 C50 28 50 44 50 44"
-          stroke="#5A534C"
+          stroke="var(--color-cm)"
           strokeWidth="1.8"
           fill="none"
           strokeLinecap="round"
         />
-        <ellipse cx="30" cy="44" rx="20" ry="4" stroke="#5A534C" strokeWidth="1.3" fill="none" />
+        <ellipse cx="30" cy="44" rx="20" ry="4" stroke="var(--color-cm)" strokeWidth="1.3" fill="none" />
       </svg>
     );
   }
   return (
     <svg width="40" height="40" viewBox="0 0 60 60" fill="none">
-      <circle cx="30" cy="30" r="18" stroke="#9A9189" strokeWidth="1.5" fill="none" />
+      <circle cx="30" cy="30" r="18" stroke="var(--color-cl)" strokeWidth="1.5" fill="none" />
     </svg>
   );
 }

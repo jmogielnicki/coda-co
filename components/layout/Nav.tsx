@@ -44,7 +44,7 @@ export function Nav({ active }: NavProps) {
         {link("Grief meets humor", "/light-and-dark", "light")}
         {link("List with us", "/list-with-us", "list")}
         <li>
-          <a className="bg-tr text-white px-[17px] py-[7px] rounded-full text-[13px] cursor-pointer hover:bg-tr-d transition-colors duration-150 no-underline">
+          <a className="btn-primary btn-sm">
             Sign in
           </a>
         </li>

@@ -164,8 +164,8 @@ function FilterSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mb-[1.4rem]">
-      <h4 className="text-[11px] tracking-[.1em] uppercase text-ink font-medium mb-[.65rem]">
+    <div className="mb-5">
+      <h4 className="text-overline text-ink mb-2.5">
         {heading}
       </h4>
       {children}
@@ -189,12 +189,7 @@ function FilterPill({
   return (
     <button
       onClick={onClick}
-      className={[
-        "px-[11px] py-[5px] rounded-[14px] text-[12px] font-sans cursor-pointer transition-colors",
-        active
-          ? "bg-tr text-white border border-tr"
-          : "bg-pl text-cm border border-[rgba(44,40,37,.12)] hover:bg-tr hover:text-white hover:border-tr",
-      ].join(" ")}
+      className={`filter-pill ${active ? "filter-pill-on" : "filter-pill-off"}`}
     >
       {label}
     </button>
@@ -224,5 +219,5 @@ function FilterCheck({
 }
 
 function Divider() {
-  return <div className="h-px bg-[rgba(44,40,37,.07)] my-[1.1rem]" />;
+  return <div className="h-px bg-[rgba(44,40,37,.07)] my-4" />;
 }

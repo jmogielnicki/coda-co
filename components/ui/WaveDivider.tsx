@@ -5,14 +5,8 @@ interface WaveDividerProps {
 
 export function WaveDivider({ topColor, bottomColor }: WaveDividerProps) {
   return (
-    <div style={{ background: topColor, paddingBottom: 60, marginBottom: -60 }}>
-      <div
-        style={{
-          background: bottomColor,
-          borderRadius: "50% 50% 0 0 / 60px 60px 0 0",
-          height: 60,
-        }}
-      />
+    <div style={{ background: topColor }} className="pb-[60px] -mb-[60px]">
+      <div className="arc-top h-[60px]" style={{ background: bottomColor }} />
     </div>
   );
 }
