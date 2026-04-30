@@ -138,7 +138,7 @@ export default async function LandingPage() {
           and expert resources to help you approach death — yours or someone
           you love — with grace and intention.
         </p>
-        <p className="text-[14px] text-cl italic mb-8">
+        <p className="font-serif italic font-light text-[28px] leading-[1.3] text-ch mb-8">
           Death is a part of life. Support shouldn&apos;t be hard to find.
         </p>
 
