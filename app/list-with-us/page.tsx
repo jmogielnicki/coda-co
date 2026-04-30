@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
+import { FaqList } from "@/components/list-with-us/FaqList";
 
 export const metadata: Metadata = {
   title: "List with us — CodaCo",
@@ -113,13 +114,13 @@ export default function ListWithUsPage() {
       <Breadcrumb crumbs={[{ label: "Home", href: "/" }, { label: "List with us" }]} />
 
       {/* Hero */}
-      <section className="bg-white px-10 py-16 text-center">
+      <section className="bg-white px-10 pt-16 pb-12 text-center">
         <p className="text-[11px] tracking-[.14em] uppercase text-tr mb-3">
           For vendors &amp; service providers
         </p>
         <h1 className="font-serif text-[46px] font-light leading-[1.13] text-ch mb-4">
           Reach people who are{" "}
-          <em className="not-italic text-tr">ready.</em>
+          <em className="italic text-tr">ready.</em>
         </h1>
         <p className="text-[15px] text-cm max-w-[520px] mx-auto mb-10 leading-[1.75]">
           CodaCo connects you with clients who are actively seeking support around death and dying —
@@ -128,12 +129,12 @@ export default function ListWithUsPage() {
         </p>
 
         {/* Type cards */}
-        <div className="flex gap-6 justify-center flex-wrap">
+        <div className="grid grid-cols-2 gap-4 max-w-[620px] mx-auto">
           <Link
             href="/list-with-us/goods"
-            className="bg-tr-vp border border-tr-p rounded-[14px] p-8 w-[260px] text-left no-underline hover:border-tr transition-colors group"
+            className="bg-white border-2 border-[rgba(44,40,37,.12)] rounded-[12px] py-7 px-6 text-center no-underline cursor-pointer transition-colors hover:border-tr-l hover:bg-tr-vp"
           >
-            <div className="mb-4">
+            <div className="w-[54px] h-[54px] mx-auto mb-4 flex items-center justify-center">
               <svg width="50" height="50" viewBox="0 0 60 60" fill="none">
                 <path
                   d="M30 8 C18 8 10 20 10 35 C10 48 18 56 30 56 C42 56 50 48 50 35 C50 20 42 8 30 8Z"
@@ -149,8 +150,10 @@ export default function ListWithUsPage() {
                 />
               </svg>
             </div>
-            <div className="text-[18px] font-medium text-ch mb-2">List goods</div>
-            <p className="text-[13px] text-cl leading-relaxed">
+            <div className="font-serif text-[22px] font-normal text-ch mb-1.5">
+              List goods
+            </div>
+            <p className="text-[13px] text-cl leading-[1.5]">
               Urns, jewelry, shrouds, planning workbooks, memorial art, humor gifts — anything
               shipped or available locally
             </p>
@@ -158,9 +161,9 @@ export default function ListWithUsPage() {
 
           <Link
             href="/list-with-us/services"
-            className="bg-sg-vp border border-sg-p rounded-[14px] p-8 w-[260px] text-left no-underline hover:border-sg transition-colors group"
+            className="bg-white border-2 border-[rgba(44,40,37,.12)] rounded-[12px] py-7 px-6 text-center no-underline cursor-pointer transition-colors hover:border-tr-l hover:bg-tr-vp"
           >
-            <div className="mb-4">
+            <div className="w-[54px] h-[54px] mx-auto mb-4 flex items-center justify-center">
               <svg width="50" height="50" viewBox="0 0 60 60" fill="none">
                 <circle cx="24" cy="20" r="9" stroke="#7A9E82" strokeWidth="2" />
                 <path
@@ -178,8 +181,10 @@ export default function ListWithUsPage() {
                 />
               </svg>
             </div>
-            <div className="text-[18px] font-medium text-ch mb-2">List services</div>
-            <p className="text-[13px] text-cl leading-relaxed">
+            <div className="font-serif text-[22px] font-normal text-ch mb-1.5">
+              List services
+            </div>
+            <p className="text-[13px] text-cl leading-[1.5]">
               Death doulas, estate attorneys, death cleaning, celebrants, EOL organizers — found by
               geographic location
             </p>
@@ -243,45 +248,13 @@ export default function ListWithUsPage() {
       </section>
 
       {/* FAQ */}
-      <section className="bg-sg-vp px-10 py-14">
+      <section className="bg-sg-vp px-10 py-12">
         <div className="max-w-[680px] mx-auto">
           <div className="text-center mb-8">
             <p className="text-[11px] tracking-[.14em] uppercase text-sg mb-2">FAQ</p>
             <h2 className="font-serif text-[32px] font-light text-ch">Common questions</h2>
           </div>
-          <div>
-            {faqs.map((faq, i) => (
-              <div
-                key={i}
-                className={`py-4 ${i < faqs.length - 1 ? "border-b border-[rgba(44,40,37,.1)]" : ""}`}
-              >
-                <div className="text-[14px] font-medium text-ch mb-2">{faq.q}</div>
-                <p className="text-[13px] text-cm leading-[1.7]">{faq.a}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="bg-ch px-10 py-14 text-center">
-        <h2 className="font-serif text-[32px] font-light text-tr-vp mb-3">Ready to join?</h2>
-        <p className="text-[14px] text-[rgba(252,244,241,.7)] max-w-[400px] mx-auto mb-8 leading-relaxed">
-          It takes about 10 minutes to create your first listing.
-        </p>
-        <div className="flex gap-4 justify-center flex-wrap">
-          <Link
-            href="/list-with-us/goods"
-            className="bg-tr text-white px-8 py-3 rounded-full text-[14px] no-underline hover:bg-tr-d transition-colors"
-          >
-            List goods
-          </Link>
-          <Link
-            href="/list-with-us/services"
-            className="border border-[rgba(252,244,241,.3)] text-tr-vp px-8 py-3 rounded-full text-[14px] no-underline hover:border-tr-vp transition-colors"
-          >
-            List services
-          </Link>
+          <FaqList faqs={faqs} />
         </div>
       </section>
     </>
