@@ -102,7 +102,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
         </div>
       </section>
 
-      <WaveDivider topColor="#ffffff" bottomColor="#FCF4F1" />
+      <WaveDivider topColor="#ffffff" bottomColor="#EC9670" />
 
       {/* Results section */}
       <section className="bg-tr-vp px-10 pb-12 pt-10">

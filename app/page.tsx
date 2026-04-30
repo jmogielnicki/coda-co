@@ -145,7 +145,7 @@ export default async function LandingPage() {
         <HeroSearch />
       </section>
 
-      <WaveDivider topColor="#ffffff" bottomColor="#FCF4F1" />
+      <WaveDivider topColor="#ffffff" bottomColor="#EC9670" />
 
       {/* Browse by category */}
       <section className="bg-tr-vp px-10 pt-12 pb-10">
@@ -180,7 +180,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <WaveDivider topColor="#FCF4F1" bottomColor="#ffffff" />
+      <WaveDivider topColor="#EC9670" bottomColor="#ffffff" />
 
       {/* Support in your area */}
       <section className="bg-white px-10 pt-12 pb-12">
