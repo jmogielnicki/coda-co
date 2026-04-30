@@ -4,9 +4,9 @@ import { ServiceSearchCard } from "@/components/ui/ServiceCard";
 export function ServiceGrid({ vendors }: { vendors: Vendor[] }) {
   if (vendors.length === 0) {
     return (
-      <div className="text-center py-16 text-cm">
+      <div className="text-center py-16 text-ink">
         <p className="text-[15px] mb-2">No providers found.</p>
-        <p className="text-[13px] text-cl">Try different filters or broaden your search.</p>
+        <p className="text-[13px] text-ink">Try different filters or broaden your search.</p>
       </div>
     );
   }

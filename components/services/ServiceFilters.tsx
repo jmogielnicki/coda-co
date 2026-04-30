@@ -62,7 +62,7 @@ export function ServiceFilters() {
         <span className="text-[13px] font-medium text-ch">Filters</span>
         <button
           onClick={() => router.push(pathname)}
-          className="text-[12px] text-cl bg-transparent border-0 font-sans cursor-pointer underline hover:text-tr"
+          className="text-[12px] text-ink bg-transparent border-0 font-sans cursor-pointer underline hover:text-tr"
         >
           Clear all
         </button>
@@ -165,7 +165,7 @@ function FilterSection({
 }) {
   return (
     <div className="mb-[1.4rem]">
-      <h4 className="text-[11px] tracking-[.1em] uppercase text-cl font-medium mb-[.65rem]">
+      <h4 className="text-[11px] tracking-[.1em] uppercase text-ink font-medium mb-[.65rem]">
         {heading}
       </h4>
       {children}
@@ -218,7 +218,7 @@ function FilterCheck({
         onChange={onChange}
         className="accent-tr w-[13px] h-[13px]"
       />
-      <span className="text-[12px] text-cm">{label}</span>
+      <span className="text-[12px] text-ink">{label}</span>
     </label>
   );
 }
