@@ -87,41 +87,10 @@ This file tracks implementation progress for the Next.js rebuild. See `PLAN.md` 
 
 ---
 
-### Phase 6 — Prototype Fidelity (active)
-
-The first-pass pages were written freehand and have drifted from
-`index.html.reference`. Phase 6 closes the gap, page by page, using the
-visual-diff script (`npm run visual-diff`) to measure progress. See
-`docs/prototype-fidelity-plan.md` for the homepage plan and approach;
-the same approach applies to other pages.
-
-- [x] Stub pages added at `app/books/` and `app/light-and-dark/` so the
-      restored Nav links route somewhere
-- [ ] Homepage (`/`) — port to match prototype `#p0` (hero copy + alignment,
-      two-tier guided-search CTAs, Books / Light & Dark / vendor-steps
-      sections, single-pill search bar). Plan: `docs/prototype-fidelity-plan.md`
-- [ ] `Nav` — restore "Books" and "Light & dark" links; widen
-      `NavProps["active"]` union accordingly
-- [ ] `GuidedSearch` — convert to controlled (`open` / `onToggle` props),
-      switch to 2×2 `.gb-btn` grid with featured tile, port verbatim
-      sub-panel copy and `← Back` affordance
-- [ ] Services page (`/services`) — diff against `#p1` and reconcile
-- [ ] Product detail (`/shop/[productId]`) — diff against `#p2`
-- [ ] Shop (`/shop`) — diff against `#p3`
-- [ ] List-with-us flow (`/list-with-us`, `/goods`, `/services`, `/plan`,
-      `/confirm`) — diff against `#p4`–`#p8`
-- [ ] Where to start (`/where-to-start`) — diff against `#p9`
-
----
-
 ## Notes for Future Agents
 
 - **Design reference**: `index.html.reference` is the source of truth for
-  layout, copy, and colors. The dev server also serves it at
-  `/__prototype__/index.html` for the visual-diff script.
-- **Visual diff**: `npm run visual-diff [section]`. Output PNGs land in
-  `./diff/`. See README for setup. Use it whenever you touch a page that's
-  in Phase 6.
+  layout, copy, and colors.
 - **Tailwind tokens**: brand colors live in `app/globals.css` under
   `@theme`. Use `bg-tr`, `text-sg-d`, `border-tr-l`, `font-serif`, etc.
   Don't hardcode hex values that already have a token.
