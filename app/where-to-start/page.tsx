@@ -90,7 +90,7 @@ export default function WhereToStartPage() {
         <h1 className="font-serif text-[42px] font-light text-ch mb-4 leading-tight">
           Where to start
         </h1>
-        <p className="text-[15px] text-cm max-w-[480px] mx-auto leading-relaxed">
+        <p className="text-[15px] text-ink max-w-[480px] mx-auto leading-relaxed">
           Death touches everyone differently. These are starting points — not prescriptions. Use
           what helps.
         </p>
@@ -104,7 +104,13 @@ export default function WhereToStartPage() {
               {section.eyebrow}
             </p>
             <h2 className="font-serif text-[28px] font-light text-ch mb-4">{section.heading}</h2>
-            <p className="text-[14px] text-cm leading-[1.8] mb-5">{section.body}</p>
+            <p
+              className={`text-[14px] leading-[1.8] mb-5 ${
+                section.bg === "bg-tr-vp" ? "text-ink" : "text-cm"
+              }`}
+            >
+              {section.body}
+            </p>
             <div className="flex flex-wrap gap-3">
               {section.links.map((l) => (
                 <Link
@@ -155,7 +161,7 @@ export default function WhereToStartPage() {
         <h2 className="font-serif text-[24px] font-light text-ch mb-3">
           You don&apos;t have to do this alone.
         </h2>
-        <p className="text-[13px] text-cm max-w-[480px] mx-auto mb-6 leading-[1.75]">
+        <p className="text-[13px] text-ink max-w-[480px] mx-auto mb-6 leading-[1.75]">
           Every provider listed on CodaCo has been vetted. If you&apos;re not sure who to contact
           first, a death doula is often the right starting point — they can help you figure out what
           else you need.

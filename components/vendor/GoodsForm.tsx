@@ -292,7 +292,7 @@ export function GoodsForm() {
               <button
                 onClick={() => setStep((s) => s - 1)}
                 disabled={step === 0}
-                className="px-6 py-2.5 rounded-full border border-[rgba(44,40,37,.2)] text-[13px] text-cm cursor-pointer hover:border-ch transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-6 py-2.5 rounded-full border border-[rgba(44,40,37,.2)] text-[13px] text-ink cursor-pointer hover:border-ch transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 ← Back
               </button>

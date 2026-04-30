@@ -39,7 +39,7 @@ export function ProductTabs({ product, reviews, summary, sellerBio }: ProductTab
                 "px-5 py-4 text-[13px] cursor-pointer border-b-2 -mb-px transition-colors",
                 active === tab.id
                   ? "border-tr text-tr font-medium"
-                  : "border-transparent text-cm hover:text-ch",
+                  : "border-transparent text-ink hover:text-ch",
               ].join(" ")}
             >
               {label}
@@ -51,7 +51,7 @@ export function ProductTabs({ product, reviews, summary, sellerBio }: ProductTab
       {/* Tab content */}
       <div className="px-10 py-8 max-w-[680px]">
         {active === "desc" && (
-          <div className="text-[14px] text-cm leading-[1.8] whitespace-pre-line">
+          <div className="text-[14px] text-ink leading-[1.8] whitespace-pre-line">
             {product.description}
           </div>
         )}
@@ -63,7 +63,7 @@ export function ProductTabs({ product, reviews, summary, sellerBio }: ProductTab
                 key={key}
                 className="flex py-2.5 border-b border-[rgba(44,40,37,.07)] last:border-b-0"
               >
-                <span className="text-[13px] text-cl capitalize w-[160px] flex-shrink-0">
+                <span className="text-[13px] text-ink capitalize w-[160px] flex-shrink-0">
                   {key.replace(/([A-Z])/g, " $1")}
                 </span>
                 <span className="text-[13px] text-ch">{val}</span>
@@ -81,12 +81,12 @@ export function ProductTabs({ product, reviews, summary, sellerBio }: ProductTab
                     {summary.average.toFixed(1)}
                   </div>
                   <div className="text-[13px] text-tr">★★★★★</div>
-                  <div className="text-[11px] text-cl">{summary.total} reviews</div>
+                  <div className="text-[11px] text-ink">{summary.total} reviews</div>
                 </div>
                 <div className="flex-1">
                   {summary.distribution.map((row) => (
                     <div key={row.stars} className="flex items-center gap-2 mb-1">
-                      <span className="text-[12px] text-cl w-5">{row.stars}★</span>
+                      <span className="text-[12px] text-ink w-5">{row.stars}★</span>
                       <div className="flex-1 bg-[rgba(44,40,37,.08)] h-1.5 rounded-full">
                         <div
                           className="bg-tr h-full rounded-full"
@@ -95,7 +95,7 @@ export function ProductTabs({ product, reviews, summary, sellerBio }: ProductTab
                           }}
                         />
                       </div>
-                      <span className="text-[11px] text-cl w-5">{row.count}</span>
+                      <span className="text-[11px] text-ink w-5">{row.count}</span>
                     </div>
                   ))}
                 </div>
@@ -104,7 +104,7 @@ export function ProductTabs({ product, reviews, summary, sellerBio }: ProductTab
             {reviews.length > 0 ? (
               reviews.map((r) => <ReviewCard key={r.id} review={r} />)
             ) : (
-              <p className="text-[13px] text-cl">No reviews yet.</p>
+              <p className="text-[13px] text-ink">No reviews yet.</p>
             )}
           </div>
         )}
@@ -116,8 +116,8 @@ export function ProductTabs({ product, reviews, summary, sellerBio }: ProductTab
             </div>
             <div>
               <div className="text-[16px] font-medium text-ch mb-1">{product.seller}</div>
-              <div className="text-[13px] text-cl mb-3">{product.location}</div>
-              <p className="text-[13px] text-cm leading-relaxed">
+              <div className="text-[13px] text-ink mb-3">{product.location}</div>
+              <p className="text-[13px] text-ink leading-relaxed">
                 {sellerBio ?? "A trusted CodaCo seller."}
               </p>
             </div>

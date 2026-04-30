@@ -51,7 +51,7 @@ export default function ConfirmPage() {
 
         <p className="text-[11px] tracking-[.14em] uppercase text-sg mb-2">Submitted</p>
         <h1 className="font-serif text-[42px] font-light text-ch mb-4">You&apos;re in the queue.</h1>
-        <p className="text-[15px] text-cm max-w-[460px] mx-auto leading-relaxed">
+        <p className="text-[15px] text-ink max-w-[460px] mx-auto leading-relaxed">
           Your listing has been received. Our team will review it within 1–2 business days and
           send you a confirmation email at the address you provided.
         </p>

@@ -6,14 +6,14 @@
   --color-tr-l:  #D4876F;
   --color-tr-p:  #F5EAE6;
   --color-tr-d:  #8B3E2D;
-  --color-tr-vp: #EC9670;
+  --color-tr-vp: #F0AE90;
 
   /* Sage */
   --color-sg:    #7A9E82;
   --color-sg-l:  #A8C4AC;
   --color-sg-p:  #EAF0EB;
   --color-sg-d:  #4D7255;
-  --color-sg-vp: #A8BF9D;
+  --color-sg-vp: #B5C9AB;
 
   /* Neutral warm whites */
   --color-pl:    #FAF9F7;
@@ -23,6 +23,8 @@
   --color-ch:    #2C2825;
   --color-cm:    #5A534C;
   --color-cl:    #9A9189;
+  /* Ink: high-contrast text for use on tinted banner backgrounds */
+  --color-ink:   #2B2620;
 
   /* Fonts */
   --font-serif:  'Cormorant Garamond', Georgia, serif;

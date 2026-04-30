@@ -30,7 +30,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
           <div className="text-center mb-10">
             <p className="text-[11px] tracking-[.14em] uppercase text-tr mb-2">Pricing</p>
             <h1 className="font-serif text-[38px] font-light text-ch">Choose a plan</h1>
-            <p className="text-[14px] text-cm mt-2">Start free. Upgrade when you are ready.</p>
+            <p className="text-[14px] text-ink mt-2">Start free. Upgrade when you are ready.</p>
           </div>
 
           <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-8">
@@ -82,7 +82,7 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
             ))}
           </div>
 
-          <p className="text-center text-[12px] text-cl">
+          <p className="text-center text-[12px] text-ink">
             All plans include CodaCo buyer protection, secure messaging, and vetting support.
           </p>
         </div>

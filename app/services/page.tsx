@@ -102,7 +102,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
         </div>
       </section>
 
-      <WaveDivider topColor="#ffffff" bottomColor="#EC9670" />
+      <WaveDivider topColor="#ffffff" bottomColor="#F0AE90" />
 
       {/* Results section */}
       <section className="bg-tr-vp px-10 pb-12 pt-10">
@@ -139,7 +139,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
 
             {/* Count + sort */}
             <div className="flex items-center justify-between mb-5">
-              <span className="text-[13px] text-cm">
+              <span className="text-[13px] text-ink">
                 {hasActiveFilter ? (
                   <>
                     {total} providers · <strong className="text-ch">{filtered}</strong> after filters
@@ -149,7 +149,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
                 )}
               </span>
               <div className="flex items-center gap-[7px]">
-                <label className="text-[12px] text-cl">Sort by</label>
+                <label className="text-[12px] text-ink">Sort by</label>
                 <select className="text-[12px] text-cm border border-[rgba(44,40,37,.15)] rounded-[6px] px-2.5 py-[5px] bg-white font-sans outline-none">
                   <option>Best match</option>
                   <option>Rating: high to low</option>

@@ -61,7 +61,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         </div>
       </section>
 
-      <WaveDivider topColor="#ffffff" bottomColor="#A8BF9D" />
+      <WaveDivider topColor="#ffffff" bottomColor="#B5C9AB" />
 
       <section className="bg-sg-vp px-10 py-10">
         <div className="max-w-[900px] mx-auto">
