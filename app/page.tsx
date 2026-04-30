@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { HeroSearch } from "@/components/landing/HeroSearch";
-import { ProductCard } from "@/components/ui/ProductCard";
 import { ServiceCard } from "@/components/ui/ServiceCard";
 import { WaveDivider } from "@/components/ui/WaveDivider";
-import { getFeaturedProducts } from "@/lib/api/products";
 import { getHomeFeaturedVendors } from "@/lib/api/vendors";
 
 export const metadata: Metadata = {
@@ -120,77 +118,8 @@ const categories = [
   },
 ];
 
-const books = [
-  {
-    title: "Briefly Perfectly Human",
-    author: "Alua Arthur",
-    bg: "#8B4F42",
-    desc: "Death doula Alua Arthur explores what it means to be alive through honest, moving encounters with the dying.",
-    overlay: (
-      <svg width="100%" height="100%" viewBox="0 0 160 170">
-        <line x1="0" y1="20" x2="160" y2="0" stroke="#fff" strokeWidth=".7"/>
-        <line x1="0" y1="60" x2="160" y2="40" stroke="#fff" strokeWidth=".5"/>
-        <line x1="0" y1="100" x2="160" y2="80" stroke="#fff" strokeWidth=".6"/>
-        <line x1="0" y1="140" x2="160" y2="120" stroke="#fff" strokeWidth=".5"/>
-      </svg>
-    ),
-  },
-  {
-    title: "Smoke Gets in Your Eyes",
-    author: "Caitlin Doughty",
-    bg: "#3D5C47",
-    desc: "A mortician's dark, funny memoir challenging how Americans hide from death — and why we shouldn't.",
-    overlay: (
-      <svg width="100%" height="100%" viewBox="0 0 160 170">
-        <circle cx="80" cy="85" r="60" stroke="#fff" strokeWidth=".7" fill="none"/>
-        <circle cx="80" cy="85" r="35" stroke="#fff" strokeWidth=".5" fill="none"/>
-      </svg>
-    ),
-  },
-  {
-    title: "Being Mortal",
-    author: "Atul Gawande",
-    bg: "#4A4030",
-    desc: "A physician's exploration of how medicine can better serve people at the end of life on their own terms.",
-    overlay: (
-      <svg width="100%" height="100%" viewBox="0 0 160 170">
-        <rect x="20" y="20" width="120" height="130" stroke="#fff" strokeWidth=".6" fill="none"/>
-        <rect x="36" y="36" width="88" height="98" stroke="#fff" strokeWidth=".4" fill="none"/>
-      </svg>
-    ),
-  },
-  {
-    title: "When Breath Becomes Air",
-    author: "Paul Kalanithi",
-    bg: "#2C3A5A",
-    desc: "A young neurosurgeon's luminous memoir, written as he faced his own terminal diagnosis.",
-    overlay: (
-      <svg width="100%" height="100%" viewBox="0 0 160 170">
-        <path d="M0 170 Q80 60 160 170" stroke="#fff" strokeWidth=".7" fill="none"/>
-        <path d="M0 130 Q80 30 160 130" stroke="#fff" strokeWidth=".5" fill="none"/>
-      </svg>
-    ),
-  },
-];
-
-const humor = [
-  { quote: "Eventually, we are all just stardust with opinions.", item: "Art print, 8×10", price: "$18" },
-  { quote: "I've made peace with my mortality. My accountant has not.", item: "Ceramic mug, 12 oz", price: "$24" },
-  { quote: "YOLO was taken. So I planned ahead.", item: "Tote bag", price: "$22" },
-  { quote: "My estate plan is the most loving thing I've ever done.", item: "Greeting card set", price: "$14" },
-];
-
-const vendorSteps = [
-  { n: 1, title: "Create your profile", desc: "Set up a shop or service profile with photos and pricing" },
-  { n: 2, title: "List goods or services", desc: "Add products with shipping options or services with area" },
-  { n: 3, title: "Connect with clients", desc: "Receive inquiries, manage orders, build reviews" },
-];
-
 export default async function LandingPage() {
-  const [featuredProducts, featuredVendors] = await Promise.all([
-    getFeaturedProducts(4),
-    getHomeFeaturedVendors(),
-  ]);
+  const featuredVendors = await getHomeFeaturedVendors();
 
   return (
     <>
@@ -254,7 +183,7 @@ export default async function LandingPage() {
       <WaveDivider topColor="#FCF4F1" bottomColor="#ffffff" />
 
       {/* Support in your area */}
-      <section className="bg-white px-10 pt-12 pb-10">
+      <section className="bg-white px-10 pt-12 pb-12">
         <div className="max-w-[900px] mx-auto">
           <div className="text-center mb-7">
             <p className="text-[11px] tracking-[.14em] uppercase text-sg mb-1.5">
@@ -301,193 +230,6 @@ export default async function LandingPage() {
               className="inline-block text-[13px] text-sg border-b border-dotted border-sg-l no-underline hover:text-sg-d"
             >
               Not sure what you need? See our guide for recently bereaved →
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <WaveDivider topColor="#ffffff" bottomColor="#F1F7F2" />
-
-      {/* Featured in the marketplace */}
-      <section className="bg-sg-vp px-10 pt-12 pb-10">
-        <div className="max-w-[900px] mx-auto">
-          <div className="text-center mb-7">
-            <p className="text-[11px] tracking-[.14em] uppercase text-tr mb-1.5">
-              Handpicked goods
-            </p>
-            <h2 className="font-serif text-[32px] font-light text-ch mb-1">
-              Featured in the marketplace
-            </h2>
-            <p className="text-[13px] text-cl">
-              Available locally or shipped anywhere in the US
-            </p>
-          </div>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(178px,1fr))] gap-4">
-            {featuredProducts.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
-          <div className="text-center mt-5">
-            <Link
-              href="/shop"
-              className="inline-block text-[13px] text-tr border-b border-dotted border-tr-l no-underline hover:text-tr-d"
-            >
-              View all goods →
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <WaveDivider topColor="#F1F7F2" bottomColor="#ffffff" />
-
-      {/* Books on death & dying */}
-      <section className="bg-white px-10 pt-12 pb-10">
-        <div className="max-w-[900px] mx-auto">
-          <div className="text-center mb-7">
-            <p className="text-[11px] tracking-[.14em] uppercase text-sg mb-1.5">
-              The reading room
-            </p>
-            <h2 className="font-serif text-[32px] font-light text-ch mb-1">
-              Books on death &amp; dying
-            </h2>
-            <p className="text-[13px] text-cl">
-              Honest, beautifully written guides for the journey
-            </p>
-          </div>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(158px,1fr))] gap-4">
-            {books.map((b) => (
-              <div
-                key={b.title}
-                className="bg-white border border-[rgba(44,40,37,.08)] rounded-[10px] overflow-hidden cursor-pointer transition-transform duration-200 hover:-translate-y-0.5"
-              >
-                <div
-                  className="h-[168px] flex items-end p-3.5 relative overflow-hidden"
-                  style={{ background: b.bg }}
-                >
-                  <div className="absolute inset-0 opacity-[.13]">{b.overlay}</div>
-                  <div className="relative z-10">
-                    <div className="font-serif text-[17px] font-normal text-white/95 leading-[1.2]">
-                      {b.title}
-                    </div>
-                    <div className="text-[11px] text-white/70 mt-1 italic">
-                      {b.author}
-                    </div>
-                  </div>
-                </div>
-                <div className="px-4 py-3">
-                  <div className="text-[12px] text-cm leading-[1.5] mb-1.5">
-                    {b.desc}
-                  </div>
-                  <span className="text-[12px] text-tr border-b border-dotted border-tr-l cursor-pointer">
-                    Find this book →
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="text-center mt-5">
-            <Link
-              href="/books"
-              className="inline-block text-[13px] text-tr border-b border-dotted border-tr-l no-underline hover:text-tr-d"
-            >
-              Browse the full reading list →
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <WaveDivider topColor="#ffffff" bottomColor="#FCF4F1" />
-
-      {/* Light & Dark */}
-      <section className="bg-tr-vp px-10 pt-12 pb-10">
-        <div className="max-w-[900px] mx-auto">
-          <div className="bg-ch rounded-[12px] px-8 py-6 flex items-center justify-between gap-4 mb-6 flex-wrap">
-            <div>
-              <h3 className="font-serif text-[24px] font-light text-tr-vp mb-0.5">
-                Light &amp; Dark — Because death is also funny.
-              </h3>
-              <p className="text-[13px] text-tr-vp/60 max-w-[340px]">
-                Prints, mugs, cards and gifts that find the levity in life&apos;s
-                only guarantee.
-              </p>
-            </div>
-            <Link
-              href="/light-and-dark"
-              className="bg-tr text-white border-0 px-5 py-2.5 rounded-[18px] text-[13px] no-underline hover:bg-tr-d transition-colors"
-            >
-              Shop all →
-            </Link>
-          </div>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(158px,1fr))] gap-3.5">
-            {humor.map((h) => (
-              <div
-                key={h.quote}
-                className="bg-white border border-[rgba(44,40,37,.08)] rounded-[10px] p-3.5 text-center cursor-pointer transition-colors hover:border-cl"
-              >
-                <div className="h-[86px] bg-ch rounded-[7px] flex items-center justify-center mb-2.5 font-serif text-[12px] text-tr-vp/85 px-3 leading-[1.45] italic">
-                  {h.quote}
-                </div>
-                <div className="text-[12px] text-ch font-medium">{h.item}</div>
-                <div className="text-[12px] text-tr mt-0.5">{h.price}</div>
-              </div>
-            ))}
-          </div>
-          <div className="text-center mt-5">
-            <Link
-              href="/light-and-dark"
-              className="inline-block text-[13px] text-tr border-b border-dotted border-tr-l no-underline hover:text-tr-d"
-            >
-              Browse Light &amp; Dark →
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <WaveDivider topColor="#FCF4F1" bottomColor="#ffffff" />
-
-      {/* Reach people who are ready (vendor CTA) */}
-      <section className="bg-white px-10 pt-12 pb-12 text-center">
-        <div className="max-w-[900px] mx-auto">
-          <p className="text-[11px] tracking-[.14em] uppercase text-tr mb-1.5">
-            For vendors &amp; service providers
-          </p>
-          <h2 className="font-serif text-[32px] font-light text-ch mb-3">
-            Reach people who are ready
-          </h2>
-          <p className="text-[15px] text-cm max-w-[460px] mx-auto mb-8">
-            CodaCo connects you with clients actively seeking what you offer.
-            List your goods or services in three easy steps.
-          </p>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4 max-w-[680px] mx-auto mb-8">
-            {vendorSteps.map((s) => (
-              <div
-                key={s.n}
-                className="bg-white rounded-[10px] py-5 px-4 text-center border border-[rgba(44,40,37,.07)]"
-              >
-                <div className="w-[30px] h-[30px] rounded-full bg-tr text-white text-[13px] font-medium flex items-center justify-center mx-auto mb-2.5">
-                  {s.n}
-                </div>
-                <div className="text-[13px] font-medium text-ch mb-0.5">
-                  {s.title}
-                </div>
-                <div className="text-[12px] text-cl leading-[1.45]">
-                  {s.desc}
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-3.5 justify-center flex-wrap">
-            <Link
-              href="/list-with-us/goods"
-              className="inline-block bg-tr text-white px-[30px] py-3.5 rounded-[26px] text-[14px] no-underline hover:bg-tr-d transition-colors"
-            >
-              List goods →
-            </Link>
-            <Link
-              href="/list-with-us/services"
-              className="inline-block bg-transparent text-ch border-[1.5px] border-[rgba(44,40,37,.25)] px-[26px] py-3 rounded-[26px] text-[13px] no-underline hover:border-tr hover:text-tr transition-colors"
-            >
-              List services
             </Link>
           </div>
         </div>

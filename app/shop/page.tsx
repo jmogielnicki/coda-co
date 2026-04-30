@@ -3,7 +3,9 @@ import { Suspense } from "react";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { FilterStrip } from "@/components/shop/FilterStrip";
 import { ProductGrid } from "@/components/shop/ProductGrid";
-import { getProducts } from "@/lib/api/products";
+import { ProductCard } from "@/components/ui/ProductCard";
+import { WaveDivider } from "@/components/ui/WaveDivider";
+import { getFeaturedProducts, getProducts } from "@/lib/api/products";
 import type { ProductCategory } from "@/lib/types";
 
 export const metadata: Metadata = {
@@ -19,9 +21,10 @@ interface ShopPageProps {
 export default async function ShopPage({ searchParams }: ShopPageProps) {
   const { category, sort } = await searchParams;
 
-  const products = await getProducts({
-    category: category as ProductCategory | undefined,
-  });
+  const [products, featuredProducts] = await Promise.all([
+    getProducts({ category: category as ProductCategory | undefined }),
+    getFeaturedProducts(4),
+  ]);
 
   // Client-side sort can't be done on RSC, so we handle it here
   const sorted = [...products].sort((a, b) => {
@@ -35,6 +38,30 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   return (
     <>
       <Breadcrumb crumbs={[{ label: "Home", href: "/" }, { label: "Shop goods" }]} />
+
+      {/* Featured in the marketplace */}
+      <section className="bg-white px-10 pt-12 pb-10">
+        <div className="max-w-[900px] mx-auto">
+          <div className="text-center mb-7">
+            <p className="text-[11px] tracking-[.14em] uppercase text-tr mb-1.5">
+              Handpicked goods
+            </p>
+            <h2 className="font-serif text-[32px] font-light text-ch mb-1">
+              Featured in the marketplace
+            </h2>
+            <p className="text-[13px] text-cl">
+              Available locally or shipped anywhere in the US
+            </p>
+          </div>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(178px,1fr))] gap-4">
+            {featuredProducts.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <WaveDivider topColor="#ffffff" bottomColor="#F1F7F2" />
 
       <section className="bg-sg-vp px-10 py-10">
         <div className="max-w-[900px] mx-auto">

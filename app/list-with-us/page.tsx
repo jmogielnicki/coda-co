@@ -9,6 +9,12 @@ export const metadata: Metadata = {
     "Join CodaCo's curated marketplace for death and dying. Reach clients who are ready.",
 };
 
+const howItWorks = [
+  { n: 1, title: "Create your profile", desc: "Set up a shop or service profile with photos and pricing" },
+  { n: 2, title: "List goods or services", desc: "Add products with shipping options or services with area" },
+  { n: 3, title: "Connect with clients", desc: "Receive inquiries, manage orders, build reviews" },
+];
+
 const whyItems = [
   {
     icon: (
@@ -189,6 +195,50 @@ export default function ListWithUsPage() {
               geographic location
             </p>
           </Link>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="bg-white px-10 pt-2 pb-12">
+        <div className="max-w-[680px] mx-auto">
+          <div className="text-center mb-7">
+            <p className="text-[11px] tracking-[.14em] uppercase text-tr mb-2">How it works</p>
+            <h2 className="font-serif text-[32px] font-light text-ch">
+              Three steps to get started
+            </h2>
+          </div>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-4 mb-8">
+            {howItWorks.map((s) => (
+              <div
+                key={s.n}
+                className="bg-white rounded-[10px] py-5 px-4 text-center border border-[rgba(44,40,37,.07)]"
+              >
+                <div className="w-[30px] h-[30px] rounded-full bg-tr text-white text-[13px] font-medium flex items-center justify-center mx-auto mb-2.5">
+                  {s.n}
+                </div>
+                <div className="text-[13px] font-medium text-ch mb-0.5">
+                  {s.title}
+                </div>
+                <div className="text-[12px] text-cl leading-[1.45]">
+                  {s.desc}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-3.5 justify-center flex-wrap">
+            <Link
+              href="/list-with-us/goods"
+              className="inline-block bg-tr text-white px-[30px] py-3.5 rounded-[26px] text-[14px] no-underline hover:bg-tr-d transition-colors"
+            >
+              List goods →
+            </Link>
+            <Link
+              href="/list-with-us/services"
+              className="inline-block bg-transparent text-ch border-[1.5px] border-[rgba(44,40,37,.25)] px-[26px] py-3 rounded-[26px] text-[13px] no-underline hover:border-tr hover:text-tr transition-colors"
+            >
+              List services
+            </Link>
+          </div>
         </div>
       </section>
 

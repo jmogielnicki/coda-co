@@ -1,24 +1,115 @@
 import type { Metadata } from "next";
+import { Breadcrumb } from "@/components/layout/Breadcrumb";
 
 export const metadata: Metadata = {
   title: "Books — CodaCo",
   description: "Honest, beautifully written guides for the journey.",
 };
 
+const books = [
+  {
+    title: "Briefly Perfectly Human",
+    author: "Alua Arthur",
+    bg: "#8B4F42",
+    desc: "Death doula Alua Arthur explores what it means to be alive through honest, moving encounters with the dying.",
+    overlay: (
+      <svg width="100%" height="100%" viewBox="0 0 160 170">
+        <line x1="0" y1="20" x2="160" y2="0" stroke="#fff" strokeWidth=".7"/>
+        <line x1="0" y1="60" x2="160" y2="40" stroke="#fff" strokeWidth=".5"/>
+        <line x1="0" y1="100" x2="160" y2="80" stroke="#fff" strokeWidth=".6"/>
+        <line x1="0" y1="140" x2="160" y2="120" stroke="#fff" strokeWidth=".5"/>
+      </svg>
+    ),
+  },
+  {
+    title: "Smoke Gets in Your Eyes",
+    author: "Caitlin Doughty",
+    bg: "#3D5C47",
+    desc: "A mortician's dark, funny memoir challenging how Americans hide from death — and why we shouldn't.",
+    overlay: (
+      <svg width="100%" height="100%" viewBox="0 0 160 170">
+        <circle cx="80" cy="85" r="60" stroke="#fff" strokeWidth=".7" fill="none"/>
+        <circle cx="80" cy="85" r="35" stroke="#fff" strokeWidth=".5" fill="none"/>
+      </svg>
+    ),
+  },
+  {
+    title: "Being Mortal",
+    author: "Atul Gawande",
+    bg: "#4A4030",
+    desc: "A physician's exploration of how medicine can better serve people at the end of life on their own terms.",
+    overlay: (
+      <svg width="100%" height="100%" viewBox="0 0 160 170">
+        <rect x="20" y="20" width="120" height="130" stroke="#fff" strokeWidth=".6" fill="none"/>
+        <rect x="36" y="36" width="88" height="98" stroke="#fff" strokeWidth=".4" fill="none"/>
+      </svg>
+    ),
+  },
+  {
+    title: "When Breath Becomes Air",
+    author: "Paul Kalanithi",
+    bg: "#2C3A5A",
+    desc: "A young neurosurgeon's luminous memoir, written as he faced his own terminal diagnosis.",
+    overlay: (
+      <svg width="100%" height="100%" viewBox="0 0 160 170">
+        <path d="M0 170 Q80 60 160 170" stroke="#fff" strokeWidth=".7" fill="none"/>
+        <path d="M0 130 Q80 30 160 130" stroke="#fff" strokeWidth=".5" fill="none"/>
+      </svg>
+    ),
+  },
+];
+
 export default function BooksPage() {
   return (
-    <section className="bg-white px-10 py-24 text-center">
-      <div className="max-w-[560px] mx-auto">
-        <p className="text-[11px] tracking-[.14em] uppercase text-sg mb-2">
-          The reading room
-        </p>
-        <h1 className="font-serif text-[42px] font-light text-ch mb-4">
-          Books on death &amp; dying
-        </h1>
-        <p className="text-[15px] text-cm leading-[1.7]">
-          A curated reading list is coming soon.
-        </p>
-      </div>
-    </section>
+    <>
+      <Breadcrumb crumbs={[{ label: "Home", href: "/" }, { label: "Books" }]} />
+
+      <section className="bg-white px-10 pt-12 pb-12">
+        <div className="max-w-[900px] mx-auto">
+          <div className="text-center mb-7">
+            <p className="text-[11px] tracking-[.14em] uppercase text-sg mb-1.5">
+              The reading room
+            </p>
+            <h1 className="font-serif text-[42px] font-light text-ch mb-2">
+              Books on death &amp; dying
+            </h1>
+            <p className="text-[13px] text-cl">
+              Honest, beautifully written guides for the journey
+            </p>
+          </div>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(158px,1fr))] gap-4">
+            {books.map((b) => (
+              <div
+                key={b.title}
+                className="bg-white border border-[rgba(44,40,37,.08)] rounded-[10px] overflow-hidden cursor-pointer transition-transform duration-200 hover:-translate-y-0.5"
+              >
+                <div
+                  className="h-[168px] flex items-end p-3.5 relative overflow-hidden"
+                  style={{ background: b.bg }}
+                >
+                  <div className="absolute inset-0 opacity-[.13]">{b.overlay}</div>
+                  <div className="relative z-10">
+                    <div className="font-serif text-[17px] font-normal text-white/95 leading-[1.2]">
+                      {b.title}
+                    </div>
+                    <div className="text-[11px] text-white/70 mt-1 italic">
+                      {b.author}
+                    </div>
+                  </div>
+                </div>
+                <div className="px-4 py-3">
+                  <div className="text-[12px] text-cm leading-[1.5] mb-1.5">
+                    {b.desc}
+                  </div>
+                  <span className="text-[12px] text-tr border-b border-dotted border-tr-l cursor-pointer">
+                    Find this book →
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
