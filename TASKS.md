@@ -76,24 +76,65 @@ This file tracks implementation progress for the Next.js rebuild. See `PLAN.md` 
 
 ---
 
-### Phase 5 — State Wiring (Remaining Work)
+### Phase 5 — State Wiring
 - [x] Cart state: `CartProvider` wired to `AddToCart` in PDP — works end-to-end
 - [x] Filter state: URL searchParams flow from `FilterStrip`/`ServiceFilters` → page RSC
 - [x] Multi-step form state: component state in `GoodsForm`/`ServicesForm`
 - [ ] Add cart count display to Nav (requires Nav to become client or use server-side cookie)
-- [ ] Server Actions for `GoodsForm`/`ServicesForm` submission (currently router.push stub)
+- [ ] Server Actions for `GoodsForm`/`ServicesForm` submission (currently `router.push` stub)
 - [ ] `generateStaticParams` for `/shop/[productId]` to enable full static generation
 - [ ] Suspense boundaries for filter components to enable streaming
 
 ---
 
+### Phase 6 — Prototype Fidelity (active)
+
+The first-pass pages were written freehand and have drifted from
+`index.html.reference`. Phase 6 closes the gap, page by page, using the
+visual-diff script (`npm run visual-diff`) to measure progress. See
+`docs/prototype-fidelity-plan.md` for the homepage plan and approach;
+the same approach applies to other pages.
+
+- [x] Stub pages added at `app/books/` and `app/light-and-dark/` so the
+      restored Nav links route somewhere
+- [ ] Homepage (`/`) — port to match prototype `#p0` (hero copy + alignment,
+      two-tier guided-search CTAs, Books / Light & Dark / vendor-steps
+      sections, single-pill search bar). Plan: `docs/prototype-fidelity-plan.md`
+- [ ] `Nav` — restore "Books" and "Light & dark" links; widen
+      `NavProps["active"]` union accordingly
+- [ ] `GuidedSearch` — convert to controlled (`open` / `onToggle` props),
+      switch to 2×2 `.gb-btn` grid with featured tile, port verbatim
+      sub-panel copy and `← Back` affordance
+- [ ] Services page (`/services`) — diff against `#p1` and reconcile
+- [ ] Product detail (`/shop/[productId]`) — diff against `#p2`
+- [ ] Shop (`/shop`) — diff against `#p3`
+- [ ] List-with-us flow (`/list-with-us`, `/goods`, `/services`, `/plan`,
+      `/confirm`) — diff against `#p4`–`#p8`
+- [ ] Where to start (`/where-to-start`) — diff against `#p9`
+
+---
+
 ## Notes for Future Agents
 
-- **Design reference**: `index.html.reference` is the full original prototype. Use it for visual parity and content reference.
-- **Tailwind tokens**: All brand colors are in `app/globals.css` under `@theme`. Use `bg-tr`, `text-sg-d`, `border-tr-l`, `font-serif`, etc.
-- **RSC first**: Components are RSC by default. Only add `'use client'` if the component needs `useState`, `useEffect`, browser APIs, or event handlers.
-- **Data API**: All data fetched via `lib/api/*.ts`. These are async — call with `await` in Server Components. Don't import from `lib/data/*.ts` directly in components.
-- **Cart**: `useCart()` from `components/providers/CartProvider.tsx`. Works client-side only.
-- **Filters**: URL searchParams are the source of truth for shop/service filters. `FilterStrip` and `ServiceFilters` update URL; the page RSC re-renders with new data.
-- **Forms**: `GoodsForm` and `ServicesForm` manage their own step state. On final submit, they call `router.push('/list-with-us/confirm')`. Replace with a Server Action for real persistence.
-- **Next.js version**: 16.2.4 — `reactCompiler` is a top-level config key, not under `experimental`.
+- **Design reference**: `index.html.reference` is the source of truth for
+  layout, copy, and colors. The dev server also serves it at
+  `/__prototype__/index.html` for the visual-diff script.
+- **Visual diff**: `npm run visual-diff [section]`. Output PNGs land in
+  `./diff/`. See README for setup. Use it whenever you touch a page that's
+  in Phase 6.
+- **Tailwind tokens**: brand colors live in `app/globals.css` under
+  `@theme`. Use `bg-tr`, `text-sg-d`, `border-tr-l`, `font-serif`, etc.
+  Don't hardcode hex values that already have a token.
+- **RSC first**: components are RSC by default. Only add `'use client'`
+  when you need `useState`, `useEffect`, browser APIs, or event handlers.
+- **Data API**: fetch via `lib/api/*.ts` (async, call with `await` from
+  Server Components). Don't import `lib/data/*.ts` from components.
+- **Cart**: `useCart()` from `components/providers/CartProvider.tsx`,
+  client-only.
+- **Filters**: URL searchParams are the source of truth. `FilterStrip` /
+  `ServiceFilters` update the URL; the page RSC re-renders.
+- **Forms**: `GoodsForm` / `ServicesForm` own step state and currently
+  finish with `router.push('/list-with-us/confirm')`. Replace with a
+  Server Action for real persistence.
+- **Next.js version**: 16.2.4. `reactCompiler` is a top-level config key,
+  not under `experimental`.
