@@ -202,7 +202,7 @@ export default async function LandingPage() {
               Showing results near:
             </span>
             <input
-              defaultValue="New York, NY 10001"
+              defaultValue="Boulder, CO 80301"
               className="border-0 bg-transparent font-sans text-[13px] text-tr font-medium outline-none w-[200px]"
             />
             <button className="bg-sg text-white border-0 px-4 py-1.5 rounded-[18px] text-[12px] cursor-pointer hover:bg-sg-d transition-colors">

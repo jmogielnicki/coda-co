@@ -92,7 +92,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
             </div>
             <input
               className="flex-1 border-0 px-3.5 py-2.5 font-sans text-[13px] text-ch outline-none bg-transparent"
-              defaultValue="New York, NY 10001"
+              defaultValue="Boulder, CO 80301"
               placeholder="Location…"
             />
           </div>
@@ -132,7 +132,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
                   strokeDasharray="4 3"
                 />
                 <text x="140" y="72" fontSize="10" fill="#9A9189" textAnchor="middle" fontFamily="sans-serif">
-                  {total} providers near New York, NY
+                  {total} providers near Boulder, CO
                 </text>
               </svg>
             </div>
