@@ -9,8 +9,8 @@
 
 | Stage | Description                                                  | Status        |
 |-------|--------------------------------------------------------------|---------------|
-| 1     | Expand tokens + `@layer components` in `app/globals.css`     | ⬜ Not started |
-| 2     | Extract shared primitives in `components/ui/`                | ⬜ Not started |
+| 1     | Expand tokens + `@layer components` in `app/globals.css`     | ✅ Done        |
+| 2     | Extract shared primitives in `components/ui/`                | 🟡 In progress |
 | 3     | Generalize the filter system (primitives + hook)             | ⬜ Not started |
 | 4     | Consolidate card logic (vendor format helpers, `VendorCard`) | ⬜ Not started |
 | 5     | Document reuse conventions in `AGENTS.md`                    | ⬜ Not started |
@@ -20,6 +20,14 @@
 When you complete a stage, flip its status to ✅ in your commit. If you can
 only finish part of a stage, set it to 🟡 and add a sub-progress list under
 the table noting which sub-items are done so the next agent can continue.
+
+### Stage 2 sub-progress
+
+- ✅ `components/ui/Container.tsx`
+- ⬜ `components/ui/SectionHeader.tsx` — **next**
+- ⬜ `components/ui/Avatar.tsx`
+- ⬜ `components/ui/Card.tsx`
+- ⬜ `components/ui/Stars.tsx` (consolidates today's `StarRating` + the inline `★/☆` strings in `ServiceCard.tsx`)
 
 ---
 
