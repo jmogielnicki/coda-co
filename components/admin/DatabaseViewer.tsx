@@ -135,7 +135,7 @@ function ProductsTab({ products }: { products: Product[] }) {
 
 // ── Vendors ───────────────────────────────────────────────────────────────────
 
-const VENDOR_TYPES = ['doula', 'attorney', 'cleaner', 'celebrant', 'organizer', 'grief', 'home-funeral', 'funeral-home', 'green-burial', 'cremation'] as const;
+const VENDOR_TYPES = ['doula', 'attorney', 'cleaner', 'celebrant', 'organizer', 'grief', 'home-funeral', 'green-burial'] as const;
 
 function VendorsTab({ vendors }: { vendors: Vendor[] }) {
   const [search, setSearch] = useState('');

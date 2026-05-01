@@ -8,9 +8,7 @@ const TYPE_LABELS: Record<string, string> = {
   organizer: "EOL organizer",
   grief: "Grief counselor",
   "home-funeral": "Home funeral guide",
-  "funeral-home": "Funeral home",
   "green-burial": "Green burial",
-  cremation: "Cremation services",
 };
 
 export function vendorTypeLabel(type: string): string {

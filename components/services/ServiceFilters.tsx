@@ -14,9 +14,7 @@ const SERVICE_TYPES = [
   { value: "celebrant", label: "Celebrant" },
   { value: "organizer", label: "EOL organizer" },
   { value: "home-funeral", label: "Home funeral" },
-  { value: "funeral-home", label: "Funeral home" },
   { value: "green-burial", label: "Green burial" },
-  { value: "cremation", label: "Cremation services" },
 ];
 
 const DISTANCES = ["5 mi", "15 mi", "30 mi", "50 mi", "Virtual only"];
