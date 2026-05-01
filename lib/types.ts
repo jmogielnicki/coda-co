@@ -58,7 +58,10 @@ export type VendorType =
   | "celebrant"
   | "organizer"
   | "grief"
-  | "home-funeral";
+  | "home-funeral"
+  | "funeral-home"
+  | "green-burial"
+  | "cremation";
 
 export interface Vendor {
   id: string;
