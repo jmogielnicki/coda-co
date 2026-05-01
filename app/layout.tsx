@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
-import { Libre_Baskerville, Mulish } from "next/font/google";
+import { Crimson_Pro, Nunito_Sans } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 import { CartProvider } from "@/components/providers/CartProvider";
 
-const serif = Libre_Baskerville({
+const serif = Crimson_Pro({
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: ["300", "400", "500", "700"],
   style: ["normal", "italic"],
   variable: "--font-serif",
 });
 
-const sans = Mulish({
+const sans = Nunito_Sans({
   subsets: ["latin"],
   weight: ["300", "400", "500", "700"],
   variable: "--font-sans",
