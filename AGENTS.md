@@ -10,11 +10,6 @@ prototype. The prototype lives at `index.html.reference` and is the source of
 truth for visual design and copy. See `PLAN.md` for architecture and
 `TASKS.md` for current implementation status.
 
-> **In-flight refactor:** there is a multi-stage modularization in progress.
-> Before adding components or styles, read `MODULAR_REFACTOR.md` — it has a
-> live status table and tells you which primitives to reuse (or whether the
-> primitive you need is the next stage to build).
-
 ## Stack
 
 - Next.js 16.2.4 (App Router, Turbopack)
@@ -39,6 +34,10 @@ shipped in `node_modules/next/dist/docs/` rather than relying on memory.
   filtering. Client filter components update the URL; the page RSC re-renders.
 - **Tokens**: brand colors live in `app/globals.css` under `@theme`. Use
   `bg-tr`, `text-sg-d`, `border-tr-l`, `font-serif`, etc. Don't hardcode hex.
+- **Reuse primitives.** Before adding markup, scan the **Reuse conventions**
+  section below. There's a primitive for almost every page-level pattern
+  (containers, section headers, cards, avatars, filters, stars). Hard rules
+  are listed; violations cause drift.
 
 ## Prototype fidelity
 
@@ -54,20 +53,20 @@ inline (see Decision rules below).
 
 ### Primitives (`components/ui/`)
 
-| Component        | When to use                                                   | File                                      |
-|------------------|---------------------------------------------------------------|-------------------------------------------|
-| `<Container>`    | Any horizontal page wrapper that today uses `max-w-[…] mx-auto`. Pick `width="narrow"` (680), `"mid"` (880), or `"wide"` (900). | `components/ui/Container.tsx`             |
-| `<SectionHeader>`| Centered eyebrow + serif H2 + subtitle block. Always use this — never re-create the markup. | `components/ui/SectionHeader.tsx`         |
-| `<Card>`         | Bordered white surface. Pass `href` to render as `<Link>`. `hoverTone="sage"\|"terracotta"\|"none"`, `padding="md"\|"none"` (use `none` for cards with edge-to-edge media). | `components/ui/Card.tsx`                  |
-| `<Avatar>`       | Circular initials badge. `size="sm"\|"md"\|"lg"`, `tone="sage"\|"terracotta"`. | `components/ui/Avatar.tsx`                |
-| `<Stars>`        | Rating display. Pass `reviewCount` to append " · N reviews" inline. | `components/ui/Stars.tsx`                 |
-| `<VendorCard>`   | Vendor list item. `layout="compact"` for grid tiles, `"search"` for service-search rows. | `components/ui/VendorCard.tsx`            |
-| `<ProductCard>`  | Product grid tile.                                            | `components/ui/ProductCard.tsx`           |
-| `<ReviewCard>`   | One review row with stars + body.                             | `components/ui/ReviewCard.tsx`            |
-| `<Badge>`        | "Bestseller" / "New" / etc. pills with variant colors.        | `components/ui/Badge.tsx`                 |
-| `<Breadcrumb>`   | Page top breadcrumb trail.                                    | `components/layout/Breadcrumb.tsx`        |
-| `<WaveDivider>`  | Section transition with arc-top.                              | `components/ui/WaveDivider.tsx`           |
-| `<StepsBar>`     | Multi-step form indicator.                                    | `components/ui/StepsBar.tsx`              |
+| Component        | Props                                                         | When to use                                                   | File                                      |
+|------------------|---------------------------------------------------------------|---------------------------------------------------------------|-------------------------------------------|
+| `<Container>`    | `width: 'narrow'\|'mid'\|'wide'`, `as?`, `className?`         | Horizontal page wrapper. Replaces every `max-w-[680\|880\|900px] mx-auto`. Widths map to 680/880/900. | `components/ui/Container.tsx`             |
+| `<SectionHeader>`| `eyebrow?`, `title`, `subtitle?`, `eyebrowTone='tr'\|'sg'`, `subtitleTone='cl'\|'ink'` (use `ink` on tinted backgrounds), `className?` | Centered eyebrow + serif H2 + subtitle block. Always use this — never re-create the markup. Page-`<h1>` headers stay inline (semantic). | `components/ui/SectionHeader.tsx`         |
+| `<Card>`         | `href?` (renders as `<Link>`), `hoverTone='sage'\|'terracotta'\|'none'`, `padding='md'\|'none'` (use `none` for edge-to-edge media), `className?` | Bordered white surface. Composes `.card-surface`. | `components/ui/Card.tsx`                  |
+| `<Avatar>`       | `initials`, `size='sm'\|'md'\|'lg'`, `tone='sage'\|'terracotta'`, `className?` | Circular initials badge. | `components/ui/Avatar.tsx`                |
+| `<Stars>`        | `rating`, `reviewCount?`, `className?`                        | Rating display. Pass `reviewCount` to append " · N reviews" inline. Wrap in a `text-tr` parent if you want the suffix terracotta-colored. | `components/ui/Stars.tsx`                 |
+| `<VendorCard>`   | `vendor`, `layout='compact'\|'search'`                        | Vendor list item. `compact` for grid tiles, `search` for service-search rows. | `components/ui/VendorCard.tsx`            |
+| `<ProductCard>`  | `product`                                                     | Product grid tile.                                            | `components/ui/ProductCard.tsx`           |
+| `<ReviewCard>`   | `review`                                                      | One review row with stars + body.                             | `components/ui/ReviewCard.tsx`            |
+| `<Badge>`        | `badge`                                                       | "Bestseller" / "New" / etc. pills with variant colors.        | `components/ui/Badge.tsx`                 |
+| `<Breadcrumb>`   | `crumbs`                                                      | Page top breadcrumb trail.                                    | `components/layout/Breadcrumb.tsx`        |
+| `<WaveDivider>`  | `topColor`, `bottomColor`                                     | Section transition with arc-top.                              | `components/ui/WaveDivider.tsx`           |
+| `<StepsBar>`     | `steps`, `current`                                            | Multi-step form indicator.                                    | `components/ui/StepsBar.tsx`              |
 
 ### Filter primitives (`components/ui/filters/`)
 
@@ -118,8 +117,8 @@ non-component markup). Don't reinvent them.
 
 ### Hard rules (no exceptions without extending the system)
 
-1. **No raw `rgba(44, 40, 37, …)` colors.** Use `border-line` and friends.
-2. **No raw hex values.** Use the brand/charcoal tokens.
+1. **No raw `rgba(44, 40, 37, …)` colors** in `className` strings. Use `border-line` / `border-line-strong` / `border-line-bold` / `border-line-soft`.
+2. **No raw hex values in `className` strings or CSS.** Use brand/charcoal tokens (e.g. `text-tr`, `border-sg-l`). *Exception:* SVG attributes like `stroke="#C1634F"` are fine — SVG can't reference CSS variables cleanly, and the prototype uses literal hex there.
 3. **No `max-w-[680px]` / `max-w-[880px]` / `max-w-[900px]`.** Use `<Container width="…">`.
 4. **No new section-header markup.** Use `<SectionHeader>`. Extend its props if a new variant is genuinely needed.
 5. **No inline avatar circles.** Use `<Avatar>`.
