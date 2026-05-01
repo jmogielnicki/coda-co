@@ -130,18 +130,13 @@ export default async function LandingPage() {
         <p className="text-[11px] tracking-[.14em] uppercase text-tr mb-1.5">
           Welcome
         </p>
-        <h1 className="font-serif text-[52px] font-light leading-[1.12] text-ch mb-5">
-          Everything you need to plan
-          <br />
-          <em className="italic text-tr">a meaningful end.</em>
+        <h1 className="font-serif italic text-[52px] font-light leading-[1.12] text-ch mb-5">
+          Death is a part of life. Support shouldn&apos;t be hard to find.
         </h1>
-        <p className="text-[15px] text-cm max-w-[560px] mx-auto leading-[1.78] mb-2">
+        <p className="text-[15px] text-cm max-w-[560px] mx-auto leading-[1.78] mb-8">
           CodaCo connects you with thoughtfully curated goods, local services
           and expert resources to help you approach death — yours or someone
           you love — with grace and intention.
-        </p>
-        <p className="font-serif italic font-light text-[28px] leading-[1.3] text-ch mb-8">
-          Death is a part of life. Support shouldn&apos;t be hard to find.
         </p>
 
         <HeroSearch />
