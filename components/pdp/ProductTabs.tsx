@@ -3,7 +3,9 @@
 import { useState } from "react";
 import type { Product } from "@/lib/types";
 import type { Review, ReviewSummary } from "@/lib/types";
+import { Avatar } from "@/components/ui/Avatar";
 import { ReviewCard } from "@/components/ui/ReviewCard";
+import { Stars } from "@/components/ui/Stars";
 
 interface ProductTabsProps {
   product: Product;
@@ -80,7 +82,7 @@ export function ProductTabs({ product, reviews, summary, sellerBio }: ProductTab
                   <div className="font-serif text-[40px] font-light text-ch leading-none">
                     {summary.average.toFixed(1)}
                   </div>
-                  <div className="text-[13px] text-tr">★★★★★</div>
+                  <Stars rating={summary.average} className="text-[13px] block" />
                   <div className="text-[11px] text-ink">{summary.total} reviews</div>
                 </div>
                 <div className="flex-1">
@@ -111,9 +113,10 @@ export function ProductTabs({ product, reviews, summary, sellerBio }: ProductTab
 
         {active === "seller" && (
           <div className="flex gap-4">
-            <div className="w-12 h-12 rounded-full bg-sg-p border border-[1.5px] border-sg-l flex items-center justify-center font-serif text-[18px] text-sg-d flex-shrink-0">
-              {product.seller.slice(0, 2).toUpperCase()}
-            </div>
+            <Avatar
+              initials={product.seller.slice(0, 2).toUpperCase()}
+              size="lg"
+            />
             <div>
               <div className="text-[16px] font-medium text-ch mb-1">{product.seller}</div>
               <div className="text-[13px] text-ink mb-3">{product.location}</div>

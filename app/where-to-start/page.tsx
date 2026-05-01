@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { Container } from "@/components/ui/Container";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 
 export const metadata: Metadata = {
   title: "Where to Start — CodaCo",
@@ -130,12 +131,12 @@ export default function WhereToStartPage() {
       {/* Reading room */}
       <section className="bg-white px-10 py-14">
         <Container width="mid">
-          <p className="text-[11px] tracking-[.14em] uppercase text-sg mb-2 text-center">
-            Reading room
-          </p>
-          <h2 className="font-serif text-[32px] font-light text-ch text-center mb-8">
-            Books worth reading
-          </h2>
+          <SectionHeader
+            eyebrow="Reading room"
+            eyebrowTone="sg"
+            title="Books worth reading"
+            className="mb-8"
+          />
           <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4">
             {books.map((book) => (
               <div

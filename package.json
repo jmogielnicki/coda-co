@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "visual-diff": "node scripts/visual-diff.mjs"
+    "visual-diff": "node scripts/visual-diff.mjs",
+    "check-drift": "node scripts/check-drift.mjs"
   },
   "dependencies": {
     "babel-plugin-react-compiler": "^1.0.0",

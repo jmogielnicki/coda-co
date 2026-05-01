@@ -38,6 +38,9 @@ shipped in `node_modules/next/dist/docs/` rather than relying on memory.
   section below. There's a primitive for almost every page-level pattern
   (containers, section headers, cards, avatars, filters, stars). Hard rules
   are listed; violations cause drift.
+- **Run `npm run check-drift`** before finishing a task. It scans for the
+  patterns banned below and explains what to use instead. Treat it as
+  required: a clean run is part of "done".
 
 ## Prototype fidelity
 
