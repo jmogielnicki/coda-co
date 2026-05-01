@@ -5,8 +5,8 @@ shrouds, planning documents) and services (death doulas, estate attorneys,
 celebrants, grief counselors). Next.js 16 App Router rebuild of the original
 single-file HTML prototype.
 
-See `PLAN.md` for architecture, `TASKS.md` for status, and `AGENTS.md` for
-guidance when working in the codebase.
+See `AGENTS.md` for guidance when working in the codebase, and `TASKS.md`
+for known open work.
 
 ## Getting started
 

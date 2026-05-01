@@ -7,8 +7,7 @@ Read this before editing. It's short on purpose.
 CodaCo is a curated marketplace for death and dying (goods + services). The
 codebase is a Next.js App Router rebuild of an original single-file HTML
 prototype. The prototype lives at `index.html.reference` and is the source of
-truth for visual design and copy. See `PLAN.md` for architecture and
-`TASKS.md` for current implementation status.
+truth for visual design and copy. See `TASKS.md` for known open work.
 
 ## Stack
 
