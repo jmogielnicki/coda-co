@@ -45,8 +45,8 @@
   --w-wide:   900px;
 
   /* Fonts */
-  --font-serif:  'Cormorant Garamond', Georgia, serif;
-  --font-sans:   'DM Sans', system-ui, sans-serif;
+  --font-serif:  'Libre Baskerville', Baskerville, Georgia, serif;
+  --font-sans:   'Mulish', Avenir, system-ui, sans-serif;
 }
 
 @layer base {

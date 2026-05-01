@@ -17,7 +17,8 @@ truth for visual design and copy. See `PLAN.md` for architecture and
   `next.config.ts` — top-level, not under `experimental`)
 - TypeScript, Tailwind CSS v4 (tokens declared via `@theme` in
   `app/globals.css`)
-- `next/font` — Cormorant Garamond (serif) + DM Sans (sans)
+- `next/font` — Libre Baskerville (serif, Baskerville stand-in) + Mulish
+  (sans, Avenir stand-in)
 
 If something about the Next.js / React APIs surprises you, check the docs
 shipped in `node_modules/next/dist/docs/` rather than relying on memory.
