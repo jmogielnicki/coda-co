@@ -14,10 +14,14 @@ const sections = [
   {
     eyebrow: "First 24–48 hours",
     heading: "If someone just died",
-    body: "You don't have to do anything immediately except be present. If the death was expected and at home, you have time. If it was sudden or unattended, contact emergency services. There is no rush to call a funeral home in the first hour.",
+    body: "You don't have to do anything immediately except be present. If the death was expected and at home, you have time. If it was sudden or unattended, contact emergency services. There is no rush to call a funeral home in the first hour.\n\nWhen you are ready, here are some services that may be helpful:",
     links: [
       { label: "Find a death doula near me →", href: "/services?type=doula" },
       { label: "Find a home funeral guide →", href: "/services?type=home-funeral" },
+      { label: "Find a funeral home near me →", href: "/services?type=funeral-home" },
+      { label: "Find green burials near me →", href: "/services?type=green-burial" },
+      { label: "Find cremation services near me →", href: "/services?type=cremation" },
+      { label: "Let me browse through memorial items →", href: "/shop?category=memorial" },
     ],
     bg: "bg-tr-vp",
     accent: "text-tr",
@@ -107,7 +111,7 @@ export default function WhereToStartPage() {
             </p>
             <h2 className="font-serif text-[28px] font-light text-ch mb-4">{section.heading}</h2>
             <p
-              className={`text-[14px] leading-[1.8] mb-5 ${
+              className={`text-[14px] leading-[1.8] mb-5 whitespace-pre-line ${
                 section.bg === "bg-tr-vp" ? "text-ink" : "text-cm"
               }`}
             >
