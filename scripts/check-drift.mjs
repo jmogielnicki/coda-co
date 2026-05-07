@@ -26,6 +26,10 @@ const ALLOWLIST = new Set([
   // because it's a page heading, not a section header (different
   // semantics and spacing from <SectionHeader>).
   "app/shop/page.tsx::section-header",
+  // /smoke-test is a design-system demo page — it intentionally renders
+  // sample markup that mirrors the eyebrow + serif-title patterns to
+  // show what they look like alongside the actual <SectionHeader>.
+  "app/smoke-test/page.tsx::section-header",
 ]);
 
 // Each rule:
