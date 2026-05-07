@@ -52,7 +52,7 @@ export default function AboutPage() {
       <WaveDivider topColor="var(--color-white)" bottomColor="var(--color-tr-vp)" />
 
       {/* Our purpose */}
-      <section className="bg-tr-vp px-10 pt-12 pb-16">
+      <section className="bg-tr-vp px-10 pt-2 pb-16">
         <Container width="narrow">
           <SectionHeader
             eyebrow="Our purpose"
@@ -81,7 +81,7 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <p className="font-serif italic text-[26px] font-light text-tr-d text-center my-10 leading-[1.4]">
+          <p className="font-serif italic text-[26px] font-light text-tr-d text-center mt-6 mb-10 leading-[1.4]">
             This is not a hustle.
             <br />
             It is a considered place.
