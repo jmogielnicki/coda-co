@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "postinstall": "prisma generate",
     "visual-diff": "node scripts/visual-diff.mjs",
     "check-drift": "node scripts/check-drift.mjs",
     "db:seed": "prisma db seed",
