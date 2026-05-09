@@ -88,7 +88,9 @@ async function attachRatings<T extends { id: string }>(
 }
 
 export async function getProducts(filters: ProductFilters = {}): Promise<ProductWithRating[]> {
-  const where: Prisma.ProductWhereInput = {};
+  // Public catalog only ever surfaces `published` rows. Drafts and
+  // archived products live in the vendor dashboard via getVendorProducts.
+  const where: Prisma.ProductWhereInput = { status: "published" };
   if (filters.productType) where.productType = { slug: filters.productType };
   if (filters.sellerId) where.vendor = { slug: filters.sellerId };
   if (filters.verified != null) where.verified = filters.verified;
@@ -114,8 +116,10 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Product
 }
 
 export async function getProduct(id: string): Promise<ProductWithRating | null> {
-  const p = await prisma.product.findUnique({
-    where: { slug: id },
+  // The PDP is public, so we only return published rows here. The
+  // dashboard editor uses getDashboardProduct (below) to fetch drafts.
+  const p = await prisma.product.findFirst({
+    where: { slug: id, status: "published" },
     include: { vendor: true, productType: true, variants: true },
   });
   if (!p) return null;
@@ -139,6 +143,7 @@ export async function getRelatedProducts(product: Product): Promise<ProductWithR
   const sameTypeAndVendor = await prisma.product.findMany({
     where: {
       slug: { not: product.id },
+      status: "published",
       productType: { slug: product.productType },
       vendor: { slug: product.sellerId },
     },
@@ -151,6 +156,7 @@ export async function getRelatedProducts(product: Product): Promise<ProductWithR
     ? await prisma.product.findMany({
         where: {
           slug: { not: product.id },
+          status: "published",
           productType: { slug: product.productType },
           NOT: { id: { in: sameTypeAndVendor.map((p) => p.id) } },
         },

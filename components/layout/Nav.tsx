@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { Logo } from "@/components/ui/Logo";
+import { prisma } from "@/lib/db";
 
 interface NavProps {
   active?: "shop" | "services" | "books" | "light" | "list";
@@ -8,6 +9,15 @@ interface NavProps {
 
 export async function Nav({ active }: NavProps) {
   const session = await auth();
+  // Look up vendor status once so the "Dashboard" link only renders for
+  // approved vendors. The query is cheap (unique lookup on user_id) and
+  // every Nav render already touches the session.
+  const vendor = session?.user
+    ? await prisma.vendorProfile.findUnique({
+        where: { userId: session.user.id },
+        select: { id: true },
+      })
+    : null;
 
   const link = (label: string, href: string, key: NavProps["active"]) => (
     <li key={href}>
@@ -46,7 +56,11 @@ export async function Nav({ active }: NavProps) {
         {link("Books", "/books", "books")}
         {link("Grief meets humor", "/light-and-dark", "light")}
         {link("List with us", "/list-with-us", "list")}
-        {session?.user ? <SignedInControls user={session.user} /> : <SignedOutControls />}
+        {session?.user ? (
+          <SignedInControls user={session.user} hasVendorProfile={vendor != null} />
+        ) : (
+          <SignedOutControls />
+        )}
       </ul>
     </nav>
   );
@@ -64,12 +78,21 @@ function SignedOutControls() {
 
 function SignedInControls({
   user,
+  hasVendorProfile,
 }: {
   user: { name?: string | null; email: string; role: string };
+  hasVendorProfile: boolean;
 }) {
   const display = user.name?.trim() || user.email;
   return (
     <>
+      {hasVendorProfile && (
+        <li>
+          <Link href="/dashboard" className="text-[13px] text-cm hover:text-tr no-underline">
+            Dashboard
+          </Link>
+        </li>
+      )}
       {user.role === "admin" && (
         <li>
           <Link href="/admin" className="text-[13px] text-cm hover:text-tr no-underline">

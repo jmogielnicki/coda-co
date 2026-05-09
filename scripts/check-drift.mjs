@@ -31,6 +31,13 @@ const ALLOWLIST = new Set([
   // (one <h1> per page) — <SectionHeader> renders an <h2>.
   "app/login/page.tsx::section-header",
   "app/signup/page.tsx::section-header",
+  // Dashboard + admin/applications page-H1 markup follows the same
+  // pattern: page-level <h1>, not <SectionHeader>'s <h2>.
+  "app/dashboard/page.tsx::section-header",
+  "app/dashboard/products/page.tsx::section-header",
+  "app/dashboard/products/new/page.tsx::section-header",
+  "app/dashboard/products/[id]/page.tsx::section-header",
+  "app/admin/applications/page.tsx::section-header",
 ]);
 
 // Each rule:

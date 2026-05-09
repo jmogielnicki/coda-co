@@ -63,6 +63,8 @@ model User {
   accounts      Account[]
   sessions      Session[]
   vendorProfile VendorProfile?
+  applications  VendorApplication[] @relation("VendorApplicationsApplicant")
+  reviewedApps  VendorApplication[] @relation("VendorApplicationsReviewer")
 
   @@map("users")
 }
@@ -149,8 +151,93 @@ model VendorProfile {
   products       Product[]
   services       Service[]
   vendorReviews  VendorReview[]
+  subscriptions  Subscription[]
 
   @@map("vendor_profile")
+}
+
+// ── Vendor lifecycle ──────────────────────────────────────────────────────────
+
+enum ApplicationKind {
+  unknown
+  goods
+  services
+  both
+}
+
+enum ApplicationStatus {
+  unknown
+  submitted
+  approved
+  rejected
+}
+
+enum SubscriptionPlanId {
+  unknown
+  starter
+  standard
+  pro
+}
+
+enum SubscriptionKind {
+  unknown
+  goods
+  services
+}
+
+enum SubscriptionStatus {
+  unknown
+  active
+  past_due
+  cancelled
+}
+
+// Submitted before a vendor exists; on approval, an admin (or the demo
+// auto-approve flag) creates a `vendor_profile` + `subscription` and the
+// applicant becomes a vendor. Type-specific fields (credentials,
+// service_type, specializations) are intentionally deferred until the
+// approval UI needs them.
+model VendorApplication {
+  id                  String            @id @default(cuid())
+  applicantUserId     String            @map("applicant_user_id")
+  kind                ApplicationKind   @default(unknown)
+  proposedDisplayName String            @map("proposed_display_name")
+  proposedSlug        String            @map("proposed_slug")
+  proposedBio         String            @map("proposed_bio")
+  location            String
+  planId              SubscriptionPlanId @default(unknown) @map("plan_id")
+  status              ApplicationStatus @default(submitted)
+  reviewedByUserId    String?           @map("reviewed_by_user_id")
+  reviewedAt          DateTime?         @map("reviewed_at")
+  reviewNotes         String?           @map("review_notes")
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt      @map("updated_at")
+
+  applicant User  @relation("VendorApplicationsApplicant", fields: [applicantUserId], references: [id], onDelete: Cascade)
+  reviewer  User? @relation("VendorApplicationsReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([applicantUserId])
+  @@index([status])
+  @@map("vendor_applications")
+}
+
+// Created on approval. A vendor with kind=both can hold two subscriptions
+// (one goods, one services) — that's why kind lives on the row rather
+// than the vendor.
+model Subscription {
+  id               String              @id @default(cuid())
+  vendorId         String              @map("vendor_id")
+  planId           SubscriptionPlanId  @default(unknown) @map("plan_id")
+  kind             SubscriptionKind    @default(unknown)
+  status           SubscriptionStatus  @default(unknown)
+  currentPeriodEnd DateTime?           @map("current_period_end")
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt      @map("updated_at")
+
+  vendor VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId])
+  @@map("subscriptions")
 }
 
 // ── Catalog: products ─────────────────────────────────────────────────────────

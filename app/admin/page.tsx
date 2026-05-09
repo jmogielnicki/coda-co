@@ -60,13 +60,21 @@ export default async function AdminPage() {
   return (
     <div className="min-h-screen bg-pl2">
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-10">
-        <div className="mb-7">
-          <p className="text-xs font-medium uppercase tracking-widest text-tr mb-1.5">Admin</p>
-          <h1 className="font-serif text-4xl text-ch">Database Viewer</h1>
-          <p className="text-cm text-sm mt-1.5">
-            Read-only view of all database records.{' '}
-            <span className="text-cl">No authentication — development only.</span>
-          </p>
+        <div className="mb-7 flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-widest text-tr mb-1.5">Admin</p>
+            <h1 className="font-serif text-4xl text-ch">Database Viewer</h1>
+            <p className="text-cm text-sm mt-1.5">
+              Read-only view of all database records.{' '}
+              <span className="text-cl">No authentication — development only.</span>
+            </p>
+          </div>
+          <a
+            href="/admin/applications"
+            className="btn-secondary btn-sm no-underline shrink-0"
+          >
+            Vendor applications →
+          </a>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-7">

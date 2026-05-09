@@ -37,6 +37,8 @@ async function clear() {
   await prisma.productVariant.deleteMany();
   await prisma.product.deleteMany();
   await prisma.service.deleteMany();
+  await prisma.subscription.deleteMany();
+  await prisma.vendorApplication.deleteMany();
   await prisma.vendorProfile.deleteMany();
   await prisma.session.deleteMany();
   await prisma.account.deleteMany();
@@ -101,6 +103,19 @@ async function main() {
       },
     });
     vendorBySlug.set(v.id, created);
+
+    // A mock vendor without an active subscription would land in the
+    // dashboard's "No active subscription" path on first sign-in, which
+    // hides what the demo is meant to show. Give every mock vendor a
+    // starter subscription matching their listing kind.
+    await prisma.subscription.create({
+      data: {
+        vendorId: created.id,
+        planId: "starter",
+        kind: v.kind === "services" ? "services" : "goods",
+        status: "active",
+      },
+    });
   }
 
   // Products. The base price + currency live on the product; per-variant

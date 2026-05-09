@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { submitServicesApplication } from "@/app/list-with-us/actions";
 import { StepsBar } from "@/components/ui/StepsBar";
 import { LIFE_STAGES } from "@/lib/format/lifeStage";
 import type { LifeStage } from "@/lib/types";
+
+type PlanId = "starter" | "standard" | "pro";
 
 const STEPS = [
   { label: "Your profile" },
@@ -73,8 +75,10 @@ interface FormData {
 }
 
 export function ServicesForm() {
-  const router = useRouter();
   const [step, setStep] = useState(0);
+  const [plan, setPlan] = useState<PlanId>("starter");
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
   const [data, setData] = useState<FormData>({
     firstName: "",
     lastName: "",
@@ -382,49 +386,57 @@ export function ServicesForm() {
                 <div className="space-y-3">
                   {[
                     {
+                      id: "starter" as const,
                       name: "Starter",
                       price: "Free",
                       features: ["1 service profile", "CodaCo messaging", "Basic visibility"],
                       popular: false,
                     },
                     {
+                      id: "standard" as const,
                       name: "Standard",
                       price: "$12/mo",
                       features: ["Unlimited profiles", "Verified badge", "Client reviews", "Priority search"],
                       popular: true,
                     },
                     {
+                      id: "pro" as const,
                       name: "Pro",
                       price: "$29/mo",
                       features: ["Featured placement", "Advanced analytics", "Priority support", "Team accounts"],
                       popular: false,
                     },
-                  ].map((plan) => (
-                    <div
-                      key={plan.name}
-                      className={[
-                        "border rounded-[10px] p-4 cursor-pointer transition-all",
-                        plan.popular ? "border-sg bg-sg-vp" : "border-line-strong hover:border-sg",
-                      ].join(" ")}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-[15px] font-medium text-ch">{plan.name}</span>
-                        <span className="text-[15px] font-medium text-sg-d">{plan.price}</span>
-                        {plan.popular && (
-                          <span className="text-[10px] bg-sg text-white px-2 py-0.5 rounded-full">
-                            Most popular
-                          </span>
-                        )}
-                      </div>
-                      <ul className="space-y-1">
-                        {plan.features.map((f) => (
-                          <li key={f} className="text-[12px] text-cm flex items-center gap-1.5">
-                            <span className="text-sg">✓</span> {f}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
+                  ].map((p) => {
+                    const selected = plan === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setPlan(p.id)}
+                        className={[
+                          "block w-full text-left border rounded-[10px] p-4 cursor-pointer transition-all",
+                          selected ? "border-sg bg-sg-vp" : "border-line-strong hover:border-sg",
+                        ].join(" ")}
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-[15px] font-medium text-ch">{p.name}</span>
+                          <span className="text-[15px] font-medium text-sg-d">{p.price}</span>
+                          {p.popular && (
+                            <span className="text-[10px] bg-sg text-white px-2 py-0.5 rounded-full">
+                              Most popular
+                            </span>
+                          )}
+                        </div>
+                        <ul className="space-y-1">
+                          {p.features.map((f) => (
+                            <li key={f} className="text-[12px] text-cm flex items-center gap-1.5">
+                              <span className="text-sg">✓</span> {f}
+                            </li>
+                          ))}
+                        </ul>
+                      </button>
+                    );
+                  })}
                 </div>
               </>
             )}
@@ -448,13 +460,35 @@ export function ServicesForm() {
               </button>
             ) : (
               <button
-                onClick={() => router.push("/list-with-us/confirm")}
-                className="px-8 py-2.5 rounded-full bg-sg text-white text-[13px] cursor-pointer hover:bg-sg-d transition-colors"
+                onClick={() => {
+                  setSubmitError(null);
+                  startTransition(async () => {
+                    const displayName =
+                      data.companyName.trim() ||
+                      `${data.firstName} ${data.lastName}`.trim();
+                    const result = await submitServicesApplication({
+                      displayName,
+                      bio: data.bio,
+                      city: data.city,
+                      state: data.state,
+                      planId: plan,
+                    });
+                    if (result?.error) setSubmitError(result.error);
+                  });
+                }}
+                disabled={pending}
+                className="px-8 py-2.5 rounded-full bg-sg text-white text-[13px] cursor-pointer hover:bg-sg-d transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Submit listing →
+                {pending ? "Submitting…" : "Submit listing →"}
               </button>
             )}
           </div>
+
+          {submitError && (
+            <p className="mt-3 text-[13px] text-tr-d bg-tr-p border border-tr-l rounded px-3 py-2">
+              {submitError}
+            </p>
+          )}
         </div>
       </section>
     </div>
