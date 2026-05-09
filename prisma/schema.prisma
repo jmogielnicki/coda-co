@@ -37,6 +37,79 @@ model ServiceType {
   @@map("service_types")
 }
 
+// ── Identity ──────────────────────────────────────────────────────────────────
+
+// `role` is the central authorization signal. Vendors and buyers are both
+// `user`; `admin` gates internal tooling. Use `unknown` as the default so a
+// missing role is visible rather than silently treated as something.
+enum UserRole {
+  unknown
+  user
+  admin
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String?   @map("password_hash")
+  role          UserRole  @default(unknown)
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt      @map("updated_at")
+
+  accounts      Account[]
+  sessions      Session[]
+  vendorProfile VendorProfile?
+
+  @@map("users")
+}
+
+// Auth.js Prisma-adapter shapes. Required even when only Credentials is in
+// use today — keeps the door open for OAuth providers later without a
+// follow-up migration.
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
 // ── Vendors ───────────────────────────────────────────────────────────────────
 
 enum VendorKind {
@@ -46,11 +119,11 @@ enum VendorKind {
   both
 }
 
-// `user_id` arrives in Phase C with the `users` table. Until then the column
-// is nullable so vendors can exist before identity is wired up.
+// Phase C wires `user_id` to the `users` table. Backfill creates one user
+// per existing vendor so the FK is enforced going forward.
 model VendorProfile {
   id           String     @id @default(cuid())
-  userId       String?    @unique @map("user_id")
+  userId       String     @unique @map("user_id")
   slug         String     @unique
   displayName  String     @map("display_name")
   bio          String
@@ -72,6 +145,7 @@ model VendorProfile {
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedAt    DateTime   @updatedAt      @map("updated_at")
 
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   products       Product[]
   services       Service[]
   vendorReviews  VendorReview[]
