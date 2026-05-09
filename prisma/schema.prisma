@@ -1,0 +1,221 @@
+// Phase B schema: covers the entities the current app reads. Tables for
+// users / orders / vendor_applications / subscriptions land in their own
+// phases — see docs/data-model-evolution.md.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── Catalog: types ────────────────────────────────────────────────────────────
+
+// Renamed from `categories` to mirror `service_types`. System-seeded.
+model ProductType {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  name      String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt      @map("updated_at")
+
+  products  Product[]
+
+  @@map("product_types")
+}
+
+model ServiceType {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  name      String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt      @map("updated_at")
+
+  services  Service[]
+
+  @@map("service_types")
+}
+
+// ── Vendors ───────────────────────────────────────────────────────────────────
+
+enum VendorKind {
+  unknown
+  goods
+  services
+  both
+}
+
+// `user_id` arrives in Phase C with the `users` table. Until then the column
+// is nullable so vendors can exist before identity is wired up.
+model VendorProfile {
+  id           String     @id @default(cuid())
+  userId       String?    @unique @map("user_id")
+  slug         String     @unique
+  displayName  String     @map("display_name")
+  bio          String
+  location     String
+  kind         VendorKind @default(unknown)
+  verified     Boolean    @default(false)
+
+  // Currently consumed by the UI but not yet covered by the docs' minimum
+  // shape. Treat them as deferred-but-rendered and revisit once their
+  // owners (auth, photo uploads, locations) land in later phases.
+  initials     String?
+  credentials  String?
+  distanceMi   Float?     @map("distance_mi")
+  lifeStages   String[]   @default([]) @map("life_stages")
+  memberSince  DateTime?  @map("member_since")
+  photoSrc     String?    @map("photo_src")
+  photoTone    String?    @map("photo_tone")
+
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt      @map("updated_at")
+
+  products       Product[]
+  services       Service[]
+  vendorReviews  VendorReview[]
+
+  @@map("vendor_profile")
+}
+
+// ── Catalog: products ─────────────────────────────────────────────────────────
+
+enum ProductStatus {
+  unknown
+  draft
+  published
+  archived
+}
+
+model Product {
+  id              String        @id @default(cuid())
+  vendorId        String        @map("vendor_id")
+  productTypeId   String        @map("product_type_id")
+  slug            String        @unique
+  title           String
+  description     String
+  basePriceCents  Int           @map("base_price_cents")
+  currency        String        @default("USD")
+  details         Json          @default("{}")
+  status          ProductStatus @default(unknown)
+
+  // Currently consumed by the UI; tied to vendor verification in the doc.
+  // Stays here so per-product overrides remain possible without a refactor.
+  verified        Boolean       @default(false)
+  // Front-end uses these for filter chips + the recommended-products
+  // heuristic. Both stay until curation has its own table.
+  lifeStages      String[]      @default([]) @map("life_stages")
+
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt      @map("updated_at")
+
+  vendor          VendorProfile  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  productType     ProductType    @relation(fields: [productTypeId], references: [id])
+  variants        ProductVariant[]
+  reviews         ProductReview[]
+
+  @@index([vendorId])
+  @@index([productTypeId])
+  @@map("products")
+}
+
+model ProductVariant {
+  id          String   @id @default(cuid())
+  productId   String   @map("product_id")
+  label       String
+  priceCents  Int      @map("price_cents")
+  currency    String   @default("USD")
+  stock       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt      @map("updated_at")
+
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+// ── Catalog: services ─────────────────────────────────────────────────────────
+
+enum ServiceStatus {
+  unknown
+  draft
+  published
+  archived
+}
+
+enum ServiceLocationType {
+  unknown
+  virtual
+  in_person
+  both
+}
+
+enum ServicePricingModel {
+  unknown
+  fixed
+  hourly
+  quote
+}
+
+model Service {
+  id            String              @id @default(cuid())
+  vendorId      String              @map("vendor_id")
+  serviceTypeId String              @map("service_type_id")
+  slug          String              @unique
+  title         String
+  description   String
+  locationType  ServiceLocationType @default(unknown) @map("location_type")
+  pricingModel  ServicePricingModel @default(unknown) @map("pricing_model")
+  priceCents    Int?                @map("price_cents")
+  currency      String              @default("USD")
+  status        ServiceStatus       @default(unknown)
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt      @map("updated_at")
+
+  vendor      VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  serviceType ServiceType   @relation(fields: [serviceTypeId], references: [id])
+
+  @@index([vendorId])
+  @@index([serviceTypeId])
+  @@map("services")
+}
+
+// ── Reviews ───────────────────────────────────────────────────────────────────
+
+// `verified_purchase` and `order_item_id` land in Phase F once orders
+// exist. Until then `author_user_id` is also deferred (Phase C) — the
+// reviewer's name and location live on the row.
+model ProductReview {
+  id             String   @id @default(cuid())
+  productId      String   @map("product_id")
+  // Phase C will replace these author fields with `author_user_id`.
+  reviewerName   String   @map("reviewer_name")
+  reviewerLocation String @map("reviewer_location")
+  rating         Int
+  body           String
+  reviewedAt     DateTime @map("reviewed_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_reviews")
+}
+
+model VendorReview {
+  id               String   @id @default(cuid())
+  vendorId         String   @map("vendor_id")
+  reviewerName     String   @map("reviewer_name")
+  reviewerLocation String   @map("reviewer_location")
+  rating           Int
+  body             String
+  reviewedAt       DateTime @map("reviewed_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  vendor           VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId])
+  @@map("vendor_reviews")
+}
