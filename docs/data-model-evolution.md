@@ -378,6 +378,11 @@ require auth yet.
 
 ### Phase D — vendor self-service
 
+**This is the demo-ready milestone.** Through Phase D the product can
+walk a prospective vendor through: sign up → apply → land in dashboard →
+add a product → see it live on `/shop`. Phases E and F (orders, reviews)
+are not required for that demo and stay deferred.
+
 `/list-with-us/goods` and `/list-with-us/services` POST to a server
 action that persists a `vendor_application`. Anonymous visitors get
 redirected to `/signup?next=/list-with-us/...`. Admin route
@@ -385,6 +390,28 @@ redirected to `/signup?next=/list-with-us/...`. Admin route
 `vendor_profile` + `subscription` and the user can edit products at
 `/dashboard/products/...`. Stock per variant is the editable field that
 matters most.
+
+**Publish flow.** New products default to `status = 'draft'` and are
+invisible on `/shop` and `/services`. The dashboard product editor has
+a "Publish" toggle that flips `status` to `'published'`. All public
+catalog queries (`getProducts`, `getServices`, vendor profile pages)
+filter to `status = 'published'`. The vendor's own dashboard shows
+their drafts alongside their published rows so they can preview before
+publishing.
+
+**Dev/demo auto-approve.** A `DEMO_AUTO_APPROVE_VENDORS` env flag, when
+set, makes the application server action skip the admin queue: it
+immediately writes `vendor_applications.status = 'approved'`, creates
+the `vendor_profile` + `subscription`, and signs the user into their
+dashboard. Off in production, on for live demos so a prospect can sign
+up and have a published product in front of them in under a minute.
+The admin approval UI still exists and works — the flag just bypasses
+it.
+
+**Cart status pre-Phase-E.** Until orders ship, the cart drawer's
+"Checkout" button is visibly disabled with a "Coming soon" label. The
+add-to-cart and cart-drawer UX still work end-to-end (so vendors can
+preview the buyer-side flow), but no order is written.
 
 ### Phase E — orders + checkout + vendor notifications
 
