@@ -1,10 +1,12 @@
 export interface Variant {
+  id: string;
   label: string;
   price: number;
+  currency: string;
   stock: number;
 }
 
-export type ProductCategory =
+export type ProductType =
   | "urns"
   | "jewelry"
   | "shrouds"
@@ -18,10 +20,11 @@ export type LifeStage =
   | "post-death"
   | "throughout";
 
-export interface Badge {
-  label: string;
-  variant: "terracotta" | "sage";
-}
+export type ProductStatus =
+  | "unknown"
+  | "draft"
+  | "published"
+  | "archived";
 
 export interface ProductDetail {
   dimensions?: string;
@@ -34,7 +37,8 @@ export interface ProductDetail {
   madeIn?: string;
   format?: string;
   delivery?: string;
-  [key: string]: string | undefined;
+  glazes?: string[];
+  [key: string]: string | string[] | undefined;
 }
 
 export interface Product {
@@ -44,13 +48,10 @@ export interface Product {
   sellerId: string;
   location: string;
   price: number;
-  category: ProductCategory;
-  badge?: Badge;
-  thumbBg: string;
+  currency: string;
+  productType: ProductType;
   variants: Variant[];
-  glazeOptions?: string[];
-  rating: number;
-  reviewCount: number;
+  status: ProductStatus;
   verified: boolean;
   description: string;
   details: ProductDetail;
@@ -58,7 +59,35 @@ export interface Product {
   relatedIds?: string[];
 }
 
-export type VendorType =
+export interface ProductWithRating extends Product {
+  rating: number;
+  reviewCount: number;
+}
+
+export type VendorKind = "unknown" | "goods" | "services" | "both";
+
+export interface Vendor {
+  id: string;
+  initials: string;
+  name: string;
+  kind: VendorKind;
+  location: string;
+  bio: string;
+  credentials?: string;
+  distanceMi?: number;
+  lifeStages: LifeStage[];
+  verified: boolean;
+  memberSince?: string;
+  photoSrc?: string;
+  photoTone?: "sage" | "terracotta";
+}
+
+export interface VendorWithRating extends Vendor {
+  rating: number;
+  reviewCount: number;
+}
+
+export type ServiceType =
   | "doula"
   | "attorney"
   | "cleaner"
@@ -70,29 +99,35 @@ export type VendorType =
   | "cafe"
   | "life-celebration";
 
-export interface Vendor {
+export type ServiceLocationType =
+  | "unknown"
+  | "virtual"
+  | "in_person"
+  | "both";
+
+export type ServicePricingModel =
+  | "unknown"
+  | "fixed"
+  | "hourly"
+  | "quote";
+
+export type ServiceStatus =
+  | "unknown"
+  | "draft"
+  | "published"
+  | "archived";
+
+export interface Service {
   id: string;
-  initials: string;
-  name: string;
-  type: VendorType;
-  location: string;
-  bio: string;
-  credentials?: string;
-  rating: number;
-  reviewCount: number;
-  distanceMi?: number;
-  accepting: boolean;
-  virtual: boolean;
-  inHome: boolean;
-  specializations: string[];
-  lifeStages: LifeStage[];
-  verified: boolean;
-  memberSince?: string;
-  // Excludes product-only sellers (ceramics studios, jewelers, etc.) from
-  // service-provider listings. Defaults to true; set false on shop sellers.
-  isServiceProvider?: boolean;
-  photoSrc?: string;
-  photoTone?: "sage" | "terracotta";
+  vendorId: string;
+  serviceType: ServiceType;
+  title: string;
+  description: string;
+  locationType: ServiceLocationType;
+  pricingModel: ServicePricingModel;
+  price?: number;
+  currency: string;
+  status: ServiceStatus;
 }
 
 export interface Review {
@@ -105,8 +140,26 @@ export interface Review {
   body: string;
 }
 
+export interface VendorReview {
+  id: string;
+  vendorId: string;
+  reviewer: string;
+  location: string;
+  date: string;
+  rating: number;
+  body: string;
+}
+
+// Derived response shape — never persisted. Computed from `reviews`.
 export interface ReviewSummary {
   productId: string;
+  average: number;
+  total: number;
+  distribution: { stars: number; count: number }[];
+}
+
+export interface VendorReviewSummary {
+  vendorId: string;
   average: number;
   total: number;
   distribution: { stars: number; count: number }[];
@@ -125,12 +178,8 @@ export interface Plan {
 
 export interface CartItem {
   productId: string;
-  title: string;
-  seller: string;
-  price: number;
+  variantId: string;
   qty: number;
-  variant?: string;
-  thumbBg: string;
 }
 
 export interface VendorStats {
@@ -142,6 +191,4 @@ export interface VendorStats {
 
 export interface SellerProfile extends Vendor {
   shopName?: string;
-  bio: string;
-  stats: VendorStats;
 }

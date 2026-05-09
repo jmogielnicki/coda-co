@@ -1,14 +1,23 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import type { Product, Vendor, Review, Plan } from '@/lib/types';
+import type {
+  Plan,
+  ProductWithRating,
+  Review,
+  Service,
+  VendorReview,
+  VendorWithRating,
+} from '@/lib/types';
 
-type Tab = 'products' | 'vendors' | 'reviews' | 'plans';
+type Tab = 'products' | 'vendors' | 'services' | 'reviews' | 'vendorReviews' | 'plans';
 
 interface Props {
-  products: Product[];
-  vendors: Vendor[];
+  products: ProductWithRating[];
+  vendors: VendorWithRating[];
+  services: Service[];
   reviews: Review[];
+  vendorReviews: VendorReview[];
   plans: Plan[];
 }
 
@@ -55,31 +64,31 @@ function EmptyRow({ cols }: { cols: number }) {
 
 // ── Products ─────────────────────────────────────────────────────────────────
 
-const PRODUCT_CATEGORIES = ['urns', 'jewelry', 'shrouds', 'planning', 'memorial', 'humor'] as const;
+const PRODUCT_TYPES = ['urns', 'jewelry', 'shrouds', 'planning', 'memorial', 'humor'] as const;
 
-function ProductsTab({ products }: { products: Product[] }) {
+function ProductsTab({ products }: { products: ProductWithRating[] }) {
   const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('');
+  const [productType, setProductType] = useState('');
   const [verified, setVerified] = useState('');
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return products.filter((p) => {
       if (q && !p.title.toLowerCase().includes(q) && !p.seller.toLowerCase().includes(q) && !p.id.includes(q)) return false;
-      if (category && p.category !== category) return false;
+      if (productType && p.productType !== productType) return false;
       if (verified === 'yes' && !p.verified) return false;
       if (verified === 'no' && p.verified) return false;
       return true;
     });
-  }, [products, search, category, verified]);
+  }, [products, search, productType, verified]);
 
   return (
     <>
       <FilterBar>
         <SearchInput value={search} onChange={setSearch} placeholder="Search title, seller, ID…" />
-        <Select value={category} onChange={setCategory} label="Category">
-          <option value="">All categories</option>
-          {PRODUCT_CATEGORIES.map((c) => (
+        <Select value={productType} onChange={setProductType} label="Type">
+          <option value="">All types</option>
+          {PRODUCT_TYPES.map((c) => (
             <option key={c} value={c}>{c}</option>
           ))}
         </Select>
@@ -98,8 +107,9 @@ function ProductsTab({ products }: { products: Product[] }) {
               <Th>ID</Th>
               <Th>Title</Th>
               <Th>Seller</Th>
-              <Th>Category</Th>
+              <Th>Type</Th>
               <Th>Price</Th>
+              <Th>Status</Th>
               <Th>Rating</Th>
               <Th>Reviews</Th>
               <Th>Verified</Th>
@@ -108,7 +118,7 @@ function ProductsTab({ products }: { products: Product[] }) {
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <EmptyRow cols={9} />
+              <EmptyRow cols={10} />
             ) : (
               filtered.map((p) => (
                 <Tr key={p.id}>
@@ -116,9 +126,10 @@ function ProductsTab({ products }: { products: Product[] }) {
                   <Td>{p.title}</Td>
                   <Td>{p.seller}</Td>
                   <Td>
-                    <Badge label={p.category} color="tr" />
+                    <Badge label={p.productType} color="tr" />
                   </Td>
                   <Td mono>${p.price}</Td>
+                  <Td>{p.status}</Td>
                   <Td><Stars rating={p.rating} /></Td>
                   <Td mono>{p.reviewCount}</Td>
                   <Td><BoolCell value={p.verified} /></Td>
@@ -135,46 +146,38 @@ function ProductsTab({ products }: { products: Product[] }) {
 
 // ── Vendors ───────────────────────────────────────────────────────────────────
 
-const VENDOR_TYPES = ['doula', 'attorney', 'cleaner', 'celebrant', 'organizer', 'grief', 'home-funeral', 'green-burial'] as const;
+const VENDOR_KINDS = ['unknown', 'goods', 'services', 'both'] as const;
 
-function VendorsTab({ vendors }: { vendors: Vendor[] }) {
+function VendorsTab({ vendors }: { vendors: VendorWithRating[] }) {
   const [search, setSearch] = useState('');
-  const [type, setType] = useState('');
+  const [kind, setKind] = useState('');
   const [verified, setVerified] = useState('');
-  const [accepting, setAccepting] = useState('');
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return vendors.filter((v) => {
       if (q && !v.name.toLowerCase().includes(q) && !v.location.toLowerCase().includes(q) && !v.id.includes(q)) return false;
-      if (type && v.type !== type) return false;
+      if (kind && v.kind !== kind) return false;
       if (verified === 'yes' && !v.verified) return false;
       if (verified === 'no' && v.verified) return false;
-      if (accepting === 'yes' && !v.accepting) return false;
-      if (accepting === 'no' && v.accepting) return false;
       return true;
     });
-  }, [vendors, search, type, verified, accepting]);
+  }, [vendors, search, kind, verified]);
 
   return (
     <>
       <FilterBar>
         <SearchInput value={search} onChange={setSearch} placeholder="Search name, location, ID…" />
-        <Select value={type} onChange={setType} label="Type">
-          <option value="">All types</option>
-          {VENDOR_TYPES.map((t) => (
-            <option key={t} value={t}>{t}</option>
+        <Select value={kind} onChange={setKind} label="Kind">
+          <option value="">All kinds</option>
+          {VENDOR_KINDS.map((k) => (
+            <option key={k} value={k}>{k}</option>
           ))}
         </Select>
         <Select value={verified} onChange={setVerified} label="Verified">
           <option value="">Any</option>
           <option value="yes">Verified</option>
           <option value="no">Unverified</option>
-        </Select>
-        <Select value={accepting} onChange={setAccepting} label="Accepting">
-          <option value="">Any</option>
-          <option value="yes">Accepting</option>
-          <option value="no">Not accepting</option>
         </Select>
         <RecordCount count={filtered.length} total={vendors.length} />
       </FilterBar>
@@ -185,34 +188,101 @@ function VendorsTab({ vendors }: { vendors: Vendor[] }) {
             <Tr header>
               <Th>ID</Th>
               <Th>Name</Th>
-              <Th>Type</Th>
+              <Th>Kind</Th>
               <Th>Location</Th>
               <Th>Rating</Th>
               <Th>Reviews</Th>
               <Th>Verified</Th>
-              <Th>Accepting</Th>
-              <Th>Service&nbsp;Provider</Th>
               <Th>Member&nbsp;Since</Th>
             </Tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <EmptyRow cols={10} />
+              <EmptyRow cols={8} />
             ) : (
               filtered.map((v) => (
                 <Tr key={v.id}>
                   <Td mono>{v.id}</Td>
                   <Td>{v.name}</Td>
                   <Td>
-                    <Badge label={v.type} color="sg" />
+                    <Badge label={v.kind} color="sg" />
                   </Td>
                   <Td>{v.location}</Td>
                   <Td><Stars rating={v.rating} /></Td>
                   <Td mono>{v.reviewCount}</Td>
                   <Td><BoolCell value={v.verified} /></Td>
-                  <Td><BoolCell value={v.accepting} /></Td>
-                  <Td><BoolCell value={v.isServiceProvider !== false} /></Td>
                   <Td mono>{v.memberSince ?? '—'}</Td>
+                </Tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </TableWrap>
+    </>
+  );
+}
+
+// ── Services ──────────────────────────────────────────────────────────────────
+
+function ServicesTab({ services }: { services: Service[] }) {
+  const [search, setSearch] = useState('');
+  const [serviceType, setServiceType] = useState('');
+
+  const types = useMemo(
+    () => Array.from(new Set(services.map((s) => s.serviceType))).sort(),
+    [services],
+  );
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return services.filter((s) => {
+      if (q && !s.title.toLowerCase().includes(q) && !s.vendorId.toLowerCase().includes(q) && !s.id.includes(q)) return false;
+      if (serviceType && s.serviceType !== serviceType) return false;
+      return true;
+    });
+  }, [services, search, serviceType]);
+
+  return (
+    <>
+      <FilterBar>
+        <SearchInput value={search} onChange={setSearch} placeholder="Search title, vendor, ID…" />
+        <Select value={serviceType} onChange={setServiceType} label="Type">
+          <option value="">All types</option>
+          {types.map((t) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </Select>
+        <RecordCount count={filtered.length} total={services.length} />
+      </FilterBar>
+
+      <TableWrap>
+        <table className="w-full text-sm">
+          <thead>
+            <Tr header>
+              <Th>ID</Th>
+              <Th>Vendor</Th>
+              <Th>Type</Th>
+              <Th>Title</Th>
+              <Th>Location</Th>
+              <Th>Pricing</Th>
+              <Th>Price</Th>
+              <Th>Status</Th>
+            </Tr>
+          </thead>
+          <tbody>
+            {filtered.length === 0 ? (
+              <EmptyRow cols={8} />
+            ) : (
+              filtered.map((s) => (
+                <Tr key={s.id}>
+                  <Td mono>{s.id}</Td>
+                  <Td mono>{s.vendorId}</Td>
+                  <Td><Badge label={s.serviceType} color="sg" /></Td>
+                  <Td max>{s.title}</Td>
+                  <Td>{s.locationType}</Td>
+                  <Td>{s.pricingModel}</Td>
+                  <Td mono>{s.price != null ? `$${s.price}` : '—'}</Td>
+                  <Td>{s.status}</Td>
                 </Tr>
               ))
             )}
@@ -279,7 +349,74 @@ function ReviewsTab({ reviews }: { reviews: Review[] }) {
                   <Td mono>{r.productId}</Td>
                   <Td>{r.reviewer}</Td>
                   <Td>{r.location}</Td>
-                  <Td>{r.date}</Td>
+                  <Td mono>{r.date}</Td>
+                  <Td><Stars rating={r.rating} /></Td>
+                  <Td max>{r.body}</Td>
+                </Tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </TableWrap>
+    </>
+  );
+}
+
+function VendorReviewsTab({ vendorReviews }: { vendorReviews: VendorReview[] }) {
+  const [search, setSearch] = useState('');
+  const [vendorId, setVendorId] = useState('');
+
+  const vendorIds = useMemo(
+    () => Array.from(new Set(vendorReviews.map((r) => r.vendorId))).sort(),
+    [vendorReviews]
+  );
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return vendorReviews.filter((r) => {
+      if (q && !r.reviewer.toLowerCase().includes(q) && !r.body.toLowerCase().includes(q) && !r.id.includes(q)) return false;
+      if (vendorId && r.vendorId !== vendorId) return false;
+      return true;
+    });
+  }, [vendorReviews, search, vendorId]);
+
+  return (
+    <>
+      <FilterBar>
+        <SearchInput value={search} onChange={setSearch} placeholder="Search reviewer, body, ID…" />
+        <Select value={vendorId} onChange={setVendorId} label="Vendor">
+          <option value="">All vendors</option>
+          {vendorIds.map((id) => (
+            <option key={id} value={id}>{id}</option>
+          ))}
+        </Select>
+        <RecordCount count={filtered.length} total={vendorReviews.length} />
+      </FilterBar>
+
+      <TableWrap>
+        <table className="w-full text-sm">
+          <thead>
+            <Tr header>
+              <Th>ID</Th>
+              <Th>Vendor ID</Th>
+              <Th>Reviewer</Th>
+              <Th>Location</Th>
+              <Th>Date</Th>
+              <Th>Rating</Th>
+              <Th>Body</Th>
+            </Tr>
+          </thead>
+          <tbody>
+            {filtered.length === 0 ? (
+              <EmptyRow cols={7} />
+            ) : (
+              filtered.map((r) => (
+                <Tr key={r.id}>
+                  <Td mono>{r.id}</Td>
+                  <Td mono>{r.vendorId}</Td>
+                  <Td>{r.reviewer}</Td>
+                  <Td>{r.location}</Td>
+                  <Td mono>{r.date}</Td>
                   <Td><Stars rating={r.rating} /></Td>
                   <Td max>{r.body}</Td>
                 </Tr>
@@ -437,13 +574,15 @@ function Td({ children, mono, max }: { children: React.ReactNode; mono?: boolean
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function DatabaseViewer({ products, vendors, reviews, plans }: Props) {
+export function DatabaseViewer({ products, vendors, services, reviews, vendorReviews, plans }: Props) {
   const [tab, setTab] = useState<Tab>('products');
 
   const tabs: { id: Tab; label: string; count: number }[] = [
     { id: 'products', label: 'Products', count: products.length },
     { id: 'vendors', label: 'Vendors', count: vendors.length },
+    { id: 'services', label: 'Services', count: services.length },
     { id: 'reviews', label: 'Reviews', count: reviews.length },
+    { id: 'vendorReviews', label: 'Vendor reviews', count: vendorReviews.length },
     { id: 'plans', label: 'Plans', count: plans.length },
   ];
 
@@ -476,7 +615,9 @@ export function DatabaseViewer({ products, vendors, reviews, plans }: Props) {
       {/* Tab content */}
       {tab === 'products' && <ProductsTab products={products} />}
       {tab === 'vendors' && <VendorsTab vendors={vendors} />}
+      {tab === 'services' && <ServicesTab services={services} />}
       {tab === 'reviews' && <ReviewsTab reviews={reviews} />}
+      {tab === 'vendorReviews' && <VendorReviewsTab vendorReviews={vendorReviews} />}
       {tab === 'plans' && <PlansTab plans={plans} />}
     </div>
   );

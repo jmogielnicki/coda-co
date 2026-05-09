@@ -1,6 +1,6 @@
-import type { Vendor } from "@/lib/types";
+import type { ServiceLocationType, ServiceType, Vendor } from "@/lib/types";
 
-const TYPE_LABELS: Record<string, string> = {
+const SERVICE_TYPE_LABELS: Record<ServiceType, string> = {
   doula: "Death doula",
   attorney: "Estate attorney",
   cleaner: "Death cleaning",
@@ -13,14 +13,21 @@ const TYPE_LABELS: Record<string, string> = {
   "life-celebration": "Celebration of life planner",
 };
 
-export function vendorTypeLabel(type: string): string {
-  return TYPE_LABELS[type] ?? type;
+export function serviceTypeLabel(type: ServiceType | string): string {
+  return SERVICE_TYPE_LABELS[type as ServiceType] ?? type;
 }
 
-export function vendorLocationSuffix(vendor: Vendor): string {
+// Aggregate the location capabilities of a vendor's services into a single
+// "In-home & virtual" / "In-home" / "Virtual" suffix appended to their city.
+export function vendorLocationSuffix(
+  vendor: Vendor,
+  locationTypes: ServiceLocationType[] = [],
+): string {
   const parts: string[] = [vendor.location];
-  if (vendor.inHome && vendor.virtual) parts.push("In-home & virtual");
-  else if (vendor.inHome) parts.push("In-home");
-  else if (vendor.virtual) parts.push("Virtual");
+  const inPerson = locationTypes.some((l) => l === "in_person" || l === "both");
+  const virtual = locationTypes.some((l) => l === "virtual" || l === "both");
+  if (inPerson && virtual) parts.push("In-home & virtual");
+  else if (inPerson) parts.push("In-home");
+  else if (virtual) parts.push("Virtual");
   return parts.join(" · ");
 }

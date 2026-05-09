@@ -17,19 +17,15 @@ export function AddToCart({ product }: AddToCartProps) {
 
   const variant = product.variants[selectedVariant];
   const price = variant?.price ?? product.price;
+  const glazes = product.details.glazes;
 
   function handleAdd() {
-    addItem(
-      {
-        productId: product.id,
-        title: product.title,
-        seller: product.seller,
-        price,
-        thumbBg: product.thumbBg,
-        variant: variant?.label,
-      },
-      qty
-    );
+    if (!variant) return;
+    addItem({
+      productId: product.id,
+      variantId: variant.id,
+      qty,
+    });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   }
@@ -37,13 +33,13 @@ export function AddToCart({ product }: AddToCartProps) {
   return (
     <div className="space-y-4">
       {/* Glaze selector */}
-      {product.glazeOptions && product.glazeOptions.length > 0 && (
+      {glazes && glazes.length > 0 && (
         <div>
           <div className="text-[12px] font-medium text-ch mb-2 uppercase tracking-wide">
             Glaze color
           </div>
           <div className="flex gap-2 flex-wrap">
-            {product.glazeOptions.map((glaze, i) => {
+            {glazes.map((glaze, i) => {
               const colors: Record<string, string> = {
                 Sage:     "var(--color-sg)",
                 Terra:    "var(--color-tr)",
@@ -81,13 +77,13 @@ export function AddToCart({ product }: AddToCartProps) {
           <div className="flex flex-col gap-1.5">
             {product.variants.map((v, i) => (
               <button
-                key={v.label}
+                key={v.id}
                 onClick={() => setSelectedVariant(i)}
                 className={[
                   "text-left px-4 py-2 rounded-[8px] border text-[13px] cursor-pointer transition-all",
                   selectedVariant === i
                     ? "border-ch text-ch font-medium bg-pl"
-                    : "border-[rgba(44,40,37,.2)] text-cm hover:border-ch",
+                    : "border-line-bold text-cm hover:border-ch",
                 ].join(" ")}
               >
                 {v.label}
@@ -102,7 +98,7 @@ export function AddToCart({ product }: AddToCartProps) {
       <div className="flex items-center gap-4">
         <div>
           <div className="text-[12px] font-medium text-ch mb-2 uppercase tracking-wide">Quantity</div>
-          <div className="flex items-center border border-[rgba(44,40,37,.2)] rounded-[8px] overflow-hidden">
+          <div className="flex items-center border border-line-bold rounded-[8px] overflow-hidden">
             <button
               onClick={() => setQty((q) => Math.max(1, q - 1))}
               className="px-3 py-2 text-[16px] text-cm hover:bg-pl cursor-pointer"
@@ -144,7 +140,7 @@ export function AddToCart({ product }: AddToCartProps) {
         {added ? "Added to cart ✓" : `Add to cart — $${price}`}
       </button>
 
-      <button className="w-full py-3 rounded-full text-[14px] text-cm border border-[rgba(44,40,37,.2)] hover:border-tr hover:text-tr transition-all cursor-pointer">
+      <button className="w-full py-3 rounded-full text-[14px] text-cm border border-line-bold hover:border-tr hover:text-tr transition-all cursor-pointer">
         Save to wishlist
       </button>
 

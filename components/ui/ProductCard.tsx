@@ -1,15 +1,15 @@
 import type { Product } from "@/lib/types";
-import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
+import { productThumbBg } from "@/lib/format/product";
 
 export function ProductCard({ product }: { product: Product }) {
   return (
     <Card href={`/shop/${product.id}`} hoverTone="terracotta" padding="none" className="overflow-hidden">
       <div
         className="h-[130px] flex items-center justify-center"
-        style={{ background: product.thumbBg }}
+        style={{ background: productThumbBg(product.id) }}
       >
-        <ProductThumbnail id={product.id} category={product.category} />
+        <ProductThumbnail id={product.id} productType={product.productType} />
       </div>
 
       <div className="px-4 pt-3 pb-[.95rem]">
@@ -21,14 +21,13 @@ export function ProductCard({ product }: { product: Product }) {
         </div>
         <div className="text-[14px] font-medium text-tr flex items-center flex-wrap gap-1">
           ${product.price}
-          {product.badge && <Badge badge={product.badge} />}
         </div>
       </div>
     </Card>
   );
 }
 
-function ProductThumbnail({ id, category }: { id: string; category: string }) {
+function ProductThumbnail({ id, productType }: { id: string; productType: string }) {
   if (id.startsWith("urn")) {
     return (
       <svg width="48" height="58" viewBox="0 0 60 70" fill="none">
@@ -49,7 +48,7 @@ function ProductThumbnail({ id, category }: { id: string; category: string }) {
       </svg>
     );
   }
-  if (id.startsWith("pendant") || category === "jewelry") {
+  if (id.startsWith("pendant") || productType === "jewelry") {
     return (
       <svg width="44" height="44" viewBox="0 0 60 60" fill="none">
         <path
@@ -62,7 +61,7 @@ function ProductThumbnail({ id, category }: { id: string; category: string }) {
       </svg>
     );
   }
-  if (id.startsWith("shroud") || category === "shrouds") {
+  if (id.startsWith("shroud") || productType === "shrouds") {
     return (
       <svg width="44" height="50" viewBox="0 0 60 62" fill="none">
         <path
@@ -76,7 +75,7 @@ function ProductThumbnail({ id, category }: { id: string; category: string }) {
       </svg>
     );
   }
-  if (category === "planning") {
+  if (productType === "planning") {
     return (
       <svg width="44" height="54" viewBox="0 0 60 70" fill="none">
         <rect x="12" y="8" width="36" height="52" rx="3" stroke="var(--color-tr)" strokeWidth="1.8" fill="none" />
@@ -86,7 +85,7 @@ function ProductThumbnail({ id, category }: { id: string; category: string }) {
       </svg>
     );
   }
-  if (category === "memorial") {
+  if (productType === "memorial") {
     return (
       <svg width="44" height="40" viewBox="0 0 60 54" fill="none">
         <path

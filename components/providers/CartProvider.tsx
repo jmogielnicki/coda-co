@@ -12,16 +12,19 @@ import type { CartItem } from "@/lib/types";
 interface CartContextType {
   items: CartItem[];
   count: number;
-  total: number;
-  addItem: (item: Omit<CartItem, "qty">, qty?: number) => void;
-  removeItem: (productId: string) => void;
-  updateQty: (productId: string, qty: number) => void;
+  addItem: (item: CartItem) => void;
+  removeItem: (productId: string, variantId: string) => void;
+  updateQty: (productId: string, variantId: string, qty: number) => void;
   clear: () => void;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
 
 const STORAGE_KEY = "coda-cart";
+
+function sameLine(a: CartItem, productId: string, variantId: string) {
+  return a.productId === productId && a.variantId === variantId;
+}
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -41,39 +44,45 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items]);
 
-  const addItem = useCallback((item: Omit<CartItem, "qty">, qty = 1) => {
+  const addItem = useCallback((item: CartItem) => {
     setItems((prev) => {
-      const existing = prev.find((i) => i.productId === item.productId);
+      const existing = prev.find((i) => sameLine(i, item.productId, item.variantId));
       if (existing) {
         return prev.map((i) =>
-          i.productId === item.productId ? { ...i, qty: i.qty + qty } : i
+          sameLine(i, item.productId, item.variantId)
+            ? { ...i, qty: i.qty + item.qty }
+            : i,
         );
       }
-      return [...prev, { ...item, qty }];
+      return [...prev, item];
     });
   }, []);
 
-  const removeItem = useCallback((productId: string) => {
-    setItems((prev) => prev.filter((i) => i.productId !== productId));
+  const removeItem = useCallback((productId: string, variantId: string) => {
+    setItems((prev) => prev.filter((i) => !sameLine(i, productId, variantId)));
   }, []);
 
-  const updateQty = useCallback((productId: string, qty: number) => {
-    if (qty <= 0) {
-      setItems((prev) => prev.filter((i) => i.productId !== productId));
-    } else {
-      setItems((prev) =>
-        prev.map((i) => (i.productId === productId ? { ...i, qty } : i))
-      );
-    }
-  }, []);
+  const updateQty = useCallback(
+    (productId: string, variantId: string, qty: number) => {
+      if (qty <= 0) {
+        setItems((prev) => prev.filter((i) => !sameLine(i, productId, variantId)));
+      } else {
+        setItems((prev) =>
+          prev.map((i) =>
+            sameLine(i, productId, variantId) ? { ...i, qty } : i,
+          ),
+        );
+      }
+    },
+    [],
+  );
 
   const clear = useCallback(() => setItems([]), []);
 
   const count = items.reduce((n, i) => n + i.qty, 0);
-  const total = items.reduce((n, i) => n + i.price * i.qty, 0);
 
   return (
-    <CartContext.Provider value={{ items, count, total, addItem, removeItem, updateQty, clear }}>
+    <CartContext.Provider value={{ items, count, addItem, removeItem, updateQty, clear }}>
       {children}
     </CartContext.Provider>
   );

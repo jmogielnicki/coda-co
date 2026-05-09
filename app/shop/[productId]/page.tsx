@@ -10,6 +10,7 @@ import { Stars } from "@/components/ui/Stars";
 import { getProduct, getRelatedProducts } from "@/lib/api/products";
 import { getReviews, getReviewSummary } from "@/lib/api/reviews";
 import { getVendor } from "@/lib/api/vendors";
+import { productThumbBg } from "@/lib/format/product";
 
 interface PDPProps {
   params: Promise<{ productId: string }>;
@@ -59,7 +60,7 @@ export default async function ProductDetailPage({ params }: PDPProps) {
             {/* Main image */}
             <div
               className="rounded-[12px] h-[360px] flex items-center justify-center mb-3"
-              style={{ background: product.thumbBg }}
+              style={{ background: productThumbBg(product.id) }}
             >
               <svg width="120" height="140" viewBox="0 0 120 140" fill="none">
                 <path
@@ -87,7 +88,7 @@ export default async function ProductDetailPage({ params }: PDPProps) {
                     "w-16 h-16 rounded-[8px] border-2 flex items-center justify-center cursor-pointer",
                     i === 0 ? "border-ch" : "border-line hover:border-ch",
                   ].join(" ")}
-                  style={{ background: product.thumbBg }}
+                  style={{ background: productThumbBg(product.id) }}
                 >
                   <div className="w-5 h-5 rounded-full bg-[rgba(44,40,37,.15)]" />
                 </div>
@@ -118,7 +119,7 @@ export default async function ProductDetailPage({ params }: PDPProps) {
             <div className="flex items-center gap-2 mb-3">
               <Stars rating={product.rating} />
               <span className="text-[13px] text-cl">
-                {product.rating} · {product.reviewCount} reviews
+                {product.reviewCount > 0 ? product.rating.toFixed(1) : "—"} · {product.reviewCount} reviews
               </span>
             </div>
 

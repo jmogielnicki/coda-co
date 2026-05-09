@@ -8,8 +8,11 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Stars } from "@/components/ui/Stars";
 import { VendorPhoto } from "@/components/ui/VendorPhoto";
 import { WaveDivider } from "@/components/ui/WaveDivider";
+import { getServices } from "@/lib/api/services";
 import { getVendor } from "@/lib/api/vendors";
-import { vendorTypeLabel } from "@/lib/format/vendor";
+import { getVendorReviews } from "@/lib/api/vendor-reviews";
+import { formatMonthYear } from "@/lib/format/date";
+import { serviceTypeLabel } from "@/lib/format/vendor";
 
 interface PageProps {
   params: Promise<{ vendorId: string }>;
@@ -37,14 +40,6 @@ interface Offering {
   desc: string;
 }
 
-interface ProfileReview {
-  reviewer: string;
-  location: string;
-  date: string;
-  rating: number;
-  body: string;
-}
-
 interface VendorExtras {
   longBio: string;
   team?: TeamMember[];
@@ -55,7 +50,6 @@ interface VendorExtras {
     days: string;
     hours: string;
   };
-  reviews?: ProfileReview[];
   contact?: {
     email?: string;
     phone?: string;
@@ -120,29 +114,6 @@ const VENDOR_EXTRAS: Record<string, VendorExtras> = {
       days: "Tue–Fri primary; weekends by arrangement",
       hours: "Morning, afternoon, and evening sessions",
     },
-    reviews: [
-      {
-        reviewer: "Jess M.",
-        location: "Lafayette, CO",
-        date: "March 2026",
-        rating: 5,
-        body: "Helen sat with my father his last three nights. She knew when to talk and when to be quiet. We could not have done it without her — and the sliding-scale fee made it possible at all.",
-      },
-      {
-        reviewer: "Ana S.",
-        location: "Boulder, CO",
-        date: "January 2026",
-        rating: 5,
-        body: "Marisol guided our family through both my grandmother's last days and the rituals afterward in a way that honored our culture. Bilingual support was essential. She is an exceptional companion.",
-      },
-      {
-        reviewer: "Patrick H.",
-        location: "Longmont, CO",
-        date: "November 2025",
-        rating: 5,
-        body: "Rae helped my mother and me have conversations we'd been avoiding for years before my mom's dementia advanced too far. She is patient, prepared, and never rushed.",
-      },
-    ],
     contact: {
       email: "hello@thresholdwellness.co",
       phone: "(303) 555-0142",
@@ -154,12 +125,24 @@ const VENDOR_EXTRAS: Record<string, VendorExtras> = {
 
 export default async function VendorProfilePage({ params }: PageProps) {
   const { vendorId } = await params;
-  const vendor = await getVendor(vendorId);
+  const [vendor, vendorServices, vendorReviewList] = await Promise.all([
+    getVendor(vendorId),
+    getServices({ vendorId }),
+    getVendorReviews(vendorId),
+  ]);
   if (!vendor) notFound();
 
   const extras = VENDOR_EXTRAS[vendorId];
+  const primaryType = vendorServices[0]?.serviceType;
 
-  const lastTintBeforeContact = extras?.reviews ? "var(--color-tr-vp)" : "var(--color-sg-vp)";
+  const inPerson = vendorServices.some(
+    (s) => s.locationType === "in_person" || s.locationType === "both",
+  );
+  const virtual = vendorServices.some(
+    (s) => s.locationType === "virtual" || s.locationType === "both",
+  );
+
+  const lastTintBeforeContact = vendorReviewList.length > 0 ? "var(--color-tr-vp)" : "var(--color-sg-vp)";
 
   return (
     <>
@@ -193,9 +176,11 @@ export default async function VendorProfilePage({ params }: PageProps) {
                   </span>
                 )}
               </div>
-              <div className="text-[11px] tracking-[.14em] uppercase text-tr mb-3">
-                {vendorTypeLabel(vendor.type)}
-              </div>
+              {primaryType && (
+                <div className="text-[11px] tracking-[.14em] uppercase text-tr mb-3">
+                  {serviceTypeLabel(primaryType)}
+                </div>
+              )}
               <div className="flex flex-wrap gap-x-4 gap-y-1 items-center mb-2">
                 <span className="text-[13px] text-cm">📍 {vendor.location}</span>
                 {vendor.distanceMi != null && (
@@ -203,7 +188,7 @@ export default async function VendorProfilePage({ params }: PageProps) {
                 )}
                 {vendor.memberSince && (
                   <span className="text-[13px] text-cl">
-                    CodaCo member since {vendor.memberSince}
+                    CodaCo member since {formatMonthYear(vendor.memberSince)}
                   </span>
                 )}
               </div>
@@ -213,11 +198,6 @@ export default async function VendorProfilePage({ params }: PageProps) {
                 className="text-[13px]"
               />
               <div className="flex flex-wrap gap-3 items-center mt-5">
-                {vendor.accepting && (
-                  <span className="text-[12px] text-sg-d bg-sg-p border border-sg-l px-3 py-1 rounded-full">
-                    Accepting new clients
-                  </span>
-                )}
                 <button className="btn-primary btn-md">Contact ↗</button>
                 <button className="btn-ghost btn-md">Save</button>
               </div>
@@ -306,30 +286,31 @@ export default async function VendorProfilePage({ params }: PageProps) {
         bottomColor="var(--color-sg-vp)"
       />
 
-      {/* Specializations + service area */}
+      {/* Services + service area */}
       <section className="bg-sg-vp px-10 pt-4 pb-16">
         <Container width="mid">
           <SectionHeader
             eyebrow="At a glance"
             eyebrowTone="sg"
-            title="Specializations & service area"
+            title="Services & service area"
             className="mb-8"
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white rounded-[10px] p-6 border border-line">
               <div className="text-[11px] tracking-[.08em] uppercase text-cl mb-3">
-                Specializations
+                Services offered
               </div>
-              <div className="flex flex-wrap gap-2 mb-5">
-                {vendor.specializations.map((s) => (
-                  <span
-                    key={s}
-                    className="text-[12px] bg-sg-p text-sg-d border border-sg-l px-3 py-1 rounded-full"
-                  >
-                    {s}
-                  </span>
+              <ul className="space-y-3 mb-5">
+                {vendorServices.length === 0 && (
+                  <li className="text-[13px] text-cl italic">No services listed yet.</li>
+                )}
+                {vendorServices.map((s) => (
+                  <li key={s.id} className="border-b border-line last:border-b-0 pb-2 last:pb-0">
+                    <div className="text-[13px] font-medium text-ch">{s.title}</div>
+                    <p className="text-[12px] text-cm leading-relaxed mt-0.5">{s.description}</p>
+                  </li>
                 ))}
-              </div>
+              </ul>
               {vendor.credentials && (
                 <>
                   <div className="text-[11px] tracking-[.08em] uppercase text-cl mb-1">
@@ -351,7 +332,7 @@ export default async function VendorProfilePage({ params }: PageProps) {
                 )}
                 <ProfileRow label="Formats">
                   {extras?.serviceArea.formats ??
-                    [vendor.inHome && "In-home", vendor.virtual && "Virtual"]
+                    [inPerson && "In-home", virtual && "Virtual"]
                       .filter(Boolean)
                       .join(" · ")}
                 </ProfileRow>
@@ -367,7 +348,7 @@ export default async function VendorProfilePage({ params }: PageProps) {
         </Container>
       </section>
 
-      {extras?.reviews && (
+      {vendorReviewList.length > 0 && (
         <>
           <WaveDivider topColor="var(--color-sg-vp)" bottomColor="var(--color-tr-vp)" />
 
@@ -386,9 +367,9 @@ export default async function VendorProfilePage({ params }: PageProps) {
                 />
               </div>
               <div className="space-y-4">
-                {extras.reviews.map((r) => (
+                {vendorReviewList.map((r) => (
                   <div
-                    key={`${r.reviewer}-${r.date}`}
+                    key={r.id}
                     className="bg-white rounded-[10px] p-5 border border-line"
                   >
                     <Stars rating={r.rating} className="text-[13px]" />
@@ -396,18 +377,11 @@ export default async function VendorProfilePage({ params }: PageProps) {
                       &ldquo;{r.body}&rdquo;
                     </p>
                     <div className="text-[12px] text-cl">
-                      {r.reviewer} · {r.location} · {r.date}
+                      {r.reviewer} · {r.location} · {formatMonthYear(r.date)}
                     </div>
                   </div>
                 ))}
               </div>
-              {vendor.reviewCount > extras.reviews.length && (
-                <div className="text-center mt-6">
-                  <a className="inline-block text-[13px] text-tr-d border-b border-dotted border-tr-l cursor-pointer hover:opacity-80">
-                    Show all {vendor.reviewCount} reviews →
-                  </a>
-                </div>
-              )}
             </Container>
           </section>
         </>

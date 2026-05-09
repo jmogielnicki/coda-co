@@ -1,16 +1,19 @@
 import type { Metadata } from 'next';
-import { products } from '@/lib/data/products';
-import { vendors } from '@/lib/data/vendors';
-import { reviews } from '@/lib/data/reviews';
 import { goodsPlans, servicePlans } from '@/lib/data/plans';
+import { reviews } from '@/lib/data/reviews';
+import { services } from '@/lib/data/services';
+import { vendorReviews } from '@/lib/data/vendor-reviews';
+import { getProducts } from '@/lib/api/products';
+import { getVendors } from '@/lib/api/vendors';
 import { DatabaseViewer } from '@/components/admin/DatabaseViewer';
 
 export const metadata: Metadata = {
   title: 'Database Viewer — Admin | CodaCo',
 };
 
-export default function AdminPage() {
+export default async function AdminPage() {
   const plans = [...goodsPlans, ...servicePlans];
+  const [products, vendors] = await Promise.all([getProducts(), getVendors()]);
 
   return (
     <div className="min-h-screen bg-pl2">
@@ -28,8 +31,8 @@ export default function AdminPage() {
           {[
             { label: 'Products', count: products.length, color: 'bg-tr-p border-tr-l/40' },
             { label: 'Vendors', count: vendors.length, color: 'bg-sg-p border-sg-l/40' },
-            { label: 'Reviews', count: reviews.length, color: 'bg-pl border-pl2' },
-            { label: 'Plans', count: plans.length, color: 'bg-pl border-pl2' },
+            { label: 'Services', count: services.length, color: 'bg-sg-p border-sg-l/40' },
+            { label: 'Reviews', count: reviews.length + vendorReviews.length, color: 'bg-pl border-pl2' },
           ].map(({ label, count, color }) => (
             <div key={label} className={`rounded-lg border px-4 py-3 ${color}`}>
               <p className="text-2xl font-serif text-ch tabular-nums">{count}</p>
@@ -41,7 +44,9 @@ export default function AdminPage() {
         <DatabaseViewer
           products={products}
           vendors={vendors}
+          services={services}
           reviews={reviews}
+          vendorReviews={vendorReviews}
           plans={plans}
         />
       </div>

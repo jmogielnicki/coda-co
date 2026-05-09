@@ -9,7 +9,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { WaveDivider } from "@/components/ui/WaveDivider";
 import { getFeaturedProducts, getProducts } from "@/lib/api/products";
 import { parseLifeStageParam } from "@/lib/format/lifeStage";
-import type { ProductCategory } from "@/lib/types";
+import type { ProductType } from "@/lib/types";
 
 export const metadata: Metadata = {
   title: "Shop goods — CodaCo",
@@ -26,7 +26,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
   const [products, featuredProducts] = await Promise.all([
     getProducts({
-      category: category as ProductCategory | undefined,
+      productType: category as ProductType | undefined,
       lifeStage: parseLifeStageParam(lifeStage),
     }),
     getFeaturedProducts(4),

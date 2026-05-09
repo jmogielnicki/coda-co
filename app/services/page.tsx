@@ -7,9 +7,10 @@ import { ServiceGrid } from "@/components/services/ServiceGrid";
 import { Container } from "@/components/ui/Container";
 import { LifeStageChips } from "@/components/ui/filters/LifeStageChips";
 import { WaveDivider } from "@/components/ui/WaveDivider";
+import { getServices } from "@/lib/api/services";
 import { getVendors } from "@/lib/api/vendors";
 import { parseLifeStageParam } from "@/lib/format/lifeStage";
-import type { VendorType } from "@/lib/types";
+import type { Service, ServiceLocationType, ServiceType } from "@/lib/types";
 
 export const metadata: Metadata = {
   title: "Find services — CodaCo",
@@ -21,8 +22,7 @@ interface ServicesPageProps {
   searchParams: Promise<{
     type?: string;
     minRating?: string;
-    accepting?: string;
-    virtual?: string;
+    locationType?: string;
     verified?: string;
     lifeStage?: string;
   }>;
@@ -40,32 +40,50 @@ const TYPE_LABELS: Record<string, string> = {
   "life-celebration": "Celebration of life planner",
 };
 
+const VALID_LOCATION_TYPES = new Set<ServiceLocationType>([
+  "virtual",
+  "in_person",
+  "both",
+]);
+
 export default async function ServicesPage({ searchParams }: ServicesPageProps) {
-  const { type, minRating, accepting, virtual: virt, verified, lifeStage } = await searchParams;
+  const { type, minRating, locationType: locParam, verified, lifeStage } =
+    await searchParams;
 
-  const filters = {
-    type: type as VendorType | undefined,
-    minRating: minRating ? parseFloat(minRating) : undefined,
-    accepting: accepting === "1" ? true : undefined,
-    virtual: virt === "1" ? true : undefined,
-    verified: verified === "1" ? true : undefined,
-    lifeStage: parseLifeStageParam(lifeStage),
-  };
+  const serviceType = (type ?? undefined) as ServiceType | undefined;
+  const locationType = locParam && VALID_LOCATION_TYPES.has(locParam as ServiceLocationType)
+    ? (locParam as ServiceLocationType)
+    : undefined;
 
-  const [vendors, totalVendors] = await Promise.all([
-    getVendors(filters),
-    getVendors(),
+  const [matchedServices, allServices, allVendors] = await Promise.all([
+    getServices({ serviceType, locationType }),
+    getServices(),
+    getVendors({
+      verified: verified === "1" ? true : undefined,
+      lifeStage: parseLifeStageParam(lifeStage),
+      minRating: minRating ? parseFloat(minRating) : undefined,
+    }),
   ]);
 
-  const total = totalVendors.length;
+  const vendorIds = new Set(matchedServices.map((s) => s.vendorId));
+  const vendors = allVendors.filter((v) => vendorIds.has(v.id));
+
+  // Group services by vendor for card display.
+  const servicesByVendor = new Map<string, Service[]>();
+  for (const s of matchedServices) {
+    const arr = servicesByVendor.get(s.vendorId) ?? [];
+    arr.push(s);
+    servicesByVendor.set(s.vendorId, arr);
+  }
+
+  const totalProviders = new Set(allServices.map((s) => s.vendorId)).size;
   const filtered = vendors.length;
   const hasActiveFilter =
-    filters.type != null ||
-    filters.minRating != null ||
-    filters.accepting === true ||
-    filters.virtual === true ||
-    filters.verified === true ||
-    filters.lifeStage != null;
+    serviceType != null ||
+    locationType != null ||
+    minRating != null ||
+    verified === "1" ||
+    lifeStage != null;
 
   return (
     <>
@@ -92,7 +110,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
               placeholder="Service type…"
             />
           </div>
-          <div className="flex flex-1 min-w-[180px] border-[1.5px] border-[rgba(44,40,37,.15)] rounded-[8px] overflow-hidden bg-white">
+          <div className="flex flex-1 min-w-[180px] border-[1.5px] border-line-bold rounded-[8px] overflow-hidden bg-white">
             <div className="px-3 py-2.5 border-r border-line flex items-center">
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                 <circle cx="8" cy="7" r="3.5" stroke="#9A9189" strokeWidth="1.3" />
@@ -133,15 +151,15 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
               <span className="text-[13px] text-ink">
                 {hasActiveFilter ? (
                   <>
-                    {total} providers · <strong className="text-ch">{filtered}</strong> after filters
+                    {totalProviders} providers · <strong className="text-ch">{filtered}</strong> after filters
                   </>
                 ) : (
-                  <>{total} providers</>
+                  <>{totalProviders} providers</>
                 )}
               </span>
               <div className="flex items-center gap-[7px]">
                 <label className="text-[12px] text-ink">Sort by</label>
-                <select className="text-[12px] text-cm border border-[rgba(44,40,37,.15)] rounded-[6px] px-2.5 py-[5px] bg-white font-sans outline-none">
+                <select className="text-[12px] text-cm border border-line-bold rounded-[6px] px-2.5 py-[5px] bg-white font-sans outline-none">
                   <option>Best match</option>
                   <option>Rating: high to low</option>
                   <option>Nearest first</option>
@@ -150,12 +168,12 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
               </div>
             </div>
 
-            <ServiceGrid vendors={vendors} />
+            <ServiceGrid vendors={vendors} servicesByVendor={servicesByVendor} />
 
-            {total > filtered && (
+            {totalProviders > filtered && (
               <div className="text-center pt-2">
                 <a className="inline-block text-[13px] text-tr border-b border-dotted border-tr-l cursor-pointer hover:text-tr-d">
-                  Show {total - filtered} more results →
+                  Show {totalProviders - filtered} more results →
                 </a>
               </div>
             )}
