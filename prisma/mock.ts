@@ -3,19 +3,24 @@
 // `npm run db:mock`. Hard-fails in production so a deploy can never seed
 // fake vendors. NOT wired to `prisma db seed`.
 
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
+import { config } from "dotenv";
 import { products } from "../lib/data/products";
 import { vendors } from "../lib/data/vendors";
 import { services } from "../lib/data/services";
 import { reviews } from "../lib/data/reviews";
 import { vendorReviews } from "../lib/data/vendor-reviews";
 
+config({ path: ".env" });
+
 if (process.env.NODE_ENV === "production") {
   console.error("npm run db:mock cannot run in production.");
   process.exit(1);
 }
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+const prisma = new PrismaClient({ adapter });
 
 async function clear() {
   // Order matters — children before parents. Cascade deletes would also

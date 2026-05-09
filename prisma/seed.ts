@@ -3,9 +3,14 @@
 // `prisma db seed` via prisma.config.ts so `prisma migrate deploy`
 // runs it automatically. Idempotent: re-running upserts existing rows.
 
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
+import { config } from "dotenv";
 
-const prisma = new PrismaClient();
+config({ path: ".env" });
+
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+const prisma = new PrismaClient({ adapter });
 
 const PRODUCT_TYPES = [
   { slug: "urns", name: "Urns & vessels" },

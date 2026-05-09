@@ -1,5 +1,12 @@
-import { services } from "@/lib/data/services";
-import type { Service, ServiceLocationType, ServiceType } from "@/lib/types";
+import type { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/db";
+import type {
+  Service,
+  ServiceLocationType,
+  ServicePricingModel,
+  ServiceStatus,
+  ServiceType,
+} from "@/lib/types";
 
 export interface ServiceFilters {
   vendorId?: string;
@@ -7,29 +14,48 @@ export interface ServiceFilters {
   locationType?: ServiceLocationType;
 }
 
+type DbService = Prisma.ServiceGetPayload<{
+  include: { vendor: true; serviceType: true };
+}>;
+
+function toService(s: DbService): Service {
+  return {
+    id: s.slug,
+    vendorId: s.vendor.slug,
+    serviceType: s.serviceType.slug as ServiceType,
+    title: s.title,
+    description: s.description,
+    locationType: s.locationType as ServiceLocationType,
+    pricingModel: s.pricingModel as ServicePricingModel,
+    price: s.priceCents != null ? s.priceCents / 100 : undefined,
+    currency: s.currency,
+    status: s.status as ServiceStatus,
+  };
+}
+
 export async function getServices(filters: ServiceFilters = {}): Promise<Service[]> {
-  let results = services.filter((s) => s.status === "published");
-  if (filters.vendorId) results = results.filter((s) => s.vendorId === filters.vendorId);
-  if (filters.serviceType) results = results.filter((s) => s.serviceType === filters.serviceType);
-  if (filters.locationType) {
-    results = results.filter((s) =>
-      matchesLocation(s.locationType, filters.locationType!),
-    );
+  const where: Prisma.ServiceWhereInput = { status: "published" };
+  if (filters.vendorId) where.vendor = { slug: filters.vendorId };
+  if (filters.serviceType) where.serviceType = { slug: filters.serviceType };
+  if (filters.locationType && filters.locationType !== "unknown") {
+    // 'both' covers either intent; an exact 'virtual' or 'in_person'
+    // filter should still surface services flagged as 'both'.
+    where.locationType = filters.locationType === "both"
+      ? "both"
+      : { in: [filters.locationType, "both"] };
   }
-  return results;
+  const rows = await prisma.service.findMany({
+    where,
+    include: { vendor: true, serviceType: true },
+    orderBy: { createdAt: "asc" },
+  });
+  return rows.map(toService);
 }
 
 export async function getService(id: string): Promise<Service | null> {
-  return services.find((s) => s.id === id) ?? null;
-}
-
-// `both` services match either virtual or in-person filters; an exact filter
-// also matches itself.
-function matchesLocation(
-  serviceLocation: ServiceLocationType,
-  filter: ServiceLocationType,
-): boolean {
-  if (filter === "unknown") return true;
-  if (serviceLocation === "both") return filter === "virtual" || filter === "in_person" || filter === "both";
-  return serviceLocation === filter;
+  const s = await prisma.service.findUnique({
+    where: { slug: id },
+    include: { vendor: true, serviceType: true },
+  });
+  return s ? toService(s) : null;
 }

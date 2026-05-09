@@ -1,6 +1,5 @@
-import { vendors } from "@/lib/data/vendors";
-import { vendorReviews } from "@/lib/data/vendor-reviews";
-import { matchesLifeStage } from "@/lib/format/lifeStage";
+import type { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/db";
 import type {
   LifeStage,
   Vendor,
@@ -16,26 +15,79 @@ export interface VendorFilters {
   lifeStage?: LifeStage | LifeStage[];
 }
 
-function withRating(vendor: Vendor): VendorWithRating {
-  const rs = vendorReviews.filter((r) => r.vendorId === vendor.id);
-  if (rs.length === 0) return { ...vendor, rating: 0, reviewCount: 0 };
-  const sum = rs.reduce((n, r) => n + r.rating, 0);
-  return { ...vendor, rating: sum / rs.length, reviewCount: rs.length };
+type DbVendor = Prisma.VendorProfileGetPayload<{}>;
+
+function toVendor(v: DbVendor): Vendor {
+  return {
+    id: v.slug,
+    initials: v.initials ?? deriveInitials(v.displayName),
+    name: v.displayName,
+    kind: v.kind as VendorKind,
+    location: v.location,
+    bio: v.bio,
+    credentials: v.credentials ?? undefined,
+    distanceMi: v.distanceMi ?? undefined,
+    lifeStages: v.lifeStages as LifeStage[],
+    verified: v.verified,
+    memberSince: v.memberSince ? v.memberSince.toISOString().slice(0, 10) : undefined,
+    photoSrc: v.photoSrc ?? undefined,
+    photoTone: (v.photoTone as Vendor["photoTone"]) ?? undefined,
+  };
+}
+
+function deriveInitials(displayName: string): string {
+  return displayName
+    .split(/\s+/)
+    .map((w) => w[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
+function expandLifeStageFilter(filter: LifeStage | LifeStage[]): LifeStage[] {
+  const list = Array.isArray(filter) ? filter : [filter];
+  if (list.includes("throughout")) return list;
+  return [...list, "throughout"];
+}
+
+async function attachRatings(
+  rows: { dbId: string; vendor: Vendor }[],
+): Promise<VendorWithRating[]> {
+  if (rows.length === 0) return [];
+  const grouped = await prisma.vendorReview.groupBy({
+    by: ["vendorId"],
+    where: { vendorId: { in: rows.map((r) => r.dbId) } },
+    _count: { _all: true },
+    _avg: { rating: true },
+  });
+  const byId = new Map(grouped.map((g) => [g.vendorId, g]));
+  return rows.map(({ dbId, vendor }) => {
+    const g = byId.get(dbId);
+    return {
+      ...vendor,
+      rating: g?._avg.rating ?? 0,
+      reviewCount: g?._count._all ?? 0,
+    };
+  });
 }
 
 export async function getVendors(filters: VendorFilters = {}): Promise<VendorWithRating[]> {
-  let results = vendors;
+  const where: Prisma.VendorProfileWhereInput = {};
   if (filters.kind) {
-    results = results.filter((v) =>
-      filters.kind === "both" ? v.kind === "both" : v.kind === filters.kind || v.kind === "both",
-    );
+    // 'both' covers either listing surface; an exact 'goods' or 'services'
+    // filter should still surface vendors flagged as 'both'.
+    if (filters.kind === "both") where.kind = "both";
+    else where.kind = { in: [filters.kind, "both"] };
   }
-  if (filters.verified != null) results = results.filter((v) => v.verified === filters.verified);
-  if (filters.ids) results = results.filter((v) => filters.ids!.includes(v.id));
+  if (filters.verified != null) where.verified = filters.verified;
+  if (filters.ids) where.slug = { in: filters.ids };
   if (filters.lifeStage) {
-    results = results.filter((v) => matchesLifeStage(v.lifeStages, filters.lifeStage));
+    where.lifeStages = { hasSome: expandLifeStageFilter(filters.lifeStage) };
   }
-  const augmented = results.map(withRating);
+
+  const rows = await prisma.vendorProfile.findMany({ where, orderBy: { createdAt: "asc" } });
+  const augmented = await attachRatings(rows.map((v) => ({ dbId: v.id, vendor: toVendor(v) })));
   if (filters.minRating != null) {
     return augmented.filter((v) => v.rating >= filters.minRating!);
   }
@@ -43,15 +95,27 @@ export async function getVendors(filters: VendorFilters = {}): Promise<VendorWit
 }
 
 export async function getVendor(id: string): Promise<VendorWithRating | null> {
-  const found = vendors.find((v) => v.id === id);
-  return found ? withRating(found) : null;
+  const v = await prisma.vendorProfile.findUnique({ where: { slug: id } });
+  if (!v) return null;
+  const summary = await prisma.vendorReview.aggregate({
+    where: { vendorId: v.id },
+    _count: { _all: true },
+    _avg: { rating: true },
+  });
+  return {
+    ...toVendor(v),
+    rating: summary._avg.rating ?? 0,
+    reviewCount: summary._count._all,
+  };
 }
 
 export async function getFeaturedVendors(limit = 4): Promise<VendorWithRating[]> {
-  return vendors
-    .filter((v) => v.verified && (v.kind === "services" || v.kind === "both"))
-    .slice(0, limit)
-    .map(withRating);
+  const rows = await prisma.vendorProfile.findMany({
+    where: { verified: true, kind: { in: ["services", "both"] } },
+    orderBy: { createdAt: "asc" },
+    take: limit,
+  });
+  return attachRatings(rows.map((v) => ({ dbId: v.id, vendor: toVendor(v) })));
 }
 
 // Curated set of vendors shown in the home page's "Support in your area"
@@ -64,19 +128,24 @@ const HOME_VENDOR_IDS = [
 ] as const;
 
 export async function getHomeFeaturedVendors(): Promise<VendorWithRating[]> {
-  const byId = new Map(vendors.map((v) => [v.id, v]));
-  return HOME_VENDOR_IDS.map((id) => byId.get(id))
-    .filter((v): v is Vendor => v != null)
-    .map(withRating);
+  const rows = await prisma.vendorProfile.findMany({
+    where: { slug: { in: [...HOME_VENDOR_IDS] } },
+  });
+  const bySlug = new Map(rows.map((v) => [v.slug, v]));
+  const ordered = HOME_VENDOR_IDS.map((id) => bySlug.get(id)).filter(
+    (v): v is DbVendor => v != null,
+  );
+  return attachRatings(ordered.map((v) => ({ dbId: v.id, vendor: toVendor(v) })));
 }
 
-// Placeholder until orders exist. Returns zeroed stats.
+// Placeholder until orders exist. Returns zeroed stats — the future shape
+// is documented in docs/data-model-evolution.md.
 export async function getVendorStats(vendorId: string) {
-  const vendor = vendors.find((v) => v.id === vendorId);
+  const vendor = await prisma.vendorProfile.findUnique({ where: { slug: vendorId } });
   return {
     orders: 0,
     avgRating: 0,
     onTimePercent: 0,
-    memberSince: vendor?.memberSince ?? "",
+    memberSince: vendor?.memberSince ? vendor.memberSince.toISOString().slice(0, 10) : "",
   };
 }

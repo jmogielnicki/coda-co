@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import { goodsPlans, servicePlans } from '@/lib/data/plans';
-import { reviews } from '@/lib/data/reviews';
-import { services } from '@/lib/data/services';
-import { vendorReviews } from '@/lib/data/vendor-reviews';
+import { prisma } from '@/lib/db';
 import { getProducts } from '@/lib/api/products';
+import { getServices } from '@/lib/api/services';
 import { getVendors } from '@/lib/api/vendors';
 import { DatabaseViewer } from '@/components/admin/DatabaseViewer';
 
@@ -11,9 +10,44 @@ export const metadata: Metadata = {
   title: 'Database Viewer — Admin | CodaCo',
 };
 
+// Live admin view — never static-prerender. Each render reflects current DB.
+export const dynamic = 'force-dynamic';
+
 export default async function AdminPage() {
   const plans = [...goodsPlans, ...servicePlans];
-  const [products, vendors] = await Promise.all([getProducts(), getVendors()]);
+  const [products, vendors, services, reviewRows, vendorReviewRows] = await Promise.all([
+    getProducts(),
+    getVendors(),
+    getServices(),
+    prisma.productReview.findMany({
+      include: { product: { select: { slug: true } } },
+      orderBy: { reviewedAt: "desc" },
+    }),
+    prisma.vendorReview.findMany({
+      include: { vendor: { select: { slug: true } } },
+      orderBy: { reviewedAt: "desc" },
+    }),
+  ]);
+
+  const reviews = reviewRows.map((r) => ({
+    id: r.id,
+    productId: r.product.slug,
+    reviewer: r.reviewerName,
+    location: r.reviewerLocation,
+    date: r.reviewedAt.toISOString().slice(0, 10),
+    rating: r.rating,
+    body: r.body,
+  }));
+
+  const vendorReviews = vendorReviewRows.map((r) => ({
+    id: r.id,
+    vendorId: r.vendor.slug,
+    reviewer: r.reviewerName,
+    location: r.reviewerLocation,
+    date: r.reviewedAt.toISOString().slice(0, 10),
+    rating: r.rating,
+    body: r.body,
+  }));
 
   return (
     <div className="min-h-screen bg-pl2">
@@ -22,7 +56,7 @@ export default async function AdminPage() {
           <p className="text-xs font-medium uppercase tracking-widest text-tr mb-1.5">Admin</p>
           <h1 className="font-serif text-4xl text-ch">Database Viewer</h1>
           <p className="text-cm text-sm mt-1.5">
-            Read-only view of all mock data sources.{' '}
+            Read-only view of all database records.{' '}
             <span className="text-cl">No authentication — development only.</span>
           </p>
         </div>
