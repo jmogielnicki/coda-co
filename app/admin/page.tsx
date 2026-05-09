@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
+import { auth } from '@/auth';
 import { goodsPlans, servicePlans } from '@/lib/data/plans';
 import { prisma } from '@/lib/db';
 import { getProducts } from '@/lib/api/products';
@@ -14,6 +16,12 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {
+  const session = await auth();
+  // Anonymous users go to the login page; signed-in non-admins land on home
+  // with no admin links visible (the nav already hides them).
+  if (!session?.user) redirect('/login?next=/admin');
+  if (session.user.role !== 'admin') redirect('/');
+
   const plans = [...goodsPlans, ...servicePlans];
   const [products, vendors, services, reviewRows, vendorReviewRows] = await Promise.all([
     getProducts(),

@@ -1,11 +1,14 @@
 import Link from "next/link";
+import { auth, signOut } from "@/auth";
 import { Logo } from "@/components/ui/Logo";
 
 interface NavProps {
   active?: "shop" | "services" | "books" | "light" | "list";
 }
 
-export function Nav({ active }: NavProps) {
+export async function Nav({ active }: NavProps) {
+  const session = await auth();
+
   const link = (label: string, href: string, key: NavProps["active"]) => (
     <li key={href}>
       <Link
@@ -43,12 +46,50 @@ export function Nav({ active }: NavProps) {
         {link("Books", "/books", "books")}
         {link("Grief meets humor", "/light-and-dark", "light")}
         {link("List with us", "/list-with-us", "list")}
-        <li>
-          <a className="btn-primary btn-sm">
-            Sign in
-          </a>
-        </li>
+        {session?.user ? <SignedInControls user={session.user} /> : <SignedOutControls />}
       </ul>
     </nav>
+  );
+}
+
+function SignedOutControls() {
+  return (
+    <li>
+      <Link href="/login" className="btn-primary btn-sm no-underline">
+        Sign in
+      </Link>
+    </li>
+  );
+}
+
+function SignedInControls({
+  user,
+}: {
+  user: { name?: string | null; email: string; role: string };
+}) {
+  const display = user.name?.trim() || user.email;
+  return (
+    <>
+      {user.role === "admin" && (
+        <li>
+          <Link href="/admin" className="text-[13px] text-cm hover:text-tr no-underline">
+            Admin
+          </Link>
+        </li>
+      )}
+      <li className="text-[13px] text-cm">{display}</li>
+      <li>
+        <form
+          action={async () => {
+            "use server";
+            await signOut({ redirectTo: "/" });
+          }}
+        >
+          <button type="submit" className="btn-ghost btn-sm">
+            Sign out
+          </button>
+        </form>
+      </li>
+    </>
   );
 }

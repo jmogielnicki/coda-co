@@ -5,6 +5,7 @@
 
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 import { config } from "dotenv";
 import { products } from "../lib/data/products";
 import { vendors } from "../lib/data/vendors";
@@ -22,6 +23,12 @@ if (process.env.NODE_ENV === "production") {
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
+// Every mock account uses the same dev password so a tester can sign in as
+// any vendor without a credential cheat-sheet. Never store this in a real
+// system — the mock script hard-fails in production for that reason.
+const DEV_PASSWORD = "codaco-dev";
+const ADMIN_EMAIL = "admin@codaco.local";
+
 async function clear() {
   // Order matters — children before parents. Cascade deletes would also
   // work but being explicit makes the intent obvious.
@@ -31,6 +38,9 @@ async function clear() {
   await prisma.product.deleteMany();
   await prisma.service.deleteMany();
   await prisma.vendorProfile.deleteMany();
+  await prisma.session.deleteMany();
+  await prisma.account.deleteMany();
+  await prisma.user.deleteMany();
 }
 
 async function main() {
@@ -48,10 +58,30 @@ async function main() {
     );
   }
 
-  // Vendors. Use the existing Phase A id as the slug; let Prisma generate
-  // the cuid PK so the future user_id link can stay clean.
+  const passwordHash = await bcrypt.hash(DEV_PASSWORD, 10);
+
+  // One admin user for testing role-gated routes.
+  await prisma.user.create({
+    data: {
+      email: ADMIN_EMAIL,
+      name: "CodaCo Admin",
+      passwordHash,
+      role: "admin",
+    },
+  });
+
+  // Vendors. Each gets a paired user (role=user). Email derived from slug
+  // so testers can sign in with `${slug}@codaco.local` + DEV_PASSWORD.
   const vendorBySlug = new Map<string, { id: string }>();
   for (const v of vendors) {
+    const user = await prisma.user.create({
+      data: {
+        email: `${v.id}@codaco.local`,
+        name: v.name,
+        passwordHash,
+        role: "user",
+      },
+    });
     const created = await prisma.vendorProfile.create({
       data: {
         slug: v.id,
@@ -67,6 +97,7 @@ async function main() {
         memberSince: v.memberSince ? new Date(v.memberSince) : null,
         photoSrc: v.photoSrc,
         photoTone: v.photoTone,
+        user: { connect: { id: user.id } },
       },
     });
     vendorBySlug.set(v.id, created);
@@ -161,9 +192,13 @@ async function main() {
   }
 
   console.log(
-    `Mock data: ${vendorBySlug.size} vendors, ${productBySlug.size} products, ` +
+    `Mock data: ${vendorBySlug.size + 1} users (1 admin + ${vendorBySlug.size} vendors), ` +
+      `${productBySlug.size} products, ` +
       `${services.length} services, ${reviews.length} product reviews, ` +
       `${vendorReviews.length} vendor reviews.`,
+  );
+  console.log(
+    `Sign in with admin: ${ADMIN_EMAIL} / ${DEV_PASSWORD}`,
   );
 }
 
