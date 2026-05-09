@@ -290,6 +290,35 @@ objects. The persisted row stays clean; the API-layer response carries
 the derived numbers. If sort-by-rating becomes slow under real load, add
 a materialized view — but only after measuring.
 
+## Migration workflow
+
+How phases land on `main`. These are conventions, not the plan itself —
+they exist so multiple agents can pick up phases without re-litigating
+process.
+
+- **One branch per phase, cut from the latest `main`.** Naming:
+  `claude/phase-{a-f}-{short-kebab-slug}` (e.g.
+  `claude/phase-a-data-model-cleanup`,
+  `claude/phase-b-postgres-prisma`).
+- **No long-lived integration branch.** The plan was deliberately
+  written so each phase is independently landable: A and B are
+  zero-visible-change; C–F are additive (new routes, no edits to
+  existing pages). A long-lived branch trades incremental review +
+  small blast radius for merge debt — don't take that trade.
+- **Hide unfinished surface area with feature flags / route gating,
+  not branches.** New routes (`/dashboard`, `/admin/applications`,
+  `/login`, `/signup`, etc.) ship merged but unreachable in
+  production until an env flag flips. Public pages stay unchanged
+  through every phase until the phase is ready to expose.
+- **Squash merge, PR title format `Title (#NN)`** — matches the
+  existing repo history (see PRs #33–#48).
+- **Phase D is the demo-readiness milestone.** Phases A → B → C → D
+  are sufficient to demo vendor signup + product CRUD to prospects.
+  E (orders) and F (reviews) are not on the demo path.
+- **Definition of done for a phase:** `npm run check-drift` clean,
+  `npm run build` succeeds, and the verification steps listed in the
+  phase (or the plan's `Verification` section, for Phase A) all pass.
+
 ## Phased migration
 
 ### Phase A — clean the in-memory model (no DB, no UI changes)
