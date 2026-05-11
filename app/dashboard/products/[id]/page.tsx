@@ -62,8 +62,8 @@ export default async function VendorProductEditorPage({ params }: PageProps) {
               slug: product.slug,
               title: product.title,
               description: product.description,
-              basePriceCents: product.basePriceCents,
               status: product.status,
+              details: (product.details ?? {}) as Record<string, unknown>,
               variants: product.variants.map((v) => ({
                 id: v.id,
                 label: v.label,

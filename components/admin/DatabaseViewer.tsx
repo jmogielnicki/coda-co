@@ -128,7 +128,7 @@ function ProductsTab({ products }: { products: ProductWithRating[] }) {
                   <Td>
                     <Badge label={p.productType} color="tr" />
                   </Td>
-                  <Td mono>${p.price}</Td>
+                  <Td mono>{p.priceMin === p.priceMax ? `$${p.priceMin}` : `$${p.priceMin}–$${p.priceMax}`}</Td>
                   <Td>{p.status}</Td>
                   <Td><Stars rating={p.rating} /></Td>
                   <Td mono>{p.reviewCount}</Td>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { Container } from "@/components/ui/Container";
 import { prisma } from "@/lib/db";
+import { formatPriceRange } from "@/lib/format/product";
 import { requireVendor } from "../lib";
 
 export const metadata: Metadata = {
@@ -48,7 +49,7 @@ export default async function VendorProductsPage() {
                 <tr>
                   <Th>Title</Th>
                   <Th>Type</Th>
-                  <Th>Base price</Th>
+                  <Th>Price</Th>
                   <Th>Total stock</Th>
                   <Th>Status</Th>
                   <Th />
@@ -69,6 +70,9 @@ export default async function VendorProductsPage() {
                 ) : (
                   products.map((p) => {
                     const totalStock = p.variants.reduce((n, v) => n + v.stock, 0);
+                    const prices = p.variants.map((v) => v.priceCents / 100);
+                    const priceMin = prices.length ? Math.min(...prices) : 0;
+                    const priceMax = prices.length ? Math.max(...prices) : 0;
                     return (
                       <tr key={p.id} className="border-b border-pl2">
                         <td className="px-4 py-3">
@@ -77,7 +81,7 @@ export default async function VendorProductsPage() {
                         </td>
                         <td className="px-4 py-3 text-[12px] text-cm">{p.productType.name}</td>
                         <td className="px-4 py-3 text-[12px] text-cm tabular-nums">
-                          ${(p.basePriceCents / 100).toFixed(2)}
+                          {formatPriceRange(priceMin, priceMax)}
                         </td>
                         <td className="px-4 py-3 text-[12px] text-cm tabular-nums">{totalStock}</td>
                         <td className="px-4 py-3">

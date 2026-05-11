@@ -52,9 +52,9 @@ export default async function NewProductPage() {
                 ))}
               </select>
             </Field>
-            <Field label="Base price (USD)">
+            <Field label="Starting price (USD)">
               <input
-                name="basePrice"
+                name="startingPrice"
                 type="number"
                 step="0.01"
                 min="0"
@@ -62,6 +62,9 @@ export default async function NewProductPage() {
                 className={inputCls}
                 placeholder="0.00"
               />
+              <span className="block text-[11px] text-cl mt-1">
+                Seeds your first variant. Add more variants and edit prices from the product editor.
+              </span>
             </Field>
             <Field label="Description">
               <textarea

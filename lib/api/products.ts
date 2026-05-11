@@ -38,16 +38,25 @@ function toVariant(v: DbProduct["variants"][number]): Variant {
 }
 
 function toProduct(p: DbProduct): Product {
+  const variants = p.variants.map(toVariant);
+  const prices = variants.map((v) => v.price);
+  // Products are always created with at least one variant (see createProduct
+  // in app/dashboard/products/actions.ts), but defend against the empty case
+  // so listings don't crash on a malformed row.
+  const priceMin = prices.length ? Math.min(...prices) : 0;
+  const priceMax = prices.length ? Math.max(...prices) : 0;
+  const currency = variants[0]?.currency ?? "USD";
   return {
     id: p.slug,
     title: p.title,
     seller: p.vendor.displayName,
     sellerId: p.vendor.slug,
     location: p.vendor.location,
-    price: p.basePriceCents / 100,
-    currency: p.currency,
+    priceMin,
+    priceMax,
+    currency,
     productType: p.productType.slug as ProductType,
-    variants: p.variants.map(toVariant),
+    variants,
     status: p.status as ProductStatus,
     verified: p.verified,
     description: p.description,
@@ -105,12 +114,12 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Product
     orderBy: { createdAt: "asc" },
   });
 
-  // The min/max price filters target base price as the user-perceived
-  // price; doing it in Prisma would require dropping into integer-cents
-  // throughout. Filtering after `toProduct()` keeps the API readable.
+  // The min/max price filters target the variant-derived display price;
+  // doing it in Prisma would require dropping into integer-cents throughout.
+  // Filtering after `toProduct()` keeps the API readable.
   let mapped = rows.map((p) => ({ dbId: p.id, ...toProduct(p) }));
-  if (filters.minPrice != null) mapped = mapped.filter((p) => p.price >= filters.minPrice!);
-  if (filters.maxPrice != null) mapped = mapped.filter((p) => p.price <= filters.maxPrice!);
+  if (filters.minPrice != null) mapped = mapped.filter((p) => p.priceMin >= filters.minPrice!);
+  if (filters.maxPrice != null) mapped = mapped.filter((p) => p.priceMax <= filters.maxPrice!);
 
   return attachRatings(mapped);
 }

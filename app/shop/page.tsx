@@ -32,10 +32,12 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     getFeaturedProducts(4),
   ]);
 
-  // Client-side sort can't be done on RSC, so we handle it here
+  // Client-side sort can't be done on RSC, so we handle it here. Sort by
+  // the cheapest variant when ascending, the most expensive when descending —
+  // matches how shoppers think about "lowest price first / highest first".
   const sorted = [...products].sort((a, b) => {
-    if (sort === "price-asc") return a.price - b.price;
-    if (sort === "price-desc") return b.price - a.price;
+    if (sort === "price-asc") return a.priceMin - b.priceMin;
+    if (sort === "price-desc") return b.priceMax - a.priceMax;
     if (sort === "most-reviewed") return b.reviewCount - a.reviewCount;
     // featured: verified first
     return (b.verified ? 1 : 0) - (a.verified ? 1 : 0);

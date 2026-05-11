@@ -10,7 +10,7 @@ import { Stars } from "@/components/ui/Stars";
 import { getProduct, getRelatedProducts } from "@/lib/api/products";
 import { getReviews, getReviewSummary } from "@/lib/api/reviews";
 import { getVendor } from "@/lib/api/vendors";
-import { productThumbBg } from "@/lib/format/product";
+import { formatPriceRange, productThumbBg } from "@/lib/format/product";
 
 interface PDPProps {
   params: Promise<{ productId: string }>;
@@ -124,7 +124,7 @@ export default async function ProductDetailPage({ params }: PDPProps) {
             </div>
 
             <div className="font-serif text-[32px] font-light text-tr mb-5">
-              ${product.variants[0]?.price ?? product.price}
+              {formatPriceRange(product.priceMin, product.priceMax)}
             </div>
 
             <AddToCart product={product} />

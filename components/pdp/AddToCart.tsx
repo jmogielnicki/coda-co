@@ -16,7 +16,7 @@ export function AddToCart({ product }: AddToCartProps) {
   const [added, setAdded] = useState(false);
 
   const variant = product.variants[selectedVariant];
-  const price = variant?.price ?? product.price;
+  const price = variant?.price ?? 0;
   const glazes = product.details.glazes;
 
   function handleAdd() {

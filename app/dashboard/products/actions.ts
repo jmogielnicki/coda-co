@@ -22,8 +22,10 @@ export async function createProduct(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const productTypeSlug = String(formData.get("productType") ?? "");
-  const basePrice = Number(formData.get("basePrice") ?? 0);
-  if (!title || !productTypeSlug || !(basePrice >= 0)) {
+  // Asked for as "starting price" — it seeds the default variant. The
+  // vendor can edit it (and add more variants) from the product editor.
+  const startingPrice = Number(formData.get("startingPrice") ?? 0);
+  if (!title || !productTypeSlug || !(startingPrice >= 0)) {
     throw new Error("Invalid product");
   }
 
@@ -46,12 +48,16 @@ export async function createProduct(formData: FormData) {
       slug,
       title,
       description,
-      basePriceCents: Math.round(basePrice * 100),
-      currency: "USD",
       status: "draft",
-      // Sensible default so the editor has at least one variant row to edit.
+      // Every product gets at least one variant — that's where price and
+      // stock live. The editor lets the vendor rename/repirce it later.
       variants: {
-        create: [{ label: "Default", priceCents: Math.round(basePrice * 100), currency: "USD", stock: 0 }],
+        create: [{
+          label: "Default",
+          priceCents: Math.round(startingPrice * 100),
+          currency: "USD",
+          stock: 0,
+        }],
       },
     },
   });
@@ -63,17 +69,34 @@ export async function createProduct(formData: FormData) {
 export interface UpdateProductFields {
   title: string;
   description: string;
-  basePrice: number;
+  // Scalar-string entries to overwrite in the `details` JSONB blob.
+  // Non-scalar entries (e.g. `glazes` array) are preserved untouched —
+  // the editor only manages scalar rows; arrays are owned by other UI.
+  details: Record<string, string>;
 }
 
 export async function updateProduct(productId: string, fields: UpdateProductFields) {
   const vendorId = await requireVendorId();
+
+  // Preserve non-scalar entries (arrays like `glazes`) so the key-value
+  // editor never accidentally clobbers them.
+  const existing = await prisma.product.findUnique({
+    where: { id: productId, vendorId },
+    select: { details: true },
+  });
+  if (!existing) throw new Error("Not your product");
+  const preserved: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(existing.details as Record<string, unknown>)) {
+    if (typeof v !== "string") preserved[k] = v;
+  }
+  const mergedDetails = { ...preserved, ...fields.details };
+
   await prisma.product.update({
     where: { id: productId, vendorId },
     data: {
       title: fields.title.trim(),
       description: fields.description.trim(),
-      basePriceCents: Math.round(fields.basePrice * 100),
+      details: mergedDetails as object,
     },
   });
   revalidatePath(`/dashboard/products/${productId}`);
@@ -82,9 +105,9 @@ export async function updateProduct(productId: string, fields: UpdateProductFiel
   revalidatePath("/shop/[productId]", "page");
 }
 
-// Stock is the most-edited field per the data-model plan, so it gets its
-// own action — saving the whole product on every quantity change would
-// be unnecessarily disruptive UX.
+// Stock + price both live on variants now, so they get sibling actions —
+// saving the whole product on every quantity or price change would be
+// unnecessarily disruptive UX.
 export async function updateVariantStock(variantId: string, stock: number) {
   const vendorId = await requireVendorId();
   const variant = await prisma.productVariant.findUnique({
@@ -98,6 +121,24 @@ export async function updateVariantStock(variantId: string, stock: number) {
     data: { stock: Math.max(0, Math.floor(stock)) },
   });
   revalidatePath(`/dashboard/products/${variant.product.id}`);
+  revalidatePath("/shop/[productId]", "page");
+}
+
+export async function updateVariantPrice(variantId: string, price: number) {
+  const vendorId = await requireVendorId();
+  const variant = await prisma.productVariant.findUnique({
+    where: { id: variantId },
+    select: { product: { select: { id: true, vendorId: true } } },
+  });
+  if (!variant || variant.product.vendorId !== vendorId) throw new Error("Not your product");
+
+  await prisma.productVariant.update({
+    where: { id: variantId },
+    data: { priceCents: Math.max(0, Math.round(price * 100)) },
+  });
+  revalidatePath(`/dashboard/products/${variant.product.id}`);
+  revalidatePath("/dashboard/products");
+  revalidatePath("/shop");
   revalidatePath("/shop/[productId]", "page");
 }
 

@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { setProductStatus, updateProduct, updateVariantStock } from "../actions";
+import {
+  setProductStatus,
+  updateProduct,
+  updateVariantPrice,
+  updateVariantStock,
+} from "../actions";
 
 interface Variant {
   id: string;
@@ -15,28 +20,49 @@ interface ProductView {
   slug: string;
   title: string;
   description: string;
-  basePriceCents: number;
   status: "draft" | "published" | "archived" | "unknown";
+  details: Record<string, unknown>;
   variants: Variant[];
+}
+
+interface DetailRow {
+  key: string;
+  value: string;
 }
 
 const inputCls =
   "w-full border border-line-bold rounded-[8px] px-3 py-2.5 text-[14px] text-ch bg-white outline-none focus:border-tr transition-colors";
 
+function scalarDetailRows(details: Record<string, unknown>): DetailRow[] {
+  return Object.entries(details)
+    .filter((entry): entry is [string, string] => typeof entry[1] === "string")
+    .map(([key, value]) => ({ key, value }));
+}
+
 export function ProductEditor({ product }: { product: ProductView }) {
   const [title, setTitle] = useState(product.title);
   const [description, setDescription] = useState(product.description);
-  const [basePrice, setBasePrice] = useState((product.basePriceCents / 100).toFixed(2));
+  const [detailRows, setDetailRows] = useState<DetailRow[]>(() =>
+    scalarDetailRows(product.details),
+  );
   const [variants, setVariants] = useState(product.variants);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  function saveBase() {
+  function saveProduct() {
+    // Drop empty-keyed rows and de-dupe by key (last write wins) so the
+    // server never sees junk entries from in-progress edits.
+    const details: Record<string, string> = {};
+    for (const row of detailRows) {
+      const key = row.key.trim();
+      if (!key) continue;
+      details[key] = row.value;
+    }
     startTransition(async () => {
       await updateProduct(product.id, {
         title: title.trim(),
         description: description.trim(),
-        basePrice: parseFloat(basePrice) || 0,
+        details,
       });
       setSavedAt(new Date().toLocaleTimeString());
     });
@@ -56,12 +82,42 @@ export function ProductEditor({ product }: { product: ProductView }) {
     });
   }
 
+  function setPrice(variantId: string, raw: string) {
+    const cents = Math.max(0, Math.round((Number(raw) || 0) * 100));
+    setVariants((prev) =>
+      prev.map((v) => (v.id === variantId ? { ...v, priceCents: cents } : v)),
+    );
+  }
+
+  function commitPrice(variantId: string, priceCents: number) {
+    startTransition(async () => {
+      await updateVariantPrice(variantId, priceCents / 100);
+      setSavedAt(new Date().toLocaleTimeString());
+    });
+  }
+
   function togglePublish() {
     const next = product.status === "published" ? "draft" : "published";
     startTransition(async () => {
       await setProductStatus(product.id, next);
       setSavedAt(new Date().toLocaleTimeString());
     });
+  }
+
+  function addDetailRow() {
+    setDetailRows((prev) => [...prev, { key: "", value: "" }]);
+  }
+
+  function updateDetailKey(i: number, key: string) {
+    setDetailRows((prev) => prev.map((row, j) => (j === i ? { ...row, key } : row)));
+  }
+
+  function updateDetailValue(i: number, value: string) {
+    setDetailRows((prev) => prev.map((row, j) => (j === i ? { ...row, value } : row)));
+  }
+
+  function removeDetailRow(i: number) {
+    setDetailRows((prev) => prev.filter((_, j) => j !== i));
   }
 
   const isPublished = product.status === "published";
@@ -104,16 +160,6 @@ export function ProductEditor({ product }: { product: ProductView }) {
         <Field label="Title">
           <input className={inputCls} value={title} onChange={(e) => setTitle(e.target.value)} />
         </Field>
-        <Field label="Base price (USD)">
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            className={inputCls}
-            value={basePrice}
-            onChange={(e) => setBasePrice(e.target.value)}
-          />
-        </Field>
         <Field label="Description">
           <textarea
             className={`${inputCls} min-h-[120px] resize-y`}
@@ -122,11 +168,57 @@ export function ProductEditor({ product }: { product: ProductView }) {
           />
         </Field>
 
-        <div className="flex items-center gap-3 mt-2">
+        <div className="mb-2">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="block text-[12px] font-medium text-ch">Details</span>
+            <button
+              type="button"
+              onClick={addDetailRow}
+              className="text-[12px] text-tr no-underline hover:underline"
+            >
+              + Add detail
+            </button>
+          </div>
+          <p className="text-[11px] text-cl mb-2">
+            Free-form key / value pairs shown on the product page (e.g. material, dimensions, finish).
+          </p>
+          {detailRows.length === 0 ? (
+            <p className="text-[12px] text-cl italic">No details yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {detailRows.map((row, i) => (
+                <div key={i} className="grid grid-cols-[1fr_2fr_auto] gap-2">
+                  <input
+                    className={inputCls}
+                    placeholder="Key (e.g. material)"
+                    value={row.key}
+                    onChange={(e) => updateDetailKey(i, e.target.value)}
+                  />
+                  <input
+                    className={inputCls}
+                    placeholder="Value"
+                    value={row.value}
+                    onChange={(e) => updateDetailValue(i, e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeDetailRow(i)}
+                    aria-label="Remove detail"
+                    className="px-3 text-[16px] text-cl hover:text-tr cursor-pointer"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3 mt-4">
           <button
             type="button"
             disabled={pending}
-            onClick={saveBase}
+            onClick={saveProduct}
             className="btn-primary btn-md disabled:opacity-60"
           >
             {pending ? "Saving…" : "Save changes"}
@@ -140,13 +232,13 @@ export function ProductEditor({ product }: { product: ProductView }) {
       <div className="bg-white rounded-[10px] border border-line p-6">
         <h2 className="text-[15px] font-medium text-ch mb-1">Variants &amp; stock</h2>
         <p className="text-[12px] text-cl mb-4">
-          Stock changes save the moment you commit them.
+          Price and stock changes save the moment you commit them.
         </p>
         <table className="w-full text-sm">
           <thead className="border-b border-line">
             <tr>
               <Th>Variant</Th>
-              <Th>Price</Th>
+              <Th className="w-36">Price (USD)</Th>
               <Th className="w-32">Stock</Th>
             </tr>
           </thead>
@@ -154,8 +246,22 @@ export function ProductEditor({ product }: { product: ProductView }) {
             {variants.map((v) => (
               <tr key={v.id} className="border-b border-line last:border-b-0">
                 <td className="px-3 py-3 text-[13px] text-ch">{v.label}</td>
-                <td className="px-3 py-3 text-[13px] text-cm tabular-nums">
-                  ${(v.priceCents / 100).toFixed(2)}
+                <td className="px-3 py-3">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={(v.priceCents / 100).toFixed(2)}
+                    onChange={(e) => setPrice(v.id, e.target.value)}
+                    onBlur={() => commitPrice(v.id, v.priceCents)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        commitPrice(v.id, v.priceCents);
+                        (e.target as HTMLInputElement).blur();
+                      }
+                    }}
+                    className="w-28 border border-line-bold rounded-[6px] px-2 py-1.5 text-[13px] text-ch bg-white outline-none focus:border-tr"
+                  />
                 </td>
                 <td className="px-3 py-3">
                   <input

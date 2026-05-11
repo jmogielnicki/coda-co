@@ -125,8 +125,8 @@ async function main() {
     });
   }
 
-  // Products. The base price + currency live on the product; per-variant
-  // overrides land on product_variants.
+  // Products. Price + currency live on product_variants; every product
+  // gets at least one.
   const productBySlug = new Map<string, { id: string }>();
   for (const p of products) {
     const vendor = vendorBySlug.get(p.sellerId);
@@ -139,8 +139,6 @@ async function main() {
         slug: p.id,
         title: p.title,
         description: p.description,
-        basePriceCents: Math.round(p.price * 100),
-        currency: p.currency,
         details: p.details as object,
         status: p.status,
         verified: p.verified,

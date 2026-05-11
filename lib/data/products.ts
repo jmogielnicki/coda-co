@@ -1,6 +1,30 @@
-import type { Product } from "@/lib/types";
+import type { LifeStage, ProductDetail, ProductStatus, ProductType } from "@/lib/types";
 
-export const products: Product[] = [
+// Mock seed shape — decoupled from the runtime `Product` type so the seed
+// can carry legacy fields (`price`, `currency`, `seller`, `location`,
+// `relatedIds`) that the runtime model no longer needs. Only the fields
+// consumed by `prisma/mock.ts` are meaningful here; the rest are kept
+// because they describe each product naturally and we don't want to
+// hand-strip them.
+export interface ProductSeed {
+  id: string;
+  title: string;
+  seller?: string;
+  sellerId: string;
+  location?: string;
+  price?: number;
+  currency?: string;
+  productType: ProductType;
+  variants: { id: string; label: string; price: number; currency: string; stock: number }[];
+  status: ProductStatus;
+  verified: boolean;
+  description: string;
+  details: ProductDetail;
+  lifeStages: LifeStage[];
+  relatedIds?: string[];
+}
+
+export const products: ProductSeed[] = [
   {
     id: "urn-sage-001",
     title: "Hand-thrown ceramic urn, sage glaze",

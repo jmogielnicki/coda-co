@@ -47,7 +47,10 @@ export interface Product {
   seller: string;
   sellerId: string;
   location: string;
-  price: number;
+  // Derived from variants. `priceMin === priceMax` for single-variant or
+  // uniform-price products; listings render a "$X – $Y" range otherwise.
+  priceMin: number;
+  priceMax: number;
   currency: string;
   productType: ProductType;
   variants: Variant[];

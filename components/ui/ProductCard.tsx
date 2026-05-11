@@ -1,6 +1,6 @@
 import type { Product } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
-import { productThumbBg } from "@/lib/format/product";
+import { formatPriceRange, productThumbBg } from "@/lib/format/product";
 
 export function ProductCard({ product }: { product: Product }) {
   return (
@@ -20,7 +20,7 @@ export function ProductCard({ product }: { product: Product }) {
           {product.seller}, {product.location}
         </div>
         <div className="text-[14px] font-medium text-tr flex items-center flex-wrap gap-1">
-          ${product.price}
+          {formatPriceRange(product.priceMin, product.priceMax)}
         </div>
       </div>
     </Card>

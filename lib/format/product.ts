@@ -20,3 +20,11 @@ function hashSlug(slug: string): number {
 export function productThumbBg(slug: string): string {
   return THUMB_PALETTE[hashSlug(slug) % THUMB_PALETTE.length];
 }
+
+// "$89" when the min and max match (single variant or uniform pricing),
+// "$89 – $129" when variants have a spread. Callers pass a currency
+// symbol — $ is the only currency we serve today.
+export function formatPriceRange(min: number, max: number, currency = "$"): string {
+  if (min === max) return `${currency}${min}`;
+  return `${currency}${min} – ${currency}${max}`;
+}

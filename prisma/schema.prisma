@@ -256,8 +256,9 @@ model Product {
   slug            String        @unique
   title           String
   description     String
-  basePriceCents  Int           @map("base_price_cents")
-  currency        String        @default("USD")
+  // Price + currency live on `product_variants` — every product must
+  // have at least one variant, and the variant's price is what buyers
+  // are charged. Listings derive a display range from the variant set.
   details         Json          @default("{}")
   status          ProductStatus @default(unknown)
 
