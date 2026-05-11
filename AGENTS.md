@@ -17,18 +17,40 @@ truth for visual design and copy. See `TASKS.md` for known open work.
 - TypeScript, Tailwind CSS v4 (tokens declared via `@theme` in
   `app/globals.css`)
 - `next/font` — Crimson Pro (serif) + Nunito Sans (sans)
+- **Postgres** via **Prisma 7** in driver-adapter mode
+  (`@prisma/adapter-pg` + `pg`). Schema has no inline `url`; datasource
+  config lives in `prisma.config.ts`.
+- **Auth.js v5 beta** (`next-auth`) with the Prisma adapter and a
+  Credentials provider. JWT session strategy (DB sessions aren't
+  supported with Credentials in v5 — known limitation); the `session`
+  callback in `auth.ts` re-hydrates `role` from `users` on every
+  request, so role changes still apply immediately.
 
 If something about the Next.js / React APIs surprises you, check the docs
 shipped in `node_modules/next/dist/docs/` rather than relying on memory.
+
+See `docs/data-model-evolution.md` for the master phase plan
+(A–F). Phases A–D are merged; E (orders/checkout) and F (review
+submission) haven't started.
 
 ## Conventions
 
 - **RSC by default.** Only add `'use client'` when a component needs
   `useState`, `useEffect`, browser APIs, or event handlers.
-- **Data access goes through `lib/api/*.ts`.** Don't import from
-  `lib/data/*.ts` directly in components.
+- **All runtime DB access goes through `lib/api/*.ts`.** The
+  `lib/data/*.ts` arrays exist only as a source for the mock script
+  (`prisma/mock.ts`) — components must not import them. *One
+  exception:* `lib/data/plans.ts` is intentionally still runtime
+  (plans stay code-defined per the data model).
+- **Slugs are the public id; cuids are private.** Every entity has a
+  stable `slug` (e.g. `urn-sage-001`, `maria-rosales`) plus a `cuid()`
+  PK. URLs, cart entries, API inputs all use slugs. Look up via
+  `findUnique({ where: { slug } })`, never by `id`.
+  (Variants are the exception — no slug column; the cuid is what's
+  exposed.)
 - **Cart**: `useCart()` from `components/providers/CartProvider.tsx`
-  (client-only, localStorage-backed).
+  (client-only, localStorage-backed). Items are
+  `{ productId, variantId, qty }` — no copied title/price/thumb.
 - **Filters**: URL `searchParams` are the source of truth for shop/service
   filtering. Client filter components update the URL; the page RSC re-renders.
 - **Tokens**: brand colors live in `app/globals.css` under `@theme`. Use
@@ -40,6 +62,82 @@ shipped in `node_modules/next/dist/docs/` rather than relying on memory.
 - **Run `npm run check-drift`** before finishing a task. It scans for the
   patterns banned below and explains what to use instead. Treat it as
   required: a clean run is part of "done".
+
+## Database, auth, deployment — load-bearing infrastructure
+
+These are easy to get wrong by guessing. Read before touching.
+
+### Schema & migrations
+- Schema lives in `prisma/schema.prisma`. 13 models, 12 enums. Every
+  enum has an `unknown` member as the default so missing values are
+  visible state, not silent defaults.
+- Migrations live in `prisma/migrations/`. Dev: `npx prisma migrate dev
+  --name <slug>`. Production: `npx prisma migrate deploy` (run
+  automatically in `scripts/build.mjs`).
+- **Never run `npx prisma migrate reset`** without explicit user
+  consent — Prisma 7 enforces this against AI agents via the
+  `PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION` env var.
+
+### System seed vs mock data
+Strictly separated so a prod deploy can never push fake vendors:
+- `prisma/seed.ts` — *system data only* (product_types,
+  service_types). Idempotent via upsert. Wired to `prisma db seed`,
+  safe in any environment, runs as part of every Vercel deploy.
+- `prisma/mock.ts` — *test data only* (fake users / vendors /
+  products / reviews). Destructive: wipes everything before
+  reloading. Hard-fails when `NODE_ENV === "production"` unless
+  `ALLOW_MOCK_SEED=1` is also set. Never call it from a long-lived
+  build script.
+
+Mock accounts use `{slug}@codaco.local` emails (admin is
+`admin@codaco.local`); all share password `codaco-dev`. The
+`.local` domain reservation (RFC 6762) means real users can't
+collide with it — that's the natural marker for identifying mock
+rows when you eventually need to delete them.
+
+### Auth & role gating
+- Session shape is augmented in `types/next-auth.d.ts`:
+  `session.user.{id, email, name, role}`.
+- Server-side role gate pattern (see `app/admin/page.tsx`,
+  `app/dashboard/lib.ts`):
+  ```ts
+  const session = await auth();
+  if (!session?.user) redirect("/login?next=/foo");
+  if (session.user.role !== "admin") redirect("/");
+  ```
+- Vendor-side gate: `requireVendor()` in `app/dashboard/lib.ts`
+  redirects to `/list-with-us` when a signed-in user lacks a
+  `vendor_profile`.
+
+### Build wrapper (`scripts/build.mjs`)
+Single Node script invoked by both `npm run build` and `npm run
+vercel-build`. Decides what to run from env vars, not the script name:
+
+| `DATABASE_URL` | `VERCEL_ENV` | What runs |
+|---|---|---|
+| unset | – | `next build` only (CI) |
+| set | `preview` | `next build` only (preview must NOT mutate prod DB) |
+| set | unset / `production` | `migrate deploy` + `db seed` + `next build` |
+
+This pattern is deliberate — earlier attempts using a `build` /
+`vercel-build` script split broke when Vercel's Build Command
+override pointed at the wrong one. Don't naively re-split.
+
+### Lazy Prisma client (`lib/db.ts`)
+Wrapped in a `Proxy` so `DATABASE_URL` is read on first use, not at
+module load. Without this, `next build`'s "Collecting page data"
+phase crashes on routes that never query (e.g. `/_not-found`)
+because the Auth.js + Nav chain pulls `lib/db.ts` into every page.
+Methods are bound to the underlying client so
+`prisma.$transaction` callbacks (used by the application approval
+flow) keep working. Don't naively rewrite as a direct `new
+PrismaClient()` export.
+
+### Workflow
+- One PR per logical change, cut from latest `main`, squash-merged.
+- Phase branches: `claude/phase-{a-f}-{short-kebab-slug}`. Other
+  follow-ups: `claude/{short-kebab-slug}`.
+- User reviews and merges. Agent doesn't merge unless asked.
 
 ## Reuse conventions — read before adding markup
 
@@ -59,8 +157,7 @@ inline (see Decision rules below).
 | `<Stars>`        | `rating`, `reviewCount?`, `className?`                        | Rating display. Pass `reviewCount` to append " · N reviews" inline. Wrap in a `text-tr` parent if you want the suffix terracotta-colored. | `components/ui/Stars.tsx`                 |
 | `<VendorCard>`   | `vendor`, `layout='compact'\|'search'`                        | Vendor list item. `compact` for grid tiles, `search` for service-search rows. | `components/ui/VendorCard.tsx`            |
 | `<ProductCard>`  | `product`                                                     | Product grid tile.                                            | `components/ui/ProductCard.tsx`           |
-| `<ReviewCard>`   | `review`                                                      | One review row with stars + body.                             | `components/ui/ReviewCard.tsx`            |
-| `<Badge>`        | `badge`                                                       | "Bestseller" / "New" / etc. pills with variant colors.        | `components/ui/Badge.tsx`                 |
+| `<ReviewCard>`   | `review`                                                      | One review row with stars + body. Accepts a `Review` or `VendorReview`. | `components/ui/ReviewCard.tsx`            |
 | `<Breadcrumb>`   | `crumbs`                                                      | Page top breadcrumb trail.                                    | `components/layout/Breadcrumb.tsx`        |
 | `<WaveDivider>`  | `topColor`, `bottomColor`                                     | Section transition with arc-top.                              | `components/ui/WaveDivider.tsx`           |
 | `<StepsBar>`     | `steps`, `current`                                            | Multi-step form indicator.                                    | `components/ui/StepsBar.tsx`              |
@@ -83,7 +180,9 @@ filter component.
 
 ### Format helpers
 
-- `lib/format/vendor.ts` — `vendorTypeLabel(type)`, `vendorLocationSuffix(vendor)`.
+- `lib/format/vendor.ts` — `serviceTypeLabel(type)` (maps `ServiceType` enum value to display label), `vendorLocationSuffix(vendor, locationTypes)` (builds "City · In-home & virtual"-style suffix from the vendor's matched services' `locationType`s).
+- `lib/format/product.ts` — `productThumbBg(slug)` (deterministic palette pick — replaces the dropped `Product.thumbBg` column), `formatPriceRange(min, max)` (returns `"$89"` or `"$89 – $129"` based on variant spread).
+- `lib/format/date.ts` — `formatMonthYear(iso)` (renders `"2025-03-12"` as `"March 2025"`; pass-through for non-ISO inputs).
 - `lib/format/lifeStage.ts` — `LIFE_STAGES` (label/value pairs), `lifeStageLabel(stage)`, `parseLifeStageParam(raw)` (parses a comma-separated URL param into a typed array), `matchesLifeStage(entryStages, filter)` accepts a single stage or a list (OR semantics), with `throughout`-tagged entries matching any specific-stage filter.
 
 ### `@layer components` classes (`app/globals.css`)
