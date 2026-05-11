@@ -15,8 +15,15 @@ import { vendorReviews } from "../lib/data/vendor-reviews";
 
 config({ path: ".env" });
 
-if (process.env.NODE_ENV === "production") {
-  console.error("npm run db:mock cannot run in production.");
+// Hard-fail in production unless the operator explicitly opts in by
+// setting ALLOW_MOCK_SEED=1. This is a temporary escape hatch for
+// bootstrapping a demo DB from the Vercel build — drop the env var
+// (or remove db:mock from the build script) once the cloud DB is
+// populated, so future deploys can't wipe real test signups.
+if (process.env.NODE_ENV === "production" && process.env.ALLOW_MOCK_SEED !== "1") {
+  console.error(
+    "npm run db:mock refused: NODE_ENV=production. Set ALLOW_MOCK_SEED=1 to override.",
+  );
   process.exit(1);
 }
 

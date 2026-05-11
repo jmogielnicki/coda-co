@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma migrate deploy && prisma db seed && npm run db:mock && next build",
     "start": "next start",
     "postinstall": "prisma generate",
     "visual-diff": "node scripts/visual-diff.mjs",
