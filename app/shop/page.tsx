@@ -8,6 +8,7 @@ import { ProductCard } from "@/components/ui/ProductCard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { WaveDivider } from "@/components/ui/WaveDivider";
 import { getFeaturedProducts, getProducts } from "@/lib/api/products";
+import { getProductTypes } from "@/lib/api/productTypes";
 import { parseLifeStageParam } from "@/lib/format/lifeStage";
 import type { ProductType } from "@/lib/types";
 
@@ -24,12 +25,13 @@ interface ShopPageProps {
 export default async function ShopPage({ searchParams }: ShopPageProps) {
   const { category, sort, lifeStage } = await searchParams;
 
-  const [products, featuredProducts] = await Promise.all([
+  const [products, featuredProducts, productTypes] = await Promise.all([
     getProducts({
       productType: category as ProductType | undefined,
       lifeStage: parseLifeStageParam(lifeStage),
     }),
     getFeaturedProducts(4),
+    getProductTypes(),
   ]);
 
   // Client-side sort can't be done on RSC, so we handle it here. Sort by
@@ -76,7 +78,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           </div>
 
           <Suspense>
-            <FilterStrip />
+            <FilterStrip productTypes={productTypes} />
           </Suspense>
 
           <ProductGrid products={sorted} />

@@ -3,16 +3,7 @@
 import { useFilterParams } from "@/lib/hooks/useFilterParams";
 import { FilterPill } from "@/components/ui/filters/FilterPill";
 import { LifeStageChips } from "@/components/ui/filters/LifeStageChips";
-
-const CATEGORIES = [
-  { value: "", label: "All" },
-  { value: "urns", label: "Urns & vessels" },
-  { value: "jewelry", label: "Ash jewelry" },
-  { value: "shrouds", label: "Burial shrouds" },
-  { value: "planning", label: "Planning docs" },
-  { value: "memorial", label: "Memorial items" },
-  { value: "humor", label: "Gifts & humor" },
-];
+import type { ProductTypeOption } from "@/lib/api/productTypes";
 
 const SORT_OPTIONS = [
   { value: "featured", label: "Featured" },
@@ -21,7 +12,7 @@ const SORT_OPTIONS = [
   { value: "most-reviewed", label: "Most reviewed" },
 ];
 
-export function FilterStrip() {
+export function FilterStrip({ productTypes }: { productTypes: ProductTypeOption[] }) {
   const { get, setParam } = useFilterParams();
   const activeCategory = get("category");
   const activeSort = get("sort") || "featured";
@@ -31,12 +22,17 @@ export function FilterStrip() {
       <LifeStageChips />
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-[13px] text-cl mr-1">Filter:</span>
-        {CATEGORIES.map((cat) => (
+        <FilterPill
+          label="All"
+          active={!activeCategory}
+          onClick={() => setParam("category", "")}
+        />
+        {productTypes.map((t) => (
           <FilterPill
-            key={cat.value}
-            label={cat.label}
-            active={activeCategory === cat.value}
-            onClick={() => setParam("category", cat.value)}
+            key={t.slug}
+            label={t.name}
+            active={activeCategory === t.slug}
+            onClick={() => setParam("category", t.slug)}
           />
         ))}
 
