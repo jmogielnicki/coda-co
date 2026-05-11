@@ -29,6 +29,36 @@ User-confirmed decisions:
 - Vendor signup is manually reviewed.
 - Cart stays client-only (localStorage); the order is written at checkout.
 
+## Phase status
+
+| Phase | Description                                              | Status                                         |
+|-------|----------------------------------------------------------|------------------------------------------------|
+| A     | Data model cleanup (in-memory shape aligned with future) | ✅ Merged — PR #50                              |
+| B     | Postgres + Prisma; split system seed vs mock             | ✅ Merged — PR #51                              |
+| C     | Auth.js v5 + users table; role-gated admin               | ✅ Merged — PR #52                              |
+| D     | Vendor self-service (apply → approve → dashboard)        | ✅ Merged — PR #53. **Demo-readiness milestone.** |
+| E     | Orders + checkout + vendor notifications                 | ⏳ Not started                                  |
+| F     | Review submission (verified-purchase gated)              | ⏳ Not started                                  |
+
+Production infrastructure follow-ups that landed after Phase D to make the
+live Vercel deployment work — these aren't part of the phase plan but are
+worth knowing about:
+
+| PR  | What                                                                              |
+|-----|-----------------------------------------------------------------------------------|
+| #54 | Postinstall `prisma generate` + lazy Prisma client (so `next build` works without `DATABASE_URL`) |
+| #55 | One-shot Vercel build that runs `migrate deploy` + `db seed` + `db:mock`          |
+| #56 | Robust build wrapper (`scripts/build.mjs`) — env-driven, not script-name-driven   |
+| #57 | Cleanup: removed `db:mock` from the build wrapper post-bootstrap                  |
+
+**Live demo:** `https://coda-co-nine.vercel.app`. Phase D's end-to-end
+flow (sign up → apply → auto-approve via `DEMO_AUTO_APPROVE_VENDORS=1` →
+dashboard → publish product → see on `/shop`) works in production. See
+`docs/admin-runbook.md` for credentials and operational details.
+
+**Next up:** Phase E. Not on the demo path, so not blocking. See the
+Phase E section below for scope.
+
 **Modeling principles applied throughout:**
 - *Every table has its own surrogate `id` primary key.* Even 1:1 tables
   (e.g. `vendor_profile`) — the FK is a separate `user_id` column with a
@@ -321,7 +351,7 @@ process.
 
 ## Phased migration
 
-### Phase A — clean the in-memory model (no DB, no UI changes)
+### Phase A — clean the in-memory model (no DB, no UI changes) — ✅ Merged (PR #50)
 
 The whole point of A is to land the *shape* the DB will eventually use,
 while the data is still TS arrays. Nothing the user sees changes.
@@ -371,7 +401,7 @@ while the data is still TS arrays. Nothing the user sees changes.
 Run `npm run check-drift` and `npm run build` to confirm nothing
 regressed.
 
-### Phase B — Postgres + Prisma; split system seed vs mock; swap `lib/api`
+### Phase B — Postgres + Prisma; split system seed vs mock; swap `lib/api` — ✅ Merged (PR #51)
 
 Visible change: none. Files: new `prisma/schema.prisma`, **two** seed
 scripts (see below), new `lib/db.ts` (singleton client), every file in
@@ -395,7 +425,7 @@ prod deploy can never push fake vendors:
 at runtime. `app/admin/page.tsx` shifts to query the DB (or gets removed
 once Phase D's real admin lands).
 
-### Phase C — auth and `users`
+### Phase C — auth and `users` — ✅ Merged (PR #52)
 
 Add Auth.js (NextAuth v5) with the Prisma adapter and a Credentials
 provider. Sessions in the DB. Backfill seed vendors as `users` rows with
@@ -405,7 +435,7 @@ role-gated Auth.js (`role === 'admin'`); delete the HMAC scaffold.
 New: `/login`, `/signup`, session-aware top nav. Existing pages don't
 require auth yet.
 
-### Phase D — vendor self-service
+### Phase D — vendor self-service — ✅ Merged (PR #53)
 
 **This is the demo-ready milestone.** Through Phase D the product can
 walk a prospective vendor through: sign up → apply → land in dashboard →
@@ -442,7 +472,7 @@ it.
 add-to-cart and cart-drawer UX still work end-to-end (so vendors can
 preview the buyer-side flow), but no order is written.
 
-### Phase E — orders + checkout + vendor notifications
+### Phase E — orders + checkout + vendor notifications — ⏳ Not started
 
 Cart drawer's "Checkout" button works. Server action wraps order
 creation in a Prisma transaction: revalidate price against current
@@ -459,7 +489,7 @@ buyer. `order_item_events` audit log table is added here.
 Carrier polling for `delivered_at` is a Phase E follow-up — until then
 `delivered` is set by buyer or admin.
 
-### Phase F — review submission
+### Phase F — review submission — ⏳ Not started
 
 PDP gets a "Write a review" button gated to users with a paid
 `order_item` for that product (sets `verified_purchase = true` and links
