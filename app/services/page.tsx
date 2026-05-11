@@ -8,6 +8,7 @@ import { Container } from "@/components/ui/Container";
 import { LifeStageChips } from "@/components/ui/filters/LifeStageChips";
 import { WaveDivider } from "@/components/ui/WaveDivider";
 import { getServices } from "@/lib/api/services";
+import { getServiceTypes } from "@/lib/api/serviceTypes";
 import { getVendors } from "@/lib/api/vendors";
 import { parseLifeStageParam } from "@/lib/format/lifeStage";
 import type { Service, ServiceLocationType, ServiceType } from "@/lib/types";
@@ -28,18 +29,6 @@ interface ServicesPageProps {
   }>;
 }
 
-const TYPE_LABELS: Record<string, string> = {
-  doula: "Death doula",
-  attorney: "Estate attorney",
-  cleaner: "Death cleaning",
-  celebrant: "Celebrant",
-  organizer: "EOL organizer",
-  "home-funeral": "Home funeral",
-  "green-burial": "Green burial",
-  cafe: "Death cafe",
-  "life-celebration": "Celebration of life planner",
-};
-
 const VALID_LOCATION_TYPES = new Set<ServiceLocationType>([
   "virtual",
   "in_person",
@@ -55,7 +44,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
     ? (locParam as ServiceLocationType)
     : undefined;
 
-  const [matchedServices, allServices, allVendors] = await Promise.all([
+  const [matchedServices, allServices, allVendors, serviceTypes] = await Promise.all([
     getServices({ serviceType, locationType }),
     getServices(),
     getVendors({
@@ -63,7 +52,10 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
       lifeStage: parseLifeStageParam(lifeStage),
       minRating: minRating ? parseFloat(minRating) : undefined,
     }),
+    getServiceTypes(),
   ]);
+
+  const typeLabelBySlug = new Map(serviceTypes.map((t) => [t.slug, t.name]));
 
   const vendorIds = new Set(matchedServices.map((s) => s.vendorId));
   const vendors = allVendors.filter((v) => vendorIds.has(v.id));
@@ -106,7 +98,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
             </div>
             <input
               className="flex-1 border-0 px-3.5 py-2.5 font-sans text-[13px] text-ch outline-none bg-transparent"
-              defaultValue={type ? TYPE_LABELS[type] ?? type : ""}
+              defaultValue={type ? typeLabelBySlug.get(type) ?? type : ""}
               placeholder="Service type…"
             />
           </div>
@@ -141,7 +133,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
         <Container width="mid" className="grid grid-cols-[210px_1fr] gap-0">
           {/* Filter column */}
           <Suspense>
-            <ServiceFilters />
+            <ServiceFilters serviceTypes={serviceTypes} />
           </Suspense>
 
           {/* Results column */}

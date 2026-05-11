@@ -6,18 +6,7 @@ import { FilterPillGroup } from "@/components/ui/filters/FilterPillGroup";
 import { FilterCheck } from "@/components/ui/filters/FilterCheck";
 import { FilterSection } from "@/components/ui/filters/FilterSection";
 import { FilterDivider } from "@/components/ui/filters/FilterDivider";
-
-const SERVICE_TYPES = [
-  { value: "doula", label: "Death doula" },
-  { value: "attorney", label: "Estate attorney" },
-  { value: "cleaner", label: "Death cleaning" },
-  { value: "celebrant", label: "Celebrant" },
-  { value: "organizer", label: "EOL organizer" },
-  { value: "home-funeral", label: "Home funeral" },
-  { value: "green-burial", label: "Green burial" },
-  { value: "cafe", label: "Death cafe" },
-  { value: "life-celebration", label: "Celebration of life planner" },
-];
+import type { ServiceTypeOption } from "@/lib/api/serviceTypes";
 
 const DISTANCES = ["5 mi", "15 mi", "30 mi", "50 mi", "Virtual only"];
 const RATINGS = [
@@ -41,7 +30,7 @@ const VERIFIED_OPTIONS = [
   "CodaCo verified",
 ];
 
-export function ServiceFilters() {
+export function ServiceFilters({ serviceTypes }: { serviceTypes: ServiceTypeOption[] }) {
   const { get, setParam, toggleBool, clearAll } = useFilterParams();
 
   const activeType = get("type");
@@ -63,12 +52,12 @@ export function ServiceFilters() {
 
       <FilterSection heading="Service type">
         <FilterPillGroup>
-          {SERVICE_TYPES.map((t) => (
+          {serviceTypes.map((t) => (
             <FilterPill
-              key={t.value}
-              label={t.label}
-              active={activeType === t.value}
-              onClick={() => setParam("type", activeType === t.value ? "" : t.value)}
+              key={t.slug}
+              label={t.name}
+              active={activeType === t.slug}
+              onClick={() => setParam("type", activeType === t.slug ? "" : t.slug)}
             />
           ))}
         </FilterPillGroup>

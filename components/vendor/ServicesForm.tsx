@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { submitServicesApplication } from "@/app/list-with-us/actions";
 import { StepsBar } from "@/components/ui/StepsBar";
+import type { ServiceTypeOption } from "@/lib/api/serviceTypes";
 import { LIFE_STAGES } from "@/lib/format/lifeStage";
 import type { LifeStage } from "@/lib/types";
 
@@ -13,17 +14,6 @@ const STEPS = [
   { label: "Your service" },
   { label: "Area & availability" },
   { label: "Choose a plan" },
-];
-
-const SERVICE_TYPES = [
-  "Death doula",
-  "Estate attorney",
-  "Death cleaning (döstädning)",
-  "Funeral celebrant",
-  "EOL organizer",
-  "Home funeral guide",
-  "Grief counselor",
-  "Other",
 ];
 
 const SPECIALIZATIONS = [
@@ -74,7 +64,7 @@ interface FormData {
   availableHours: string[];
 }
 
-export function ServicesForm() {
+export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption[] }) {
   const [step, setStep] = useState(0);
   const [plan, setPlan] = useState<PlanId>("starter");
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -91,7 +81,7 @@ export function ServicesForm() {
     city: "",
     state: "",
     bio: "",
-    serviceType: SERVICE_TYPES[0],
+    serviceType: serviceTypes[0]?.slug ?? "",
     serviceDescription: "",
     specializations: [],
     lifeStages: [],
@@ -217,8 +207,8 @@ export function ServicesForm() {
                 <p className="text-[13px] text-cl mb-6">Tell clients what you offer.</p>
                 <FormField label="Service type">
                   <select className={inputCls} {...field("serviceType")}>
-                    {SERVICE_TYPES.map((t) => (
-                      <option key={t}>{t}</option>
+                    {serviceTypes.map((t) => (
+                      <option key={t.slug} value={t.slug}>{t.name}</option>
                     ))}
                   </select>
                 </FormField>
