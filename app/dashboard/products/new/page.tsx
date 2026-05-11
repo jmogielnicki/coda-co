@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { Container } from "@/components/ui/Container";
-import { prisma } from "@/lib/db";
+import { getProductTypes } from "@/lib/api/productTypes";
 import { requireVendor } from "../../lib";
 import { createProduct } from "../actions";
 
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export default async function NewProductPage() {
   await requireVendor();
-  const productTypes = await prisma.productType.findMany({ orderBy: { name: "asc" } });
+  const productTypes = await getProductTypes();
 
   return (
     <>

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { GoodsForm } from "@/components/vendor/GoodsForm";
+import { getProductTypes } from "@/lib/api/productTypes";
 
 export const metadata: Metadata = {
   title: "List goods — CodaCo",
@@ -15,6 +16,8 @@ export default async function ListGoodsPage() {
   const session = await auth();
   if (!session?.user) redirect("/signup?next=/list-with-us/goods");
 
+  const productTypes = await getProductTypes();
+
   return (
     <>
       <Breadcrumb
@@ -24,7 +27,7 @@ export default async function ListGoodsPage() {
           { label: "List goods" },
         ]}
       />
-      <GoodsForm />
+      <GoodsForm productTypes={productTypes} />
     </>
   );
 }

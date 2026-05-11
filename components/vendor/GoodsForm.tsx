@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { submitGoodsApplication } from "@/app/list-with-us/actions";
 import { StepsBar } from "@/components/ui/StepsBar";
+import type { ProductTypeOption } from "@/lib/api/productTypes";
 import { LIFE_STAGES } from "@/lib/format/lifeStage";
 import type { LifeStage } from "@/lib/types";
 
@@ -13,17 +14,6 @@ const STEPS = [
   { label: "Your listing" },
   { label: "Photos & pricing" },
   { label: "Choose a plan" },
-];
-
-const CATEGORIES = [
-  "Urns & vessels",
-  "Ash jewelry",
-  "Burial shrouds",
-  "Planning documents",
-  "Memorial art & prints",
-  "Custom keepsakes",
-  "Gifts & humor",
-  "Other",
 ];
 
 const TAGS = [
@@ -56,7 +46,7 @@ interface FormData {
   basePrice: string;
 }
 
-export function GoodsForm() {
+export function GoodsForm({ productTypes }: { productTypes: ProductTypeOption[] }) {
   const [step, setStep] = useState(0);
   const [plan, setPlan] = useState<PlanId>("starter");
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -73,7 +63,7 @@ export function GoodsForm() {
     state: "",
     bio: "",
     productName: "",
-    category: CATEGORIES[0],
+    category: productTypes[0]?.slug ?? "",
     description: "",
     tags: [],
     lifeStages: [],
@@ -198,8 +188,8 @@ export function GoodsForm() {
                 </FormField>
                 <FormField label="Category">
                   <select className={inputCls} {...field("category")}>
-                    {CATEGORIES.map((c) => (
-                      <option key={c}>{c}</option>
+                    {productTypes.map((t) => (
+                      <option key={t.slug} value={t.slug}>{t.name}</option>
                     ))}
                   </select>
                 </FormField>
