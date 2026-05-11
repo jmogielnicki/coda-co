@@ -78,6 +78,8 @@ export async function updateProduct(productId: string, fields: UpdateProductFiel
   });
   revalidatePath(`/dashboard/products/${productId}`);
   revalidatePath("/dashboard/products");
+  revalidatePath("/shop");
+  revalidatePath("/shop/[productId]", "page");
 }
 
 // Stock is the most-edited field per the data-model plan, so it gets its
@@ -96,6 +98,7 @@ export async function updateVariantStock(variantId: string, stock: number) {
     data: { stock: Math.max(0, Math.floor(stock)) },
   });
   revalidatePath(`/dashboard/products/${variant.product.id}`);
+  revalidatePath("/shop/[productId]", "page");
 }
 
 export async function setProductStatus(productId: string, status: "draft" | "published" | "archived") {
