@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "vercel-build": "prisma migrate deploy && prisma db seed && npm run db:mock && next build",
+    "build": "node scripts/build.mjs",
+    "vercel-build": "node scripts/build.mjs",
     "start": "next start",
     "postinstall": "prisma generate",
     "visual-diff": "node scripts/visual-diff.mjs",
