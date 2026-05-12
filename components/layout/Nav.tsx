@@ -1,11 +1,24 @@
 import Link from "next/link";
+import { auth, signOut } from "@/auth";
 import { Logo } from "@/components/ui/Logo";
+import { prisma } from "@/lib/db";
 
 interface NavProps {
   active?: "shop" | "services" | "books" | "light" | "list";
 }
 
-export function Nav({ active }: NavProps) {
+export async function Nav({ active }: NavProps) {
+  const session = await auth();
+  // Look up vendor status once so the "Dashboard" link only renders for
+  // approved vendors. The query is cheap (unique lookup on user_id) and
+  // every Nav render already touches the session.
+  const vendor = session?.user
+    ? await prisma.vendorProfile.findUnique({
+        where: { userId: session.user.id },
+        select: { id: true },
+      })
+    : null;
+
   const link = (label: string, href: string, key: NavProps["active"]) => (
     <li key={href}>
       <Link
@@ -43,12 +56,63 @@ export function Nav({ active }: NavProps) {
         {link("Books", "/books", "books")}
         {link("Grief meets humor", "/light-and-dark", "light")}
         {link("List with us", "/list-with-us", "list")}
-        <li>
-          <a className="btn-primary btn-sm">
-            Sign in
-          </a>
-        </li>
+        {session?.user ? (
+          <SignedInControls user={session.user} hasVendorProfile={vendor != null} />
+        ) : (
+          <SignedOutControls />
+        )}
       </ul>
     </nav>
+  );
+}
+
+function SignedOutControls() {
+  return (
+    <li>
+      <Link href="/login" className="btn-primary btn-sm no-underline">
+        Sign in
+      </Link>
+    </li>
+  );
+}
+
+function SignedInControls({
+  user,
+  hasVendorProfile,
+}: {
+  user: { name?: string | null; email: string; role: string };
+  hasVendorProfile: boolean;
+}) {
+  const display = user.name?.trim() || user.email;
+  return (
+    <>
+      {hasVendorProfile && (
+        <li>
+          <Link href="/dashboard" className="text-[13px] text-cm hover:text-tr no-underline">
+            Dashboard
+          </Link>
+        </li>
+      )}
+      {user.role === "admin" && (
+        <li>
+          <Link href="/admin" className="text-[13px] text-cm hover:text-tr no-underline">
+            Admin
+          </Link>
+        </li>
+      )}
+      <li className="text-[13px] text-cm">{display}</li>
+      <li>
+        <form
+          action={async () => {
+            "use server";
+            await signOut({ redirectTo: "/" });
+          }}
+        >
+          <button type="submit" className="btn-ghost btn-sm">
+            Sign out
+          </button>
+        </form>
+      </li>
+    </>
   );
 }

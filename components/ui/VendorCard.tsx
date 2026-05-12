@@ -1,31 +1,53 @@
 import Link from "next/link";
-import type { Vendor } from "@/lib/types";
-import { Avatar } from "@/components/ui/Avatar";
+import type { Service, VendorWithRating } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
 import { Stars } from "@/components/ui/Stars";
-import { vendorTypeLabel, vendorLocationSuffix } from "@/lib/format/vendor";
+import { VendorPhoto } from "@/components/ui/VendorPhoto";
+import { serviceTypeLabel, vendorLocationSuffix } from "@/lib/format/vendor";
 
 type Layout = "compact" | "search";
 
 interface VendorCardProps {
-  vendor: Vendor;
+  vendor: VendorWithRating;
   layout?: Layout;
+  // The vendor's matching services. Used to derive type labels and the
+  // in-home/virtual line that used to live on the vendor row.
+  services?: Service[];
 }
 
-export function VendorCard({ vendor, layout = "compact" }: VendorCardProps) {
-  if (layout === "search") return <VendorSearchCard vendor={vendor} />;
-  return <VendorCompactCard vendor={vendor} />;
+export function VendorCard({ vendor, layout = "compact", services = [] }: VendorCardProps) {
+  if (layout === "search") return <VendorSearchCard vendor={vendor} services={services} />;
+  return <VendorCompactCard vendor={vendor} services={services} />;
 }
 
-function VendorCompactCard({ vendor }: { vendor: Vendor }) {
+function primaryTypeLabel(services: Service[]): string {
+  if (services.length === 0) return "Service provider";
+  return serviceTypeLabel(services[0].serviceType);
+}
+
+function VendorCompactCard({
+  vendor,
+  services,
+}: {
+  vendor: VendorWithRating;
+  services: Service[];
+}) {
   return (
     <Card hoverTone="sage" href={`/services/${vendor.id}`}>
-      <Avatar initials={vendor.initials} className="mb-3" />
+      <VendorPhoto
+        src={vendor.photoSrc}
+        alt={vendor.name}
+        initials={vendor.initials}
+        tone={vendor.photoTone}
+        className="mb-3"
+      />
       <div className="text-[14px] font-medium text-ch mb-[2px]">{vendor.name}</div>
       <div className="text-[10px] tracking-[.08em] uppercase text-cl mb-[7px]">
-        {vendorTypeLabel(vendor.type)}
+        {primaryTypeLabel(services)}
       </div>
-      <div className="text-[12px] text-cm mb-[5px]">{vendorLocationSuffix(vendor)}</div>
+      <div className="text-[12px] text-cm mb-[5px]">
+        {vendorLocationSuffix(vendor, services.map((s) => s.locationType))}
+      </div>
       <Stars
         rating={vendor.rating}
         reviewCount={vendor.reviewCount}
@@ -35,13 +57,32 @@ function VendorCompactCard({ vendor }: { vendor: Vendor }) {
   );
 }
 
-function VendorSearchCard({ vendor }: { vendor: Vendor }) {
+function VendorSearchCard({
+  vendor,
+  services,
+}: {
+  vendor: VendorWithRating;
+  services: Service[];
+}) {
+  const inPerson = services.some(
+    (s) => s.locationType === "in_person" || s.locationType === "both",
+  );
+  const virtual = services.some(
+    (s) => s.locationType === "virtual" || s.locationType === "both",
+  );
+
   return (
     <Card
       hoverTone="sage"
-      className="mb-3 grid grid-cols-[48px_1fr_120px] gap-3 items-start"
+      className="mb-3 grid grid-cols-[64px_1fr_120px] gap-3 items-start"
     >
-      <Avatar initials={vendor.initials} size="lg" />
+      <VendorPhoto
+        src={vendor.photoSrc}
+        alt={vendor.name}
+        initials={vendor.initials}
+        size="lg"
+        tone={vendor.photoTone}
+      />
 
       <div className="min-w-0">
         <Link
@@ -51,7 +92,7 @@ function VendorSearchCard({ vendor }: { vendor: Vendor }) {
           {vendor.name}
         </Link>
         <span className="inline-block text-[10px] tracking-[.07em] uppercase bg-sg-p text-sg-d border border-sg-l px-[9px] py-[2px] rounded-[10px] mb-[6px]">
-          {vendorTypeLabel(vendor.type)}
+          {primaryTypeLabel(services)}
         </span>
         <div className="text-[12px] text-cm leading-[1.5] mb-[6px]">{vendor.bio}</div>
         <div className="flex flex-wrap gap-3">
@@ -59,17 +100,14 @@ function VendorSearchCard({ vendor }: { vendor: Vendor }) {
             📍 <strong className="text-cm">{vendor.location}</strong>
             {vendor.distanceMi != null && ` · ${vendor.distanceMi} mi`}
           </span>
-          {vendor.inHome && vendor.virtual && (
+          {inPerson && virtual && (
             <span className="text-[12px] text-cl">In-home &amp; virtual</span>
           )}
-          {vendor.inHome && !vendor.virtual && (
+          {inPerson && !virtual && (
             <span className="text-[12px] text-cl">In-home</span>
           )}
-          {!vendor.inHome && vendor.virtual && (
+          {!inPerson && virtual && (
             <span className="text-[12px] text-cl">Virtual only</span>
-          )}
-          {vendor.accepting && (
-            <span className="text-[12px] text-cl">Accepting clients</span>
           )}
         </div>
       </div>

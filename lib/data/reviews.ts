@@ -1,4 +1,4 @@
-import type { Review, ReviewSummary } from "@/lib/types";
+import type { Review } from "@/lib/types";
 
 export const reviews: Review[] = [
   {
@@ -6,7 +6,7 @@ export const reviews: Review[] = [
     productId: "urn-sage-001",
     reviewer: "Diane M.",
     location: "Seattle, WA",
-    date: "March 2025",
+    date: "2025-03-12",
     rating: 5,
     body: "The quality is extraordinary — it arrived beautifully packed. Nora sent a handwritten note. This is what end of life commerce should look like.",
   },
@@ -15,7 +15,7 @@ export const reviews: Review[] = [
     productId: "urn-sage-001",
     reviewer: "Theo R.",
     location: "Austin, TX",
-    date: "January 2025",
+    date: "2025-01-08",
     rating: 5,
     body: "The craftsmanship feels deeply intentional. It sits on our mantle and gets more beautiful every day.",
   },
@@ -24,7 +24,7 @@ export const reviews: Review[] = [
     productId: "urn-sage-001",
     reviewer: "Sandra K.",
     location: "Chicago, IL",
-    date: "November 2024",
+    date: "2024-11-21",
     rating: 4,
     body: "Very beautiful. Shipping took slightly longer than expected but Nora communicated throughout. The personalization was perfect.",
   },
@@ -33,7 +33,7 @@ export const reviews: Review[] = [
     productId: "shroud-cotton-001",
     reviewer: "Patricia W.",
     location: "Vermont",
-    date: "February 2025",
+    date: "2025-02-14",
     rating: 5,
     body: "Exactly what we needed for my father's home burial. The quality is exceptional and it arrived quickly. The team was responsive and kind.",
   },
@@ -42,7 +42,7 @@ export const reviews: Review[] = [
     productId: "planning-workbook-001",
     reviewer: "James L.",
     location: "San Francisco, CA",
-    date: "January 2025",
+    date: "2025-01-19",
     rating: 5,
     body: "This workbook is thoughtfully organized and comprehensive. Doing this while healthy was hard but this made it easier. Highly recommend to everyone.",
   },
@@ -51,7 +51,7 @@ export const reviews: Review[] = [
     productId: "planning-workbook-001",
     reviewer: "Margot T.",
     location: "Portland, OR",
-    date: "December 2024",
+    date: "2024-12-04",
     rating: 5,
     body: "A beautiful, dignified product. I filled mine out with my partner and it opened up conversations we'd been putting off for years.",
   },
@@ -60,7 +60,7 @@ export const reviews: Review[] = [
     productId: "pendant-silver-001",
     reviewer: "Celeste H.",
     location: "New York, NY",
-    date: "March 2025",
+    date: "2025-03-22",
     rating: 5,
     body: "I wear this every day. It brings me comfort knowing she's with me. The craftsmanship is exceptional.",
   },
@@ -69,47 +69,8 @@ export const reviews: Review[] = [
     productId: "pendant-silver-001",
     reviewer: "David M.",
     location: "Boston, MA",
-    date: "January 2025",
+    date: "2025-01-30",
     rating: 4,
     body: "Beautiful piece. The chain is a bit thin for my taste but the pendant itself is perfect. Quick shipping.",
-  },
-];
-
-export const reviewSummaries: ReviewSummary[] = [
-  {
-    productId: "urn-sage-001",
-    average: 4.9,
-    total: 47,
-    distribution: [
-      { stars: 5, count: 40 },
-      { stars: 4, count: 6 },
-      { stars: 3, count: 1 },
-      { stars: 2, count: 0 },
-      { stars: 1, count: 0 },
-    ],
-  },
-  {
-    productId: "pendant-silver-001",
-    average: 4.8,
-    total: 32,
-    distribution: [
-      { stars: 5, count: 26 },
-      { stars: 4, count: 5 },
-      { stars: 3, count: 1 },
-      { stars: 2, count: 0 },
-      { stars: 1, count: 0 },
-    ],
-  },
-  {
-    productId: "planning-workbook-001",
-    average: 4.7,
-    total: 89,
-    distribution: [
-      { stars: 5, count: 68 },
-      { stars: 4, count: 16 },
-      { stars: 3, count: 4 },
-      { stars: 2, count: 1 },
-      { stars: 1, count: 0 },
-    ],
   },
 ];

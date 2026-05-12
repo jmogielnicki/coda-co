@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { submitGoodsApplication } from "@/app/list-with-us/actions";
 import { StepsBar } from "@/components/ui/StepsBar";
 import { LIFE_STAGES } from "@/lib/format/lifeStage";
 import type { LifeStage } from "@/lib/types";
+
+type PlanId = "starter" | "standard" | "pro";
 
 const STEPS = [
   { label: "Your profile" },
@@ -55,8 +57,10 @@ interface FormData {
 }
 
 export function GoodsForm() {
-  const router = useRouter();
   const [step, setStep] = useState(0);
+  const [plan, setPlan] = useState<PlanId>("starter");
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
   const [data, setData] = useState<FormData>({
     firstName: "",
     lastName: "",
@@ -101,7 +105,21 @@ export function GoodsForm() {
   }
 
   async function handleSubmit() {
-    router.push("/list-with-us/confirm");
+    setSubmitError(null);
+    startTransition(async () => {
+      const displayName =
+        data.companyName.trim() || `${data.firstName} ${data.lastName}`.trim();
+      const result = await submitGoodsApplication({
+        displayName,
+        bio: data.bio,
+        city: data.city,
+        state: data.state,
+        planId: plan,
+      });
+      // The action redirects on success, so we only land here on a
+      // validation failure with the error returned in the payload.
+      if (result?.error) setSubmitError(result.error);
+    });
   }
 
   return (
@@ -283,51 +301,59 @@ export function GoodsForm() {
                 <div className="space-y-3">
                   {[
                     {
+                      id: "starter" as const,
                       name: "Starter",
                       price: "Free",
                       features: ["Up to 3 listings", "Marketplace visibility", "5% transaction fee"],
                       popular: false,
                     },
                     {
+                      id: "standard" as const,
                       name: "Standard",
                       price: "$12/mo",
                       features: ["Unlimited listings", "Verified badge", "Customer reviews", "5% transaction fee"],
                       popular: true,
                     },
                     {
+                      id: "pro" as const,
                       name: "Pro",
                       price: "$29/mo",
                       features: ["Featured placement", "Analytics", "Priority support", "3% transaction fee"],
                       popular: false,
                     },
-                  ].map((plan) => (
-                    <div
-                      key={plan.name}
-                      className={[
-                        "border rounded-[10px] p-4 cursor-pointer transition-all",
-                        plan.popular
-                          ? "border-tr bg-tr-vp"
-                          : "border-line-strong hover:border-tr",
-                      ].join(" ")}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-[15px] font-medium text-ch">{plan.name}</span>
-                        <span className="text-[15px] font-medium text-tr">{plan.price}</span>
-                        {plan.popular && (
-                          <span className="text-[10px] bg-tr text-white px-2 py-0.5 rounded-full ml-2">
-                            Most popular
-                          </span>
-                        )}
-                      </div>
-                      <ul className="space-y-1">
-                        {plan.features.map((f) => (
-                          <li key={f} className="text-[12px] text-cm flex items-center gap-1.5">
-                            <span className="text-sg">✓</span> {f}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
+                  ].map((p) => {
+                    const selected = plan === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setPlan(p.id)}
+                        className={[
+                          "block w-full text-left border rounded-[10px] p-4 cursor-pointer transition-all",
+                          selected
+                            ? "border-tr bg-tr-vp"
+                            : "border-line-strong hover:border-tr",
+                        ].join(" ")}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[15px] font-medium text-ch">{p.name}</span>
+                          <span className="text-[15px] font-medium text-tr">{p.price}</span>
+                          {p.popular && (
+                            <span className="text-[10px] bg-tr text-white px-2 py-0.5 rounded-full ml-2">
+                              Most popular
+                            </span>
+                          )}
+                        </div>
+                        <ul className="space-y-1">
+                          {p.features.map((f) => (
+                            <li key={f} className="text-[12px] text-cm flex items-center gap-1.5">
+                              <span className="text-sg">✓</span> {f}
+                            </li>
+                          ))}
+                        </ul>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -351,12 +377,19 @@ export function GoodsForm() {
               ) : (
                 <button
                   onClick={handleSubmit}
-                  className="px-8 py-2.5 rounded-full bg-tr text-white text-[13px] cursor-pointer hover:bg-tr-d transition-colors"
+                  disabled={pending}
+                  className="px-8 py-2.5 rounded-full bg-tr text-white text-[13px] cursor-pointer hover:bg-tr-d transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Submit listing →
+                  {pending ? "Submitting…" : "Submit listing →"}
                 </button>
               )}
             </div>
+
+            {submitError && (
+              <p className="mt-3 text-[13px] text-tr-d bg-tr-p border border-tr-l rounded px-3 py-2">
+                {submitError}
+              </p>
+            )}
           </div>
 
           {/* Sidebar preview */}

@@ -1,0 +1,383 @@
+// Phase B schema: covers the entities the current app reads. Tables for
+// users / orders / vendor_applications / subscriptions land in their own
+// phases — see docs/data-model-evolution.md.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── Catalog: types ────────────────────────────────────────────────────────────
+
+// Renamed from `categories` to mirror `service_types`. System-seeded.
+model ProductType {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  name      String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt      @map("updated_at")
+
+  products  Product[]
+
+  @@map("product_types")
+}
+
+model ServiceType {
+  id        String    @id @default(cuid())
+  slug      String    @unique
+  name      String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt      @map("updated_at")
+
+  services  Service[]
+
+  @@map("service_types")
+}
+
+// ── Identity ──────────────────────────────────────────────────────────────────
+
+// `role` is the central authorization signal. Vendors and buyers are both
+// `user`; `admin` gates internal tooling. Use `unknown` as the default so a
+// missing role is visible rather than silently treated as something.
+enum UserRole {
+  unknown
+  user
+  admin
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String?   @map("password_hash")
+  role          UserRole  @default(unknown)
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt      @map("updated_at")
+
+  accounts      Account[]
+  sessions      Session[]
+  vendorProfile VendorProfile?
+  applications  VendorApplication[] @relation("VendorApplicationsApplicant")
+  reviewedApps  VendorApplication[] @relation("VendorApplicationsReviewer")
+
+  @@map("users")
+}
+
+// Auth.js Prisma-adapter shapes. Required even when only Credentials is in
+// use today — keeps the door open for OAuth providers later without a
+// follow-up migration.
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ── Vendors ───────────────────────────────────────────────────────────────────
+
+enum VendorKind {
+  unknown
+  goods
+  services
+  both
+}
+
+// Phase C wires `user_id` to the `users` table. Backfill creates one user
+// per existing vendor so the FK is enforced going forward.
+model VendorProfile {
+  id           String     @id @default(cuid())
+  userId       String     @unique @map("user_id")
+  slug         String     @unique
+  displayName  String     @map("display_name")
+  bio          String
+  location     String
+  kind         VendorKind @default(unknown)
+  verified     Boolean    @default(false)
+
+  // Currently consumed by the UI but not yet covered by the docs' minimum
+  // shape. Treat them as deferred-but-rendered and revisit once their
+  // owners (auth, photo uploads, locations) land in later phases.
+  initials     String?
+  credentials  String?
+  distanceMi   Float?     @map("distance_mi")
+  lifeStages   String[]   @default([]) @map("life_stages")
+  memberSince  DateTime?  @map("member_since")
+  photoSrc     String?    @map("photo_src")
+  photoTone    String?    @map("photo_tone")
+
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt      @map("updated_at")
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products       Product[]
+  services       Service[]
+  vendorReviews  VendorReview[]
+  subscriptions  Subscription[]
+
+  @@map("vendor_profile")
+}
+
+// ── Vendor lifecycle ──────────────────────────────────────────────────────────
+
+enum ApplicationKind {
+  unknown
+  goods
+  services
+  both
+}
+
+enum ApplicationStatus {
+  unknown
+  submitted
+  approved
+  rejected
+}
+
+enum SubscriptionPlanId {
+  unknown
+  starter
+  standard
+  pro
+}
+
+enum SubscriptionKind {
+  unknown
+  goods
+  services
+}
+
+enum SubscriptionStatus {
+  unknown
+  active
+  past_due
+  cancelled
+}
+
+// Submitted before a vendor exists; on approval, an admin (or the demo
+// auto-approve flag) creates a `vendor_profile` + `subscription` and the
+// applicant becomes a vendor. Type-specific fields (credentials,
+// service_type, specializations) are intentionally deferred until the
+// approval UI needs them.
+model VendorApplication {
+  id                  String            @id @default(cuid())
+  applicantUserId     String            @map("applicant_user_id")
+  kind                ApplicationKind   @default(unknown)
+  proposedDisplayName String            @map("proposed_display_name")
+  proposedSlug        String            @map("proposed_slug")
+  proposedBio         String            @map("proposed_bio")
+  location            String
+  planId              SubscriptionPlanId @default(unknown) @map("plan_id")
+  status              ApplicationStatus @default(submitted)
+  reviewedByUserId    String?           @map("reviewed_by_user_id")
+  reviewedAt          DateTime?         @map("reviewed_at")
+  reviewNotes         String?           @map("review_notes")
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt      @map("updated_at")
+
+  applicant User  @relation("VendorApplicationsApplicant", fields: [applicantUserId], references: [id], onDelete: Cascade)
+  reviewer  User? @relation("VendorApplicationsReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([applicantUserId])
+  @@index([status])
+  @@map("vendor_applications")
+}
+
+// Created on approval. A vendor with kind=both can hold two subscriptions
+// (one goods, one services) — that's why kind lives on the row rather
+// than the vendor.
+model Subscription {
+  id               String              @id @default(cuid())
+  vendorId         String              @map("vendor_id")
+  planId           SubscriptionPlanId  @default(unknown) @map("plan_id")
+  kind             SubscriptionKind    @default(unknown)
+  status           SubscriptionStatus  @default(unknown)
+  currentPeriodEnd DateTime?           @map("current_period_end")
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt      @map("updated_at")
+
+  vendor VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId])
+  @@map("subscriptions")
+}
+
+// ── Catalog: products ─────────────────────────────────────────────────────────
+
+enum ProductStatus {
+  unknown
+  draft
+  published
+  archived
+}
+
+model Product {
+  id              String        @id @default(cuid())
+  vendorId        String        @map("vendor_id")
+  productTypeId   String        @map("product_type_id")
+  slug            String        @unique
+  title           String
+  description     String
+  // Price + currency live on `product_variants` — every product must
+  // have at least one variant, and the variant's price is what buyers
+  // are charged. Listings derive a display range from the variant set.
+  details         Json          @default("{}")
+  status          ProductStatus @default(unknown)
+
+  // Currently consumed by the UI; tied to vendor verification in the doc.
+  // Stays here so per-product overrides remain possible without a refactor.
+  verified        Boolean       @default(false)
+  // Front-end uses these for filter chips + the recommended-products
+  // heuristic. Both stay until curation has its own table.
+  lifeStages      String[]      @default([]) @map("life_stages")
+
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt      @map("updated_at")
+
+  vendor          VendorProfile  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  productType     ProductType    @relation(fields: [productTypeId], references: [id])
+  variants        ProductVariant[]
+  reviews         ProductReview[]
+
+  @@index([vendorId])
+  @@index([productTypeId])
+  @@map("products")
+}
+
+model ProductVariant {
+  id          String   @id @default(cuid())
+  productId   String   @map("product_id")
+  label       String
+  priceCents  Int      @map("price_cents")
+  currency    String   @default("USD")
+  stock       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt      @map("updated_at")
+
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+// ── Catalog: services ─────────────────────────────────────────────────────────
+
+enum ServiceStatus {
+  unknown
+  draft
+  published
+  archived
+}
+
+enum ServiceLocationType {
+  unknown
+  virtual
+  in_person
+  both
+}
+
+enum ServicePricingModel {
+  unknown
+  fixed
+  hourly
+  quote
+}
+
+model Service {
+  id            String              @id @default(cuid())
+  vendorId      String              @map("vendor_id")
+  serviceTypeId String              @map("service_type_id")
+  slug          String              @unique
+  title         String
+  description   String
+  locationType  ServiceLocationType @default(unknown) @map("location_type")
+  pricingModel  ServicePricingModel @default(unknown) @map("pricing_model")
+  priceCents    Int?                @map("price_cents")
+  currency      String              @default("USD")
+  status        ServiceStatus       @default(unknown)
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt      @map("updated_at")
+
+  vendor      VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  serviceType ServiceType   @relation(fields: [serviceTypeId], references: [id])
+
+  @@index([vendorId])
+  @@index([serviceTypeId])
+  @@map("services")
+}
+
+// ── Reviews ───────────────────────────────────────────────────────────────────
+
+// `verified_purchase` and `order_item_id` land in Phase F once orders
+// exist. Until then `author_user_id` is also deferred (Phase C) — the
+// reviewer's name and location live on the row.
+model ProductReview {
+  id             String   @id @default(cuid())
+  productId      String   @map("product_id")
+  // Phase C will replace these author fields with `author_user_id`.
+  reviewerName   String   @map("reviewer_name")
+  reviewerLocation String @map("reviewer_location")
+  rating         Int
+  body           String
+  reviewedAt     DateTime @map("reviewed_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_reviews")
+}
+
+model VendorReview {
+  id               String   @id @default(cuid())
+  vendorId         String   @map("vendor_id")
+  reviewerName     String   @map("reviewer_name")
+  reviewerLocation String   @map("reviewer_location")
+  rating           Int
+  body             String
+  reviewedAt       DateTime @map("reviewed_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  vendor           VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId])
+  @@map("vendor_reviews")
+}

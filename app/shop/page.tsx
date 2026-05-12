@@ -9,7 +9,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { WaveDivider } from "@/components/ui/WaveDivider";
 import { getFeaturedProducts, getProducts } from "@/lib/api/products";
 import { parseLifeStageParam } from "@/lib/format/lifeStage";
-import type { ProductCategory } from "@/lib/types";
+import type { ProductType } from "@/lib/types";
 
 export const metadata: Metadata = {
   title: "Shop goods — CodaCo",
@@ -26,16 +26,18 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
   const [products, featuredProducts] = await Promise.all([
     getProducts({
-      category: category as ProductCategory | undefined,
+      productType: category as ProductType | undefined,
       lifeStage: parseLifeStageParam(lifeStage),
     }),
     getFeaturedProducts(4),
   ]);
 
-  // Client-side sort can't be done on RSC, so we handle it here
+  // Client-side sort can't be done on RSC, so we handle it here. Sort by
+  // the cheapest variant when ascending, the most expensive when descending —
+  // matches how shoppers think about "lowest price first / highest first".
   const sorted = [...products].sort((a, b) => {
-    if (sort === "price-asc") return a.price - b.price;
-    if (sort === "price-desc") return b.price - a.price;
+    if (sort === "price-asc") return a.priceMin - b.priceMin;
+    if (sort === "price-desc") return b.priceMax - a.priceMax;
     if (sort === "most-reviewed") return b.reviewCount - a.reviewCount;
     // featured: verified first
     return (b.verified ? 1 : 0) - (a.verified ? 1 : 0);
