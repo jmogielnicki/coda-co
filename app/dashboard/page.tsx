@@ -65,9 +65,9 @@ export default async function DashboardPage() {
             />
             <DashCard
               title="Your public profile"
-              body={`Lives at /services/${vendor.slug}. Buyers see this when searching.`}
-              href={`/services/${vendor.slug}`}
-              cta="View live profile →"
+              body={`Edit your photo and bio — buyers see this at /services/${vendor.slug}.`}
+              href="/dashboard/profile"
+              cta="Edit profile →"
             />
           </div>
         </Container>

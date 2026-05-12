@@ -263,6 +263,7 @@
   }
   .vendor-photo-tr { background: var(--color-tr); }
   .vendor-photo-disc {
+    position: relative; /* anchor for <Image fill> child */
     display: flex;
     align-items: center;
     justify-content: center;

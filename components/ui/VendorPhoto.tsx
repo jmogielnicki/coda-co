@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 type VendorPhotoSize = "sm" | "md" | "lg" | "xl";
 type VendorPhotoTone = "sage" | "terracotta";
 
@@ -8,8 +10,18 @@ const sizeClass: Record<VendorPhotoSize, string> = {
   xl: "vendor-photo-xl",
 };
 
+// Matches the outer .vendor-photo-{size} dimensions in globals.css. The
+// disc inside is 84% of the outer, but the difference doesn't matter for
+// picking a source from the next/image device-sizes ladder.
+const sizesAttr: Record<VendorPhotoSize, string> = {
+  sm: "36px",
+  md: "48px",
+  lg: "64px",
+  xl: "128px",
+};
+
 interface VendorPhotoProps {
-  src?: string;
+  src?: string | null;
   alt?: string;
   initials: string;
   size?: VendorPhotoSize;
@@ -31,13 +43,12 @@ export function VendorPhoto({
     >
       <span className="vendor-photo-disc">
         {src ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={src}
             alt={alt ?? ""}
+            fill
+            sizes={sizesAttr[size]}
             className="vendor-photo-img"
-            loading="lazy"
-            decoding="async"
           />
         ) : (
           <span aria-hidden="true">{initials}</span>
