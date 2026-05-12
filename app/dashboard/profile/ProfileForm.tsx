@@ -1,7 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
-import { ImageUploader } from "@/components/ui/ImageUploader";
+import { useActionState, useCallback, useRef } from "react";
+import {
+  ImageUploader,
+  type ImageUploaderHandle,
+} from "@/components/ui/ImageUploader";
 import { updateVendorProfile, type ProfileFormState } from "./actions";
 
 interface ProfileFormProps {
@@ -12,14 +15,41 @@ interface ProfileFormProps {
 const initial: ProfileFormState = { status: "idle" };
 
 export function ProfileForm({ currentPhotoSrc, currentTone }: ProfileFormProps) {
-  const [state, action, pending] = useActionState(updateVendorProfile, initial);
+  const uploaderRef = useRef<ImageUploaderHandle>(null);
+
+  // Pull the cropped Blob from the uploader and swap it into FormData
+  // before the server sees the request. The native file input would
+  // otherwise send the full-size original.
+  const action = useCallback(
+    async (
+      prev: ProfileFormState,
+      formData: FormData,
+    ): Promise<ProfileFormState> => {
+      const blob = await uploaderRef.current?.getCroppedBlob();
+      if (blob) {
+        formData.set(
+          "photo",
+          new File([blob], "photo.webp", { type: blob.type }),
+        );
+      }
+      return updateVendorProfile(prev, formData);
+    },
+    [],
+  );
+
+  const [state, formAction, pending] = useActionState(action, initial);
 
   return (
     <form
-      action={action}
+      action={formAction}
+      // Keying on the saved URL remounts the uploader after a successful
+      // save so the new photo is what the user sees, not their stale
+      // cropper state.
+      key={currentPhotoSrc ?? "empty"}
       className="bg-white rounded-[10px] border border-line p-6 space-y-6"
     >
       <ImageUploader
+        ref={uploaderRef}
         name="photo"
         currentSrc={currentPhotoSrc}
         shape="circle"
@@ -65,8 +95,7 @@ function ToneRadio({
   defaultChecked: boolean;
 }) {
   const label = value === "sage" ? "Sage" : "Terracotta";
-  const swatchCls =
-    value === "sage" ? "bg-sg" : "bg-tr";
+  const swatchCls = value === "sage" ? "bg-sg" : "bg-tr";
   return (
     <label className="flex items-center gap-2 cursor-pointer text-[13px] text-ch">
       <input
