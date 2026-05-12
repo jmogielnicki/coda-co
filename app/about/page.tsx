@@ -82,9 +82,8 @@ export default function AboutPage() {
           </div>
 
           <p className="font-serif italic text-[26px] font-light text-tr-d text-center mt-6 mb-10 leading-[1.4]">
-            This is not a hustle.
-            <br />
-            It is a considered place.
+            We believe death and dying should be as integrated a part of life
+            as birth, marriage, and ordering pizza.
           </p>
 
           <ul className="space-y-3">
