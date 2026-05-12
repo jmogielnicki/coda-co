@@ -1,6 +1,7 @@
 export const SPECIALIZATIONS = [
   "EOL planning",
   "Grief support",
+  "Perinatal loss",
   "Dementia",
   "Home-centered dying",
   "Legacy work",
