@@ -6,19 +6,8 @@ import { FilterPillGroup } from "@/components/ui/filters/FilterPillGroup";
 import { FilterCheck } from "@/components/ui/filters/FilterCheck";
 import { FilterSection } from "@/components/ui/filters/FilterSection";
 import { FilterDivider } from "@/components/ui/filters/FilterDivider";
+import type { ServiceTypeOption } from "@/lib/api/serviceTypes";
 import { SPECIALIZATIONS } from "@/lib/data/specializations";
-
-const SERVICE_TYPES = [
-  { value: "doula", label: "Death doula" },
-  { value: "attorney", label: "Estate attorney" },
-  { value: "cleaner", label: "Death cleaning" },
-  { value: "celebrant", label: "Celebrant" },
-  { value: "organizer", label: "EOL organizer" },
-  { value: "home-funeral", label: "Home funeral" },
-  { value: "green-burial", label: "Green burial" },
-  { value: "cafe", label: "Death cafe" },
-  { value: "life-celebration", label: "Celebration of life planner" },
-];
 
 const DISTANCES = ["5 mi", "15 mi", "30 mi", "50 mi", "Virtual only"];
 const RATINGS = [
@@ -34,12 +23,13 @@ const VERIFIED_OPTIONS = [
   "CodaCo verified",
 ];
 
-export function ServiceFilters() {
+export function ServiceFilters({ serviceTypes }: { serviceTypes: ServiceTypeOption[] }) {
   const { get, setParam, toggleBool, clearAll } = useFilterParams();
 
   const activeType = get("type");
   const activeDist = get("distance");
   const activeRating = get("minRating");
+  const activeLocation = get("locationType");
 
   return (
     <div className="pt-6 pr-5 pb-8 border-r border-line">
@@ -55,12 +45,12 @@ export function ServiceFilters() {
 
       <FilterSection heading="Service type">
         <FilterPillGroup>
-          {SERVICE_TYPES.map((t) => (
+          {serviceTypes.map((t) => (
             <FilterPill
-              key={t.value}
-              label={t.label}
-              active={activeType === t.value}
-              onClick={() => setParam("type", activeType === t.value ? "" : t.value)}
+              key={t.slug}
+              label={t.name}
+              active={activeType === t.slug}
+              onClick={() => setParam("type", activeType === t.slug ? "" : t.slug)}
             />
           ))}
         </FilterPillGroup>
@@ -83,22 +73,25 @@ export function ServiceFilters() {
 
       <FilterDivider />
 
-      <FilterSection heading="Availability">
+      <FilterSection heading="Format">
         <FilterCheck
-          label="Accepting new clients"
-          checked={get("accepting") === "1"}
-          onChange={() => toggleBool("accepting")}
+          label="Available this month"
+          checked={false}
+          onChange={() => {}}
         />
-        <FilterCheck label="Available this month" checked={false} onChange={() => {}} />
         <FilterCheck
           label="Virtual sessions"
-          checked={get("virtual") === "1"}
-          onChange={() => toggleBool("virtual")}
+          checked={activeLocation === "virtual"}
+          onChange={() =>
+            setParam("locationType", activeLocation === "virtual" ? "" : "virtual")
+          }
         />
         <FilterCheck
           label="Home visits"
-          checked={get("inHome") === "1"}
-          onChange={() => toggleBool("inHome")}
+          checked={activeLocation === "in_person"}
+          onChange={() =>
+            setParam("locationType", activeLocation === "in_person" ? "" : "in_person")
+          }
         />
       </FilterSection>
 

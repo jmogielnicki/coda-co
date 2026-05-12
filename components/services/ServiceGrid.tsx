@@ -1,7 +1,12 @@
-import type { Vendor } from "@/lib/types";
+import type { Service, VendorWithRating } from "@/lib/types";
 import { VendorCard } from "@/components/ui/VendorCard";
 
-export function ServiceGrid({ vendors }: { vendors: Vendor[] }) {
+interface ServiceGridProps {
+  vendors: VendorWithRating[];
+  servicesByVendor: Map<string, Service[]>;
+}
+
+export function ServiceGrid({ vendors, servicesByVendor }: ServiceGridProps) {
   if (vendors.length === 0) {
     return (
       <div className="text-center py-16 text-ink">
@@ -14,7 +19,12 @@ export function ServiceGrid({ vendors }: { vendors: Vendor[] }) {
   return (
     <div>
       {vendors.map((vendor) => (
-        <VendorCard key={vendor.id} vendor={vendor} layout="search" />
+        <VendorCard
+          key={vendor.id}
+          vendor={vendor}
+          layout="search"
+          services={servicesByVendor.get(vendor.id) ?? []}
+        />
       ))}
     </div>
   );

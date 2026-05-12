@@ -37,7 +37,7 @@ export function Footer() {
 
           {/* Company column */}
           <FooterColumn heading="Company">
-            <FooterLink href="/">About CodaCo</FooterLink>
+            <FooterLink href="/about">About CodaCo</FooterLink>
             <FooterLink href="/list-with-us">List with us</FooterLink>
             <FooterLink href="/where-to-start">Where to start</FooterLink>
             <FooterLink href="#">Help &amp; FAQ</FooterLink>

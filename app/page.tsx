@@ -5,6 +5,7 @@ import { Container } from "@/components/ui/Container";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { VendorCard } from "@/components/ui/VendorCard";
 import { WaveDivider } from "@/components/ui/WaveDivider";
+import { getServices } from "@/lib/api/services";
 import { getHomeFeaturedVendors } from "@/lib/api/vendors";
 
 export const metadata: Metadata = {
@@ -122,6 +123,12 @@ const categories = [
 
 export default async function LandingPage() {
   const featuredVendors = await getHomeFeaturedVendors();
+  const featuredVendorIds = featuredVendors.map((v) => v.id);
+  const allServices = await Promise.all(
+    featuredVendorIds.map((id) => getServices({ vendorId: id })),
+  );
+  const servicesByVendor = new Map<string, typeof allServices[number]>();
+  featuredVendorIds.forEach((id, i) => servicesByVendor.set(id, allServices[i]));
 
   return (
     <>
@@ -200,7 +207,11 @@ export default async function LandingPage() {
 
           <div className="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3.5">
             {featuredVendors.map((v) => (
-              <VendorCard key={v.id} vendor={v} />
+              <VendorCard
+                key={v.id}
+                vendor={v}
+                services={servicesByVendor.get(v.id) ?? []}
+              />
             ))}
           </div>
 

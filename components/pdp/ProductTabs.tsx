@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import type { Product } from "@/lib/types";
-import type { Review, ReviewSummary } from "@/lib/types";
+import type { ProductWithRating, Review, ReviewSummary } from "@/lib/types";
 import { Avatar } from "@/components/ui/Avatar";
 import { ReviewCard } from "@/components/ui/ReviewCard";
 import { Stars } from "@/components/ui/Stars";
 
 interface ProductTabsProps {
-  product: Product;
+  product: ProductWithRating;
   reviews: Review[];
   summary: ReviewSummary | null;
   sellerBio?: string;
@@ -24,10 +23,16 @@ const TABS = [
 export function ProductTabs({ product, reviews, summary, sellerBio }: ProductTabsProps) {
   const [active, setActive] = useState("desc");
 
+  // The free-form `details` JSONB can hold scalar strings (rendered as rows
+  // here) or array values like `glazes` (rendered elsewhere — skip them).
+  const detailRows = Object.entries(product.details).filter(
+    (entry): entry is [string, string] => typeof entry[1] === "string",
+  );
+
   return (
     <div>
       {/* Tab bar */}
-      <div className="flex border-b border-[rgba(44,40,37,.1)] px-10">
+      <div className="flex border-b border-line px-10">
         {TABS.map((tab) => {
           const label =
             tab.id === "reviews" && typeof tab.label === "function"
@@ -60,10 +65,10 @@ export function ProductTabs({ product, reviews, summary, sellerBio }: ProductTab
 
         {active === "details" && (
           <div>
-            {Object.entries(product.details).map(([key, val]) => (
+            {detailRows.map(([key, val]) => (
               <div
                 key={key}
-                className="flex py-2.5 border-b border-[rgba(44,40,37,.07)] last:border-b-0"
+                className="flex py-2.5 border-b border-line last:border-b-0"
               >
                 <span className="text-[13px] text-ink capitalize w-[160px] flex-shrink-0">
                   {key.replace(/([A-Z])/g, " $1")}
