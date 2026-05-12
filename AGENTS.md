@@ -78,6 +78,45 @@ These are easy to get wrong by guessing. Read before touching.
   consent — Prisma 7 enforces this against AI agents via the
   `PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION` env var.
 
+### Local DB for migration generation
+
+`prisma migrate dev` and `prisma migrate diff` both need a live
+Postgres + a shadow DB to mechanically generate migration SQL from
+schema changes. Without one, you have to hand-write the SQL and hope
+it matches what Prisma would emit — fine for trivial diffs, risky for
+anything involving FKs, indexes, or enum changes.
+
+**Recommended setup** (one-time, per dev machine):
+
+```bash
+# Starts an embedded Postgres + shadow DB in the background.
+# Prints two URLs — paste them into .env as DATABASE_URL and
+# SHADOW_DATABASE_URL.
+npx prisma dev start --detach
+
+# Apply existing migrations to the fresh DB:
+npx prisma migrate deploy
+
+# (optional) Load mock data so the app is usable:
+npm run db:mock
+```
+
+**Workflow** when editing the schema:
+
+1. Edit `prisma/schema.prisma`.
+2. `npx prisma migrate dev --name <slug>` — generates the migration
+   file under `prisma/migrations/`, applies it to your local DB, and
+   regenerates the Prisma client.
+3. Commit both `prisma/schema.prisma` and the new migration directory.
+
+CI and Vercel **don't** need either URL — `scripts/build.mjs` only
+runs `migrate deploy` (which uses `DATABASE_URL`) and never touches
+the shadow DB. `SHADOW_DATABASE_URL` is local-only.
+
+Use `npx prisma dev stop` / `ls` / `rm` to manage the embedded server.
+Bring-your-own Postgres works too — `prisma dev` is just the
+least-friction option.
+
 ### System seed vs mock data
 Strictly separated so a prod deploy can never push fake vendors:
 - `prisma/seed.ts` — *system data only* (product_types,

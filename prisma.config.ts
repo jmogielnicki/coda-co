@@ -11,5 +11,10 @@ export default defineConfig({
   },
   datasource: {
     url: process.env.DATABASE_URL!,
+    // Optional. Set for local dev so `prisma migrate dev` and `prisma
+    // migrate diff` can use a clean shadow DB to detect drift. Unset in
+    // CI / Vercel — `migrate deploy` doesn't need it. See
+    // AGENTS.md → "Local DB for migration generation".
+    shadowDatabaseUrl: process.env.SHADOW_DATABASE_URL,
   },
 });
