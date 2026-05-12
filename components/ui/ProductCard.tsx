@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { Product } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
 import { formatPriceRange, productThumbBg } from "@/lib/format/product";
@@ -5,12 +6,24 @@ import { formatPriceRange, productThumbBg } from "@/lib/format/product";
 export function ProductCard({ product }: { product: Product }) {
   return (
     <Card href={`/shop/${product.id}`} hoverTone="terracotta" padding="none" className="overflow-hidden">
-      <div
-        className="h-[130px] flex items-center justify-center"
-        style={{ background: productThumbBg(product.id) }}
-      >
-        <ProductThumbnail id={product.id} productType={product.productType} />
-      </div>
+      {product.coverImageUrl ? (
+        <div className="relative h-[130px] bg-pl2">
+          <Image
+            src={product.coverImageUrl}
+            alt={product.title}
+            fill
+            sizes="(min-width: 768px) 25vw, 50vw"
+            className="object-cover"
+          />
+        </div>
+      ) : (
+        <div
+          className="h-[130px] flex items-center justify-center"
+          style={{ background: productThumbBg(product.id) }}
+        >
+          <ProductThumbnail id={product.id} productType={product.productType} />
+        </div>
+      )}
 
       <div className="px-4 pt-3 pb-[.95rem]">
         <div className="text-[13px] font-medium text-ch mb-[3px] leading-[1.35]">

@@ -41,6 +41,13 @@ export interface ProductDetail {
   [key: string]: string | string[] | undefined;
 }
 
+export interface ProductImage {
+  id: string;
+  url: string;
+  alt: string | null;
+  sortOrder: number;
+}
+
 export interface Product {
   id: string;
   title: string;
@@ -60,6 +67,11 @@ export interface Product {
   details: ProductDetail;
   lifeStages: LifeStage[];
   relatedIds?: string[];
+  // Required at publish but nullable for drafts. Square 1024×1024 webp
+  // uploaded via the vendor dashboard.
+  coverImageUrl: string | null;
+  // Empty on list views (getProducts); populated on getProduct.
+  images: ProductImage[];
 }
 
 export interface ProductWithRating extends Product {

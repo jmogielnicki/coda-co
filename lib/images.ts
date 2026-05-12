@@ -33,6 +33,18 @@ export interface ImageValidationError {
   message: string;
 }
 
+// A URL counts as "ours to delete" only if it points at our Blob store.
+// Legacy /public paths and any other origin are left alone so we never
+// trigger a delete against something we don't own.
+export function isOwnedBlobUrl(url: string | null | undefined): url is string {
+  if (!url) return false;
+  try {
+    return new URL(url).hostname.endsWith(".public.blob.vercel-storage.com");
+  } catch {
+    return false;
+  }
+}
+
 export function validateImageFile(file: File): ImageValidationError | null {
   if (file.size === 0) {
     return { code: "empty", message: "That file looks empty." };

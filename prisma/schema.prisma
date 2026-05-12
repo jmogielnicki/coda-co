@@ -14,25 +14,25 @@ datasource db {
 
 // Renamed from `categories` to mirror `service_types`. System-seeded.
 model ProductType {
-  id        String    @id @default(cuid())
-  slug      String    @unique
+  id        String   @id @default(cuid())
+  slug      String   @unique
   name      String
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt      @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  products  Product[]
+  products Product[]
 
   @@map("product_types")
 }
 
 model ServiceType {
-  id        String    @id @default(cuid())
-  slug      String    @unique
+  id        String   @id @default(cuid())
+  slug      String   @unique
   name      String
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt      @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  services  Service[]
+  services Service[]
 
   @@map("service_types")
 }
@@ -57,8 +57,8 @@ model User {
   emailVerified DateTime? @map("email_verified")
   image         String?
 
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt      @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   accounts      Account[]
   sessions      Session[]
@@ -124,34 +124,34 @@ enum VendorKind {
 // Phase C wires `user_id` to the `users` table. Backfill creates one user
 // per existing vendor so the FK is enforced going forward.
 model VendorProfile {
-  id           String     @id @default(cuid())
-  userId       String     @unique @map("user_id")
-  slug         String     @unique
-  displayName  String     @map("display_name")
-  bio          String
-  location     String
-  kind         VendorKind @default(unknown)
-  verified     Boolean    @default(false)
+  id          String     @id @default(cuid())
+  userId      String     @unique @map("user_id")
+  slug        String     @unique
+  displayName String     @map("display_name")
+  bio         String
+  location    String
+  kind        VendorKind @default(unknown)
+  verified    Boolean    @default(false)
 
   // Currently consumed by the UI but not yet covered by the docs' minimum
   // shape. Treat them as deferred-but-rendered and revisit once their
   // owners (auth, photo uploads, locations) land in later phases.
-  initials     String?
-  credentials  String?
-  distanceMi   Float?     @map("distance_mi")
-  lifeStages   String[]   @default([]) @map("life_stages")
-  memberSince  DateTime?  @map("member_since")
-  photoSrc     String?    @map("photo_src")
-  photoTone    String?    @map("photo_tone")
+  initials    String?
+  credentials String?
+  distanceMi  Float?    @map("distance_mi")
+  lifeStages  String[]  @default([]) @map("life_stages")
+  memberSince DateTime? @map("member_since")
+  photoSrc    String?   @map("photo_src")
+  photoTone   String?   @map("photo_tone")
 
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt      @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  products       Product[]
-  services       Service[]
-  vendorReviews  VendorReview[]
-  subscriptions  Subscription[]
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products      Product[]
+  services      Service[]
+  vendorReviews VendorReview[]
+  subscriptions Subscription[]
 
   @@map("vendor_profile")
 }
@@ -198,20 +198,20 @@ enum SubscriptionStatus {
 // service_type, specializations) are intentionally deferred until the
 // approval UI needs them.
 model VendorApplication {
-  id                  String            @id @default(cuid())
-  applicantUserId     String            @map("applicant_user_id")
-  kind                ApplicationKind   @default(unknown)
-  proposedDisplayName String            @map("proposed_display_name")
-  proposedSlug        String            @map("proposed_slug")
-  proposedBio         String            @map("proposed_bio")
+  id                  String             @id @default(cuid())
+  applicantUserId     String             @map("applicant_user_id")
+  kind                ApplicationKind    @default(unknown)
+  proposedDisplayName String             @map("proposed_display_name")
+  proposedSlug        String             @map("proposed_slug")
+  proposedBio         String             @map("proposed_bio")
   location            String
   planId              SubscriptionPlanId @default(unknown) @map("plan_id")
-  status              ApplicationStatus @default(submitted)
-  reviewedByUserId    String?           @map("reviewed_by_user_id")
-  reviewedAt          DateTime?         @map("reviewed_at")
-  reviewNotes         String?           @map("review_notes")
-  createdAt           DateTime          @default(now()) @map("created_at")
-  updatedAt           DateTime          @updatedAt      @map("updated_at")
+  status              ApplicationStatus  @default(submitted)
+  reviewedByUserId    String?            @map("reviewed_by_user_id")
+  reviewedAt          DateTime?          @map("reviewed_at")
+  reviewNotes         String?            @map("review_notes")
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @updatedAt @map("updated_at")
 
   applicant User  @relation("VendorApplicationsApplicant", fields: [applicantUserId], references: [id], onDelete: Cascade)
   reviewer  User? @relation("VendorApplicationsReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
@@ -225,14 +225,14 @@ model VendorApplication {
 // (one goods, one services) — that's why kind lives on the row rather
 // than the vendor.
 model Subscription {
-  id               String              @id @default(cuid())
-  vendorId         String              @map("vendor_id")
-  planId           SubscriptionPlanId  @default(unknown) @map("plan_id")
-  kind             SubscriptionKind    @default(unknown)
-  status           SubscriptionStatus  @default(unknown)
-  currentPeriodEnd DateTime?           @map("current_period_end")
-  createdAt        DateTime            @default(now()) @map("created_at")
-  updatedAt        DateTime            @updatedAt      @map("updated_at")
+  id               String             @id @default(cuid())
+  vendorId         String             @map("vendor_id")
+  planId           SubscriptionPlanId @default(unknown) @map("plan_id")
+  kind             SubscriptionKind   @default(unknown)
+  status           SubscriptionStatus @default(unknown)
+  currentPeriodEnd DateTime?          @map("current_period_end")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
 
   vendor VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
@@ -250,49 +250,71 @@ enum ProductStatus {
 }
 
 model Product {
-  id              String        @id @default(cuid())
-  vendorId        String        @map("vendor_id")
-  productTypeId   String        @map("product_type_id")
-  slug            String        @unique
-  title           String
-  description     String
+  id            String        @id @default(cuid())
+  vendorId      String        @map("vendor_id")
+  productTypeId String        @map("product_type_id")
+  slug          String        @unique
+  title         String
+  description   String
   // Price + currency live on `product_variants` — every product must
   // have at least one variant, and the variant's price is what buyers
   // are charged. Listings derive a display range from the variant set.
-  details         Json          @default("{}")
-  status          ProductStatus @default(unknown)
+  details       Json          @default("{}")
+  status        ProductStatus @default(unknown)
 
   // Currently consumed by the UI; tied to vendor verification in the doc.
   // Stays here so per-product overrides remain possible without a refactor.
-  verified        Boolean       @default(false)
+  verified   Boolean  @default(false)
   // Front-end uses these for filter chips + the recommended-products
   // heuristic. Both stay until curation has its own table.
-  lifeStages      String[]      @default([]) @map("life_stages")
+  lifeStages String[] @default([]) @map("life_stages")
 
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt      @map("updated_at")
+  // Square cropped 1024×1024 webp. Required at publish; nullable so
+  // drafts can exist without one. Gallery images live in product_images.
+  coverImageUrl String? @map("cover_image_url")
 
-  vendor          VendorProfile  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
-  productType     ProductType    @relation(fields: [productTypeId], references: [id])
-  variants        ProductVariant[]
-  reviews         ProductReview[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  vendor      VendorProfile    @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  productType ProductType      @relation(fields: [productTypeId], references: [id])
+  variants    ProductVariant[]
+  reviews     ProductReview[]
+  images      ProductImage[]
 
   @@index([vendorId])
   @@index([productTypeId])
   @@map("products")
 }
 
-model ProductVariant {
-  id          String   @id @default(cuid())
-  productId   String   @map("product_id")
-  label       String
-  priceCents  Int      @map("price_cents")
-  currency    String   @default("USD")
-  stock       Int      @default(0)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt      @map("updated_at")
+// Free-form gallery photos shown after the cover on the product detail
+// page carousel. Any aspect ratio, normalized to max 2048px long-edge
+// webp at upload time. Cap of 5 enforced in the server action.
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String   @map("product_id")
+  url       String
+  alt       String?
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, sortOrder])
+  @@map("product_images")
+}
+
+model ProductVariant {
+  id         String   @id @default(cuid())
+  productId  String   @map("product_id")
+  label      String
+  priceCents Int      @map("price_cents")
+  currency   String   @default("USD")
+  stock      Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])
   @@map("product_variants")
@@ -334,7 +356,7 @@ model Service {
   currency      String              @default("USD")
   status        ServiceStatus       @default(unknown)
   createdAt     DateTime            @default(now()) @map("created_at")
-  updatedAt     DateTime            @updatedAt      @map("updated_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
 
   vendor      VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   serviceType ServiceType   @relation(fields: [serviceTypeId], references: [id])
@@ -350,17 +372,17 @@ model Service {
 // exist. Until then `author_user_id` is also deferred (Phase C) — the
 // reviewer's name and location live on the row.
 model ProductReview {
-  id             String   @id @default(cuid())
-  productId      String   @map("product_id")
+  id               String   @id @default(cuid())
+  productId        String   @map("product_id")
   // Phase C will replace these author fields with `author_user_id`.
-  reviewerName   String   @map("reviewer_name")
-  reviewerLocation String @map("reviewer_location")
-  rating         Int
-  body           String
-  reviewedAt     DateTime @map("reviewed_at")
-  createdAt      DateTime @default(now()) @map("created_at")
+  reviewerName     String   @map("reviewer_name")
+  reviewerLocation String   @map("reviewer_location")
+  rating           Int
+  body             String
+  reviewedAt       DateTime @map("reviewed_at")
+  createdAt        DateTime @default(now()) @map("created_at")
 
-  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])
   @@map("product_reviews")
@@ -376,7 +398,7 @@ model VendorReview {
   reviewedAt       DateTime @map("reviewed_at")
   createdAt        DateTime @default(now()) @map("created_at")
 
-  vendor           VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  vendor VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
   @@index([vendorId])
   @@map("vendor_reviews")

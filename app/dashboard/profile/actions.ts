@@ -4,25 +4,17 @@ import { revalidatePath } from "next/cache";
 import { del, put } from "@vercel/blob";
 import { requireVendor } from "@/app/dashboard/lib";
 import { prisma } from "@/lib/db";
-import { extensionForMime, validateImageFile } from "@/lib/images";
+import {
+  extensionForMime,
+  isOwnedBlobUrl,
+  validateImageFile,
+} from "@/lib/images";
 
 const TONES = ["sage", "terracotta"] as const;
 type Tone = (typeof TONES)[number];
 
 function isTone(value: string): value is Tone {
   return (TONES as readonly string[]).includes(value);
-}
-
-// A URL counts as "ours to delete" only if it points at our Blob store.
-// Legacy /public/vendors/* paths and any other origin are left alone.
-function isOwnedBlobUrl(url: string | null): url is string {
-  if (!url) return false;
-  try {
-    const host = new URL(url).hostname;
-    return host.endsWith(".public.blob.vercel-storage.com");
-  } catch {
-    return false;
-  }
 }
 
 export type ProfileFormState =

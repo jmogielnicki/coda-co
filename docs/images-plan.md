@@ -29,11 +29,11 @@ copy-objects-and-rewrite-URLs job, not a re-architecture.
 
 ## Phase status
 
-| Phase | Description                                                | Status        |
-|-------|------------------------------------------------------------|---------------|
-| 1     | Vendor headshot upload (vertical slice through full stack) | ⏳ Not started |
-| 2     | Product images (new schema model, multi-upload UX)         | ⏳ Not started |
-| 3     | Polish — user avatars, admin moderation, optimization      | ⏳ Not started |
+| Phase | Description                                                | Status                                                |
+|-------|------------------------------------------------------------|-------------------------------------------------------|
+| 1     | Vendor headshot upload (vertical slice through full stack) | ✅ Merged — PR #72 (uploader) + PR #73 (cropper)        |
+| 2     | Product images — square cover + free-form gallery          | ⏳ In progress                                         |
+| 3     | Polish — user avatars, admin moderation, optimization      | ⏳ Not started                                         |
 
 ---
 
@@ -119,46 +119,92 @@ pipeline before tackling the harder multi-image UX in Phase 2.
 
 ## Phase 2 — product images
 
-The complex one. Real multi-image UX, schema migration, integration with
-the product editor.
+Two distinct concepts with different constraints, hence two distinct
+shapes in the schema:
+
+- **Cover photo** — required to publish. Square-cropped (reuses the
+  existing `<ImageUploader>` cropper). Drives the `/shop` tile preview,
+  where consistent aspect ratio matters for the grid.
+- **Gallery photos** — 0–5 additional, any aspect ratio. Shown in a
+  carousel on the product detail page after the cover. No cropper —
+  product photos vary in shape (tall urns, wide trays) and forcing a
+  square truncates information.
+
+Total cap: **6 images per product** (1 cover + up to 5 gallery).
 
 ### Schema
 
-New model `product_images`:
+```prisma
+model Product {
+  // ... existing fields ...
+  coverImageUrl  String?  @map("cover_image_url")
+  images         ProductImage[]
+}
 
-```
-model product_images {
+model ProductImage {
   id          String   @id @default(cuid())
-  product_id  String
+  productId   String   @map("product_id")
   url         String
   alt         String?
-  sort_order  Int      @default(0)
-  created_at  DateTime @default(now())
-  product     Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
 
-  @@index([product_id, sort_order])
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, sortOrder])
+  @@map("product_images")
 }
 ```
 
-Open question for when we start: does a product also need a `primary_image_id`
-pointer, or is "lowest `sort_order`" sufficient? Probably the latter — keeps
-the model simpler.
+Migration name: `add_product_cover_and_gallery_images`.
+
+### Server actions
+
+- `updateProductCover(productId, formData)` — same shape as Phase 1's
+  `updateVendorProfile`. Receives the cropped 1024×1024 webp, stores
+  the blob at `products/{slug}/cover-{timestamp}.webp`, updates
+  `Product.coverImageUrl`, best-effort deletes the previous blob.
+- `addProductGalleryImage(productId, formData)` — receives a single
+  file (no cropper), normalizes via canvas to max 2048px long-edge
+  webp 0.85, stores at `products/{slug}/gallery-{timestamp}.webp`,
+  creates a `product_image` row with `sort_order = max(existing) + 1`.
+- `deleteProductGalleryImage(imageId)` — removes the row and
+  best-effort deletes the blob.
+- `reorderProductGalleryImages(productId, orderedImageIds)` — bulk
+  update of `sort_order` from a drag-reorder.
+- `setProductStatus` — extend the existing action so publishing
+  requires `coverImageUrl !== null`; return a typed error rather than
+  throwing.
 
 ### UI
 
-- Multi-upload field on the product editor (`app/dashboard/products/[id]/`):
-  add, reorder via drag, set primary (= move to position 0), delete.
-- `<ProductCard>` and `/shop/[productId]` use the primary image when present,
-  fall back to the existing SVG-icon + pastel-background composition.
-- `prisma/mock.ts`: decide whether mock products get uploaded blobs (slower
-  reseed, more realistic) or stay icon-only (faster, current behavior). Lean
-  icon-only — keep `db:mock` fast.
+- `<ImageGalleryUploader>` — new client primitive in `components/ui/`.
+  File picker (multi-select), thumbnail list with drag-to-reorder
+  (`@dnd-kit/core` + `@dnd-kit/sortable`), delete-per-tile, "X / 5
+  used" counter. Each pick fires an upload immediately.
+- Product editor (`app/dashboard/products/[id]/Editor.tsx`) gets two
+  sections: "Cover photo" (existing `<ImageUploader>` with
+  `shape="square"`) and "Gallery photos" (`<ImageGalleryUploader>`).
+- `<ProductCard>` swaps the SVG-icon + pastel background for
+  `next/image` when `coverImageUrl` is set; fallback stays for drafts.
+- `/shop/[productId]` renders a simple carousel: cover first, then
+  gallery in `sortOrder`. Same icon fallback for products with none.
 
-### Open questions
+### Mock data
 
-- Cap on images per product (4? 6?).
-- Do we want blurhash / `blurDataURL` placeholders generated on upload? Adds
-  a sharp dependency — defer to Phase 3 if not needed for v1.
+Mock products stay icon-only — `prisma/mock.ts` doesn't upload anything.
+Keeps `db:mock` fast. Real products that vendors publish will all have
+a cover image (enforced at publish).
+
+### Out of scope (intentionally)
+
+- Alt-text editing per image (defer to Phase 3; default is `null` and
+  `next/image` falls back to `""`).
+- Image moderation surface (Phase 3).
+- Blurhash / `blurDataURL` placeholders (Phase 3; requires `sharp`).
+- Multi-PR split: single PR for the full Phase 2 vertical slice — the
+  schema migration, both upload UIs, display, and publish gate go
+  together.
 
 ---
 

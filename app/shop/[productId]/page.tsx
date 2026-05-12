@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { AddToCart } from "@/components/pdp/AddToCart";
 import { ProductTabs } from "@/components/pdp/ProductTabs";
+import { ProductGallery } from "@/components/pdp/ProductGallery";
 import { Avatar } from "@/components/ui/Avatar";
 import { Container } from "@/components/ui/Container";
 import { ProductCard } from "@/components/ui/ProductCard";
@@ -56,45 +57,40 @@ export default async function ProductDetailPage({ params }: PDPProps) {
       <section className="bg-white px-10 py-8">
         <Container width="mid" className="grid grid-cols-[1fr_1fr] gap-10">
           {/* Gallery */}
-          <div>
-            {/* Main image */}
-            <div
-              className="rounded-[12px] h-[360px] flex items-center justify-center mb-3"
-              style={{ background: productThumbBg(product.id) }}
-            >
-              <svg width="120" height="140" viewBox="0 0 120 140" fill="none">
-                <path
-                  d="M60 18 C36 18 22 36 22 65 C22 96 36 120 60 120 C84 120 98 96 98 65 C98 36 84 18 60 18Z"
-                  stroke="#C1634F"
-                  strokeWidth="2"
-                  fill="none"
-                />
-                <path
-                  d="M38 65 C38 50 47 40 60 40 C73 40 82 50 82 65"
-                  stroke="#C1634F"
-                  strokeWidth="1.8"
-                  fill="none"
-                />
-                <line x1="60" y1="18" x2="60" y2="12" stroke="#C1634F" strokeWidth="2" strokeLinecap="round" />
-                <ellipse cx="60" cy="12" rx="9" ry="5" stroke="#C1634F" strokeWidth="1.6" fill="none" />
-              </svg>
+          {product.coverImageUrl ? (
+            <ProductGallery
+              cover={{ id: "cover", url: product.coverImageUrl }}
+              gallery={product.images}
+              title={product.title}
+            />
+          ) : (
+            // Mock-data fallback for products that pre-date Phase 2. New
+            // vendor uploads can't reach this branch — publishing now
+            // requires a cover.
+            <div>
+              <div
+                className="rounded-[12px] h-[360px] flex items-center justify-center mb-3"
+                style={{ background: productThumbBg(product.id) }}
+              >
+                <svg width="120" height="140" viewBox="0 0 120 140" fill="none">
+                  <path
+                    d="M60 18 C36 18 22 36 22 65 C22 96 36 120 60 120 C84 120 98 96 98 65 C98 36 84 18 60 18Z"
+                    stroke="#C1634F"
+                    strokeWidth="2"
+                    fill="none"
+                  />
+                  <path
+                    d="M38 65 C38 50 47 40 60 40 C73 40 82 50 82 65"
+                    stroke="#C1634F"
+                    strokeWidth="1.8"
+                    fill="none"
+                  />
+                  <line x1="60" y1="18" x2="60" y2="12" stroke="#C1634F" strokeWidth="2" strokeLinecap="round" />
+                  <ellipse cx="60" cy="12" rx="9" ry="5" stroke="#C1634F" strokeWidth="1.6" fill="none" />
+                </svg>
+              </div>
             </div>
-            {/* Thumbnails */}
-            <div className="flex gap-2">
-              {[0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  className={[
-                    "w-16 h-16 rounded-[8px] border-2 flex items-center justify-center cursor-pointer",
-                    i === 0 ? "border-ch" : "border-line hover:border-ch",
-                  ].join(" ")}
-                  style={{ background: productThumbBg(product.id) }}
-                >
-                  <div className="w-5 h-5 rounded-full bg-[rgba(44,40,37,.15)]" />
-                </div>
-              ))}
-            </div>
-          </div>
+          )}
 
           {/* Product info */}
           <div>

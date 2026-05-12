@@ -1,12 +1,16 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { ImageGalleryUploader } from "@/components/ui/ImageGalleryUploader";
+import type { ProductImage } from "@/lib/types";
 import {
   setProductStatus,
   updateProduct,
   updateVariantPrice,
   updateVariantStock,
 } from "../actions";
+import { MAX_GALLERY_IMAGES } from "../constants";
+import { ProductCoverForm } from "./ProductCoverForm";
 
 interface Variant {
   id: string;
@@ -23,6 +27,8 @@ interface ProductView {
   status: "draft" | "published" | "archived" | "unknown";
   details: Record<string, unknown>;
   variants: Variant[];
+  coverImageUrl: string | null;
+  images: ProductImage[];
 }
 
 interface DetailRow {
@@ -46,6 +52,8 @@ export function ProductEditor({ product }: { product: ProductView }) {
     scalarDetailRows(product.details),
   );
   const [variants, setVariants] = useState(product.variants);
+  const [coverUrl, setCoverUrl] = useState<string | null>(product.coverImageUrl);
+  const [statusError, setStatusError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -98,9 +106,14 @@ export function ProductEditor({ product }: { product: ProductView }) {
 
   function togglePublish() {
     const next = product.status === "published" ? "draft" : "published";
+    setStatusError(null);
     startTransition(async () => {
-      await setProductStatus(product.id, next);
-      setSavedAt(new Date().toLocaleTimeString());
+      const result = await setProductStatus(product.id, next);
+      if (result.ok) {
+        setSavedAt(new Date().toLocaleTimeString());
+      } else {
+        setStatusError(result.error);
+      }
     });
   }
 
@@ -121,11 +134,12 @@ export function ProductEditor({ product }: { product: ProductView }) {
   }
 
   const isPublished = product.status === "published";
+  const canPublish = isPublished || coverUrl !== null;
 
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-[10px] border border-line p-6">
-        <div className="flex items-start justify-between gap-4 mb-5">
+        <div className="flex items-start justify-between gap-4 mb-3">
           <div className="min-w-0">
             <p className="text-[11px] tracking-[.08em] uppercase text-cl mb-0.5">Status</p>
             <span
@@ -139,23 +153,31 @@ export function ProductEditor({ product }: { product: ProductView }) {
             <p className="text-[12px] text-cl mt-1.5">
               {isPublished
                 ? "Live on /shop. Buyers can see this product."
-                : "Draft only. Hidden from /shop until you publish."}
+                : canPublish
+                  ? "Draft only. Hidden from /shop until you publish."
+                  : "Add a cover photo below before you can publish."}
             </p>
           </div>
           <button
             type="button"
-            disabled={pending}
+            disabled={pending || !canPublish}
             onClick={togglePublish}
             className={[
-              "shrink-0 px-4 py-2 rounded-full text-[13px] font-medium transition-colors disabled:opacity-60",
+              "shrink-0 px-4 py-2 rounded-full text-[13px] font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed",
               isPublished
                 ? "bg-pl2 text-cm hover:bg-pl"
                 : "bg-tr text-white hover:bg-tr-d",
             ].join(" ")}
+            title={!canPublish ? "Add a cover photo first" : undefined}
           >
             {isPublished ? "Unpublish" : "Publish"}
           </button>
         </div>
+        {statusError && (
+          <p className="text-[12px] text-tr-d bg-tr-p border border-tr-l rounded px-2.5 py-1.5 mb-3">
+            {statusError}
+          </p>
+        )}
 
         <Field label="Title">
           <input className={inputCls} value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -227,6 +249,32 @@ export function ProductEditor({ product }: { product: ProductView }) {
             <span className="text-[12px] text-cl">Saved at {savedAt}</span>
           )}
         </div>
+      </div>
+
+      <div className="bg-white rounded-[10px] border border-line p-6">
+        <h2 className="text-[15px] font-medium text-ch mb-1">Cover photo</h2>
+        <p className="text-[12px] text-cl mb-4">
+          Square. Shown on /shop tiles and at the start of the carousel on
+          the product page. Required to publish.
+        </p>
+        <ProductCoverForm
+          productId={product.id}
+          currentCoverUrl={coverUrl}
+          onSaved={setCoverUrl}
+        />
+      </div>
+
+      <div className="bg-white rounded-[10px] border border-line p-6">
+        <h2 className="text-[15px] font-medium text-ch mb-1">Gallery photos</h2>
+        <p className="text-[12px] text-cl mb-4">
+          Up to {MAX_GALLERY_IMAGES} additional photos. Any aspect ratio.
+          Shown after the cover on the product detail page.
+        </p>
+        <ImageGalleryUploader
+          productId={product.id}
+          initial={product.images}
+          max={MAX_GALLERY_IMAGES}
+        />
       </div>
 
       <div className="bg-white rounded-[10px] border border-line p-6">

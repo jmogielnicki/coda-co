@@ -4,6 +4,7 @@ import type {
   LifeStage,
   Product,
   ProductDetail,
+  ProductImage,
   ProductStatus,
   ProductType,
   ProductWithRating,
@@ -27,6 +28,8 @@ type DbProduct = Prisma.ProductGetPayload<{
   include: { vendor: true; productType: true; variants: true };
 }>;
 
+type DbProductImage = Prisma.ProductImageGetPayload<Record<string, never>>;
+
 function toVariant(v: DbProduct["variants"][number]): Variant {
   return {
     id: v.id,
@@ -37,7 +40,16 @@ function toVariant(v: DbProduct["variants"][number]): Variant {
   };
 }
 
-function toProduct(p: DbProduct): Product {
+function toImage(i: DbProductImage): ProductImage {
+  return {
+    id: i.id,
+    url: i.url,
+    alt: i.alt,
+    sortOrder: i.sortOrder,
+  };
+}
+
+function toProduct(p: DbProduct, images: DbProductImage[] = []): Product {
   const variants = p.variants.map(toVariant);
   const prices = variants.map((v) => v.price);
   // Products are always created with at least one variant (see createProduct
@@ -62,6 +74,8 @@ function toProduct(p: DbProduct): Product {
     description: p.description,
     details: (p.details ?? {}) as ProductDetail,
     lifeStages: p.lifeStages as LifeStage[],
+    coverImageUrl: p.coverImageUrl,
+    images: images.map(toImage),
   };
 }
 
@@ -133,13 +147,19 @@ export async function getProduct(id: string): Promise<ProductWithRating | null> 
   });
   if (!p) return null;
 
-  const summary = await prisma.productReview.aggregate({
-    where: { productId: p.id },
-    _count: { _all: true },
-    _avg: { rating: true },
-  });
+  const [summary, images] = await Promise.all([
+    prisma.productReview.aggregate({
+      where: { productId: p.id },
+      _count: { _all: true },
+      _avg: { rating: true },
+    }),
+    prisma.productImage.findMany({
+      where: { productId: p.id },
+      orderBy: { sortOrder: "asc" },
+    }),
+  ]);
   return {
-    ...toProduct(p),
+    ...toProduct(p, images),
     rating: summary._avg.rating ?? 0,
     reviewCount: summary._count._all,
   };

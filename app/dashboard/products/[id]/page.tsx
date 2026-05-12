@@ -23,7 +23,10 @@ export default async function VendorProductEditorPage({ params }: PageProps) {
 
   const product = await prisma.product.findFirst({
     where: { id, vendorId: vendor.id },
-    include: { variants: { orderBy: { createdAt: "asc" } } },
+    include: {
+      variants: { orderBy: { createdAt: "asc" } },
+      images: { orderBy: { sortOrder: "asc" } },
+    },
   });
   if (!product) notFound();
 
@@ -69,6 +72,13 @@ export default async function VendorProductEditorPage({ params }: PageProps) {
                 label: v.label,
                 priceCents: v.priceCents,
                 stock: v.stock,
+              })),
+              coverImageUrl: product.coverImageUrl,
+              images: product.images.map((i) => ({
+                id: i.id,
+                url: i.url,
+                alt: i.alt,
+                sortOrder: i.sortOrder,
               })),
             }}
           />

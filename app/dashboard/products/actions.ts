@@ -2,9 +2,20 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { del, put } from "@vercel/blob";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { normalizeSlug } from "@/lib/api/applications";
+import {
+  extensionForMime,
+  isOwnedBlobUrl,
+  validateImageFile,
+} from "@/lib/images";
+import {
+  MAX_GALLERY_IMAGES,
+  type ActionError,
+  type ImageActionResult,
+} from "./constants";
 
 async function requireVendorId(): Promise<string> {
   const session = await auth();
@@ -142,13 +153,188 @@ export async function updateVariantPrice(variantId: string, price: number) {
   revalidatePath("/shop/[productId]", "page");
 }
 
-export async function setProductStatus(productId: string, status: "draft" | "published" | "archived") {
+export async function setProductStatus(
+  productId: string,
+  status: "draft" | "published" | "archived",
+): Promise<ImageActionResult> {
   const vendorId = await requireVendorId();
-  await prisma.product.update({
+  const product = await prisma.product.findFirst({
     where: { id: productId, vendorId },
+    select: { coverImageUrl: true },
+  });
+  if (!product) return { ok: false, error: "Not your product" };
+
+  // Publishing without a cover would leave /shop with a blank tile and
+  // /shop/{slug} with the SVG icon fallback. Force the vendor to upload
+  // a cover first.
+  if (status === "published" && !product.coverImageUrl) {
+    return { ok: false, error: "Add a cover photo before publishing." };
+  }
+
+  await prisma.product.update({
+    where: { id: productId },
     data: { status },
   });
   revalidatePath(`/dashboard/products/${productId}`);
   revalidatePath("/dashboard/products");
   revalidatePath("/shop");
+  return { ok: true };
+}
+
+// ── Product images ──────────────────────────────────────────────────────────
+
+async function requireOwnedProduct(productId: string) {
+  const vendorId = await requireVendorId();
+  const product = await prisma.product.findFirst({
+    where: { id: productId, vendorId },
+    select: { id: true, slug: true, coverImageUrl: true },
+  });
+  if (!product) throw new Error("Not your product");
+  return product;
+}
+
+export async function updateProductCover(
+  productId: string,
+  formData: FormData,
+): Promise<{ ok: true; url: string } | ActionError> {
+  const product = await requireOwnedProduct(productId);
+
+  const photo = formData.get("photo");
+  if (!(photo instanceof File) || photo.size === 0) {
+    return { ok: false, error: "Pick a photo first." };
+  }
+  const problem = validateImageFile(photo);
+  if (problem) return { ok: false, error: problem.message };
+
+  const ext = extensionForMime(photo.type);
+  const key = `products/${product.slug}/cover-${Date.now()}.${ext}`;
+  const blob = await put(key, photo, {
+    access: "public",
+    contentType: photo.type,
+  });
+
+  await prisma.product.update({
+    where: { id: product.id },
+    data: { coverImageUrl: blob.url },
+  });
+
+  // Old blob cleanup is best-effort. Same pattern as the vendor headshot
+  // action: if it fails, we leak one object but the row is correct.
+  if (isOwnedBlobUrl(product.coverImageUrl)) {
+    try { await del(product.coverImageUrl); } catch {}
+  }
+
+  revalidatePath(`/dashboard/products/${product.id}`);
+  revalidatePath(`/shop/${product.slug}`);
+  revalidatePath("/shop");
+  return { ok: true, url: blob.url };
+}
+
+export async function addProductGalleryImage(
+  productId: string,
+  formData: FormData,
+): Promise<
+  | { ok: true; image: { id: string; url: string; sortOrder: number; alt: string | null } }
+  | ActionError
+> {
+  const product = await requireOwnedProduct(productId);
+
+  const photo = formData.get("photo");
+  if (!(photo instanceof File) || photo.size === 0) {
+    return { ok: false, error: "Pick a photo first." };
+  }
+  const problem = validateImageFile(photo);
+  if (problem) return { ok: false, error: problem.message };
+
+  const count = await prisma.productImage.count({
+    where: { productId: product.id },
+  });
+  if (count >= MAX_GALLERY_IMAGES) {
+    return {
+      ok: false,
+      error: `At most ${MAX_GALLERY_IMAGES} gallery images per product.`,
+    };
+  }
+
+  const ext = extensionForMime(photo.type);
+  const key = `products/${product.slug}/gallery-${Date.now()}.${ext}`;
+  const blob = await put(key, photo, {
+    access: "public",
+    contentType: photo.type,
+  });
+
+  const max = await prisma.productImage.aggregate({
+    where: { productId: product.id },
+    _max: { sortOrder: true },
+  });
+  const sortOrder = (max._max.sortOrder ?? -1) + 1;
+
+  const created = await prisma.productImage.create({
+    data: { productId: product.id, url: blob.url, sortOrder },
+  });
+
+  revalidatePath(`/dashboard/products/${product.id}`);
+  revalidatePath(`/shop/${product.slug}`);
+  return {
+    ok: true,
+    image: {
+      id: created.id,
+      url: created.url,
+      sortOrder: created.sortOrder,
+      alt: created.alt,
+    },
+  };
+}
+
+export async function deleteProductGalleryImage(
+  imageId: string,
+): Promise<ImageActionResult> {
+  const vendorId = await requireVendorId();
+  const image = await prisma.productImage.findUnique({
+    where: { id: imageId },
+    include: {
+      product: { select: { id: true, slug: true, vendorId: true } },
+    },
+  });
+  if (!image || image.product.vendorId !== vendorId) {
+    return { ok: false, error: "Not your image" };
+  }
+
+  await prisma.productImage.delete({ where: { id: imageId } });
+  if (isOwnedBlobUrl(image.url)) {
+    try { await del(image.url); } catch {}
+  }
+
+  revalidatePath(`/dashboard/products/${image.product.id}`);
+  revalidatePath(`/shop/${image.product.slug}`);
+  return { ok: true };
+}
+
+export async function reorderProductGalleryImages(
+  productId: string,
+  orderedIds: string[],
+): Promise<ImageActionResult> {
+  const product = await requireOwnedProduct(productId);
+
+  const dbImages = await prisma.productImage.findMany({
+    where: { productId: product.id },
+    select: { id: true },
+  });
+  const validIds = new Set(dbImages.map((i) => i.id));
+  if (
+    orderedIds.length !== validIds.size ||
+    !orderedIds.every((id) => validIds.has(id))
+  ) {
+    return { ok: false, error: "Reorder list doesn't match this product." };
+  }
+
+  await prisma.$transaction(
+    orderedIds.map((id, sortOrder) =>
+      prisma.productImage.update({ where: { id }, data: { sortOrder } }),
+    ),
+  );
+
+  revalidatePath(`/dashboard/products/${product.id}`);
+  revalidatePath(`/shop/${product.slug}`);
+  return { ok: true };
 }
