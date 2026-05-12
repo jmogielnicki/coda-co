@@ -25,6 +25,13 @@ blocking, but the natural next phase. Full scope lives in
 Verified-purchase-gated review submission. Adds `verified_purchase` +
 `order_item_id` columns to `product_reviews`. Depends on Phase E.
 
+## Image storage (parallel workstream)
+
+User-uploaded images for vendor headshots and product photos. Three-phase
+plan using Vercel Blob; full scope in `docs/images-plan.md`. Phase 1
+(vendor headshot) is the suggested starting point and not blocked by
+Phase E.
+
 ## Smaller gaps
 
 - **No password reset / change UI.** Every user is stuck with the password
