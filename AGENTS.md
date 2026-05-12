@@ -137,7 +137,7 @@ PrismaClient()` export.
 - One PR per logical change, cut from latest `main`, squash-merged.
 - Phase branches: `claude/phase-{a-f}-{short-kebab-slug}`. Other
   follow-ups: `claude/{short-kebab-slug}`.
-- User reviews and merges. Agent doesn't merge unless asked.
+- User reviews and merges by default. When the user explicitly asks the agent to merge a PR, the agent merges it (squash, via the GitHub MCP tools).
 
 ## Reuse conventions — read before adding markup
 
