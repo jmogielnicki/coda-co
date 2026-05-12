@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { StepsBar } from "@/components/ui/StepsBar";
+import { SPECIALIZATIONS } from "@/lib/data/specializations";
 import { LIFE_STAGES } from "@/lib/format/lifeStage";
 import type { LifeStage } from "@/lib/types";
 
@@ -22,22 +23,6 @@ const SERVICE_TYPES = [
   "Home funeral guide",
   "Grief counselor",
   "Other",
-];
-
-const SPECIALIZATIONS = [
-  "EOL planning",
-  "Grief support",
-  "Dementia",
-  "Home-centered dying",
-  "Legacy work",
-  "Advance directives",
-  "Events",
-  "Memorial goods",
-  "Wills + estates",
-  "Mediation",
-  "Green burial",
-  "Funerals",
-  "Cleaning + organization",
 ];
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];

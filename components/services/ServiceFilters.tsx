@@ -6,6 +6,7 @@ import { FilterPillGroup } from "@/components/ui/filters/FilterPillGroup";
 import { FilterCheck } from "@/components/ui/filters/FilterCheck";
 import { FilterSection } from "@/components/ui/filters/FilterSection";
 import { FilterDivider } from "@/components/ui/filters/FilterDivider";
+import { SPECIALIZATIONS } from "@/lib/data/specializations";
 
 const SERVICE_TYPES = [
   { value: "doula", label: "Death doula" },
@@ -25,14 +26,6 @@ const RATINGS = [
   { value: "3", label: "3+" },
   { value: "4", label: "4+" },
   { value: "5", label: "5 only" },
-];
-
-const SPECIALIZATIONS = [
-  "EOL planning",
-  "Grief support",
-  "LGBTQ+ affirming",
-  "Bilingual (Spanish)",
-  "Perinatal loss",
 ];
 
 const VERIFIED_OPTIONS = [
