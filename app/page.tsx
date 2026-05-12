@@ -154,7 +154,7 @@ export default async function LandingPage() {
             subtitle="Goods by mail · Services by location"
             subtitleTone="ink"
           />
-          <div className="grid-auto-130">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {categories.map((cat) => (
               <Link
                 key={cat.label}
