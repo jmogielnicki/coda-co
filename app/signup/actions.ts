@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
 import { signIn } from "@/auth";
 import { prisma } from "@/lib/db";
+import { isNextControlFlow, log } from "@/lib/log";
 
 export interface SignupState {
   error?: string;
@@ -26,7 +27,7 @@ export async function signupAction(
   if (existing) return { error: "An account with that email already exists." };
 
   const passwordHash = await bcrypt.hash(password, 10);
-  await prisma.user.create({
+  const created = await prisma.user.create({
     data: {
       email,
       name: name || null,
@@ -35,13 +36,20 @@ export async function signupAction(
       // upgrade selected users with a `vendor_profile` row of their own.
       role: "user",
     },
+    select: { id: true },
   });
+  log.info("signup.user_created", { userId: created.id, email });
 
   try {
     await signIn("credentials", { email, password, redirectTo });
   } catch (err) {
     if (err instanceof AuthError) {
+      // User exists but the auto-signin failed — they're stranded mid-flow.
+      log.error("signup.auto_signin_failed", { userId: created.id, email, err });
       return { error: "Account created, but sign-in failed. Try /login." };
+    }
+    if (!isNextControlFlow(err)) {
+      log.error("signup.unexpected_error", { userId: created.id, email, err });
     }
     throw err;
   }

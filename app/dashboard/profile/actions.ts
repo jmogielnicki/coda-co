@@ -9,6 +9,7 @@ import {
   isOwnedBlobUrl,
   validateImageFile,
 } from "@/lib/images";
+import { log } from "@/lib/log";
 
 const TONES = ["sage", "terracotta"] as const;
 type Tone = (typeof TONES)[number];
@@ -61,11 +62,17 @@ export async function updateVendorProfile(
 
   // Old blob cleanup is best-effort. If the delete fails (network blip,
   // already gone), the row is still correct — we just leak one object.
+  // Log so a sustained pattern of failures is visible in ops.
   if (hasNewPhoto && isOwnedBlobUrl(vendor.photoSrc)) {
     try {
       await del(vendor.photoSrc);
-    } catch {
-      // Swallow — the user's update succeeded and that's what matters.
+    } catch (err) {
+      log.warn("blob.delete_failed", {
+        kind: "vendor_photo",
+        vendorId: vendor.id,
+        url: vendor.photoSrc,
+        err,
+      });
     }
   }
 

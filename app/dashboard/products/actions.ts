@@ -11,6 +11,7 @@ import {
   isOwnedBlobUrl,
   validateImageFile,
 } from "@/lib/images";
+import { log } from "@/lib/log";
 import {
   MAX_GALLERY_IMAGES,
   type ActionError,
@@ -221,7 +222,16 @@ export async function updateProductCover(
   // Old blob cleanup is best-effort. Same pattern as the vendor headshot
   // action: if it fails, we leak one object but the row is correct.
   if (isOwnedBlobUrl(product.coverImageUrl)) {
-    try { await del(product.coverImageUrl); } catch {}
+    try {
+      await del(product.coverImageUrl);
+    } catch (err) {
+      log.warn("blob.delete_failed", {
+        kind: "product_cover",
+        productId: product.id,
+        url: product.coverImageUrl,
+        err,
+      });
+    }
   }
 
   revalidatePath(`/dashboard/products/${product.id}`);
@@ -302,7 +312,17 @@ export async function deleteProductGalleryImage(
 
   await prisma.productImage.delete({ where: { id: imageId } });
   if (isOwnedBlobUrl(image.url)) {
-    try { await del(image.url); } catch {}
+    try {
+      await del(image.url);
+    } catch (err) {
+      log.warn("blob.delete_failed", {
+        kind: "product_gallery",
+        productId: image.product.id,
+        imageId,
+        url: image.url,
+        err,
+      });
+    }
   }
 
   revalidatePath(`/dashboard/products/${image.product.id}`);

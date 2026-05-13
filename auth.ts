@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/db";
+import { log } from "@/lib/log";
 
 // Auth.js v5 config. The adapter writes sessions to the DB so we never
 // hand a JWT to the browser; sessions are server-truth and revocable.
@@ -40,14 +41,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(creds) {
         const email = typeof creds?.email === "string" ? creds.email.trim().toLowerCase() : "";
         const password = typeof creds?.password === "string" ? creds.password : "";
-        if (!email || !password) return null;
+        if (!email || !password) {
+          log.warn("auth.signin_failed", { reason: "missing_credentials", email: email || null });
+          return null;
+        }
 
         const user = await prisma.user.findUnique({ where: { email } });
-        if (!user?.passwordHash) return null;
+        if (!user?.passwordHash) {
+          log.warn("auth.signin_failed", { reason: "user_not_found", email });
+          return null;
+        }
 
         const ok = await bcrypt.compare(password, user.passwordHash);
-        if (!ok) return null;
+        if (!ok) {
+          log.warn("auth.signin_failed", { reason: "wrong_password", email, userId: user.id });
+          return null;
+        }
 
+        log.info("auth.signin_succeeded", { userId: user.id, email });
         return { id: user.id, email: user.email, name: user.name ?? null };
       },
     }),
@@ -73,6 +84,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             name: u.name,
             role: u.role,
           };
+        } else {
+          // JWT references a user that no longer exists — likely deleted
+          // between cookie issuance and this request. Stale session, but
+          // worth knowing about: a real user just hit a dead session.
+          log.warn("auth.session_user_missing", { userId: uid });
         }
       }
       return session;

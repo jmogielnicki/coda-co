@@ -2,6 +2,7 @@
 
 import { AuthError } from "next-auth";
 import { signIn } from "@/auth";
+import { isNextControlFlow, log } from "@/lib/log";
 
 export interface LoginState {
   error?: string;
@@ -28,6 +29,9 @@ export async function loginAction(
       // surface a single generic message so the form doesn't leak whether
       // the email exists.
       return { error: "Email or password is incorrect." };
+    }
+    if (!isNextControlFlow(err)) {
+      log.error("login.unexpected_error", { email, err });
     }
     throw err;
   }
