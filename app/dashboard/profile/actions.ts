@@ -36,7 +36,7 @@ export async function updateVendorProfile(
   let nextPhotoUrl: string | null | undefined; // undefined = leave column alone
   if (hasNewPhoto) {
     const limited = rateLimit(`upload:${vendor.userId}`, {
-      limit: 30,
+      limit: 100,
       windowMs: 60 * 60 * 1000,
     });
     if (!limited.ok) {

@@ -192,7 +192,7 @@ async function requireOwnedProduct(productId: string) {
 
 function checkUploadRateLimit(vendorId: string): ActionError | null {
   const limited = rateLimit(`upload:${vendorId}`, {
-    limit: 30,
+    limit: 100,
     windowMs: 60 * 60 * 1000,
   });
   if (!limited.ok) {
