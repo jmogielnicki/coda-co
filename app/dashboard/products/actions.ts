@@ -6,7 +6,8 @@ import { del, put } from "@vercel/blob";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { normalizeSlug } from "@/lib/api/applications";
-import { isOwnedBlobUrl, processUploadedImage } from "@/lib/images";
+import { isOwnedBlobUrl } from "@/lib/images";
+import { processUploadedImage } from "@/lib/images.server";
 import { rateLimit } from "@/lib/rate-limit";
 import {
   MAX_GALLERY_IMAGES,

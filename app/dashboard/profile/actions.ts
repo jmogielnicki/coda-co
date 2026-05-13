@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { del, put } from "@vercel/blob";
 import { requireVendor } from "@/app/dashboard/lib";
 import { prisma } from "@/lib/db";
-import { isOwnedBlobUrl, processUploadedImage } from "@/lib/images";
+import { isOwnedBlobUrl } from "@/lib/images";
+import { processUploadedImage } from "@/lib/images.server";
 import { rateLimit } from "@/lib/rate-limit";
 
 const TONES = ["sage", "terracotta"] as const;
