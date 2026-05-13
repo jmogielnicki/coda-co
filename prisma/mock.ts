@@ -12,6 +12,7 @@ import { vendors } from "../lib/data/vendors";
 import { services } from "../lib/data/services";
 import { reviews } from "../lib/data/reviews";
 import { vendorReviews } from "../lib/data/vendor-reviews";
+import { normalizeSslmode } from "../lib/connectionString";
 
 config({ path: ".env" });
 
@@ -27,7 +28,9 @@ if (process.env.NODE_ENV === "production" && process.env.ALLOW_MOCK_SEED !== "1"
   process.exit(1);
 }
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+const adapter = new PrismaPg({
+  connectionString: normalizeSslmode(process.env.DATABASE_URL!),
+});
 const prisma = new PrismaClient({ adapter });
 
 // Every mock account uses the same dev password so a tester can sign in as

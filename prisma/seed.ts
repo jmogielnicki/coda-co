@@ -6,10 +6,13 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import { config } from "dotenv";
+import { normalizeSslmode } from "../lib/connectionString";
 
 config({ path: ".env" });
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+const adapter = new PrismaPg({
+  connectionString: normalizeSslmode(process.env.DATABASE_URL!),
+});
 const prisma = new PrismaClient({ adapter });
 
 const PRODUCT_TYPES = [
