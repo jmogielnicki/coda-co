@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db";
 import { normalizeSlug } from "@/lib/api/applications";
 import { isOwnedBlobUrl } from "@/lib/images";
 import { processUploadedImage } from "@/lib/images.server";
+import { log } from "@/lib/log";
 import { rateLimit } from "@/lib/rate-limit";
 import {
   MAX_GALLERY_IMAGES,
@@ -191,12 +192,13 @@ async function requireOwnedProduct(productId: string) {
   return { ...product, vendorId };
 }
 
-function checkUploadRateLimit(vendorId: string): ActionError | null {
+function checkUploadRateLimit(vendorId: string, kind: string): ActionError | null {
   const limited = rateLimit(`upload:${vendorId}`, {
     limit: 100,
     windowMs: 60 * 60 * 1000,
   });
   if (!limited.ok) {
+    log.warn("upload.rate_limited", { kind, vendorId });
     return { ok: false, error: "Too many uploads. Try again later." };
   }
   return null;
@@ -212,7 +214,7 @@ export async function updateProductCover(
   if (!(photo instanceof File) || photo.size === 0) {
     return { ok: false, error: "Pick a photo first." };
   }
-  const blocked = checkUploadRateLimit(product.vendorId);
+  const blocked = checkUploadRateLimit(product.vendorId, "product_cover");
   if (blocked) return blocked;
   const processed = await processUploadedImage(photo);
   if (!processed.ok) return { ok: false, error: processed.error };
@@ -229,7 +231,16 @@ export async function updateProductCover(
   // Old blob cleanup is best-effort. Same pattern as the vendor headshot
   // action: if it fails, we leak one object but the row is correct.
   if (isOwnedBlobUrl(product.coverImageUrl)) {
-    try { await del(product.coverImageUrl); } catch {}
+    try {
+      await del(product.coverImageUrl);
+    } catch (err) {
+      log.warn("blob.delete_failed", {
+        kind: "product_cover",
+        productId: product.id,
+        url: product.coverImageUrl,
+        err,
+      });
+    }
   }
 
   revalidatePath(`/dashboard/products/${product.id}`);
@@ -262,7 +273,7 @@ export async function addProductGalleryImage(
     };
   }
 
-  const blocked = checkUploadRateLimit(product.vendorId);
+  const blocked = checkUploadRateLimit(product.vendorId, "product_gallery");
   if (blocked) return blocked;
   const processed = await processUploadedImage(photo);
   if (!processed.ok) return { ok: false, error: processed.error };
@@ -310,7 +321,17 @@ export async function deleteProductGalleryImage(
 
   await prisma.productImage.delete({ where: { id: imageId } });
   if (isOwnedBlobUrl(image.url)) {
-    try { await del(image.url); } catch {}
+    try {
+      await del(image.url);
+    } catch (err) {
+      log.warn("blob.delete_failed", {
+        kind: "product_gallery",
+        productId: image.product.id,
+        imageId,
+        url: image.url,
+        err,
+      });
+    }
   }
 
   revalidatePath(`/dashboard/products/${image.product.id}`);

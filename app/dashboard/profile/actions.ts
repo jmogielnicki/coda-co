@@ -6,6 +6,7 @@ import { requireVendor } from "@/app/dashboard/lib";
 import { prisma } from "@/lib/db";
 import { isOwnedBlobUrl } from "@/lib/images";
 import { processUploadedImage } from "@/lib/images.server";
+import { log } from "@/lib/log";
 import { rateLimit } from "@/lib/rate-limit";
 
 const TONES = ["sage", "terracotta"] as const;
@@ -41,6 +42,7 @@ export async function updateVendorProfile(
       windowMs: 60 * 60 * 1000,
     });
     if (!limited.ok) {
+      log.warn("upload.rate_limited", { kind: "vendor_photo", vendorId: vendor.id });
       return { status: "error", error: "Too many uploads. Try again later." };
     }
     const processed = await processUploadedImage(photo);
@@ -61,11 +63,17 @@ export async function updateVendorProfile(
 
   // Old blob cleanup is best-effort. If the delete fails (network blip,
   // already gone), the row is still correct — we just leak one object.
+  // Log so a sustained pattern of failures is visible in ops.
   if (hasNewPhoto && isOwnedBlobUrl(vendor.photoSrc)) {
     try {
       await del(vendor.photoSrc);
-    } catch {
-      // Swallow — the user's update succeeded and that's what matters.
+    } catch (err) {
+      log.warn("blob.delete_failed", {
+        kind: "vendor_photo",
+        vendorId: vendor.id,
+        url: vendor.photoSrc,
+        err,
+      });
     }
   }
 

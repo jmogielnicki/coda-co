@@ -1,6 +1,7 @@
 import type { ApplicationKind, ApplicationStatus, SubscriptionPlanId } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { log } from "@/lib/log";
 
 export interface ApplicationDraft {
   applicantUserId: string;
@@ -24,7 +25,7 @@ export function normalizeSlug(input: string): string {
 }
 
 export async function createApplication(draft: ApplicationDraft) {
-  return prisma.vendorApplication.create({
+  const app = await prisma.vendorApplication.create({
     data: {
       applicantUserId: draft.applicantUserId,
       kind: draft.kind,
@@ -36,6 +37,14 @@ export async function createApplication(draft: ApplicationDraft) {
       status: "submitted",
     },
   });
+  log.info("application.submitted", {
+    applicationId: app.id,
+    applicantUserId: draft.applicantUserId,
+    kind: draft.kind,
+    planId: draft.planId,
+    proposedSlug: draft.proposedSlug,
+  });
+  return app;
 }
 
 export async function listApplications(status?: ApplicationStatus) {
@@ -57,49 +66,61 @@ export async function getApplication(id: string) {
 // outside the mock script. We do both rows in one transaction so a half-
 // approved application can't leave a vendor without a subscription.
 export async function approveApplication(applicationId: string, reviewerId: string) {
-  return prisma.$transaction(async (tx) => {
-    const app = await tx.vendorApplication.findUnique({ where: { id: applicationId } });
-    if (!app) throw new Error("Application not found");
-    if (app.status !== "submitted") throw new Error("Application is not pending review");
+  try {
+    const vendor = await prisma.$transaction(async (tx) => {
+      const app = await tx.vendorApplication.findUnique({ where: { id: applicationId } });
+      if (!app) throw new Error("Application not found");
+      if (app.status !== "submitted") throw new Error("Application is not pending review");
 
-    const subscriptionKind = app.kind === "services" ? "services" : "goods";
+      const subscriptionKind = app.kind === "services" ? "services" : "goods";
 
-    const vendor = await tx.vendorProfile.create({
-      data: {
-        userId: app.applicantUserId,
-        slug: app.proposedSlug,
-        displayName: app.proposedDisplayName,
-        bio: app.proposedBio,
-        location: app.location,
-        kind: app.kind,
-        verified: false,
-      },
+      const vendor = await tx.vendorProfile.create({
+        data: {
+          userId: app.applicantUserId,
+          slug: app.proposedSlug,
+          displayName: app.proposedDisplayName,
+          bio: app.proposedBio,
+          location: app.location,
+          kind: app.kind,
+          verified: false,
+        },
+      });
+
+      await tx.subscription.create({
+        data: {
+          vendorId: vendor.id,
+          planId: app.planId,
+          kind: subscriptionKind,
+          status: "active",
+        },
+      });
+
+      await tx.vendorApplication.update({
+        where: { id: applicationId },
+        data: {
+          status: "approved",
+          reviewedByUserId: reviewerId,
+          reviewedAt: new Date(),
+        },
+      });
+
+      return vendor;
     });
-
-    await tx.subscription.create({
-      data: {
-        vendorId: vendor.id,
-        planId: app.planId,
-        kind: subscriptionKind,
-        status: "active",
-      },
+    log.info("application.approved", {
+      applicationId,
+      reviewerId,
+      vendorId: vendor.id,
+      vendorSlug: vendor.slug,
     });
-
-    await tx.vendorApplication.update({
-      where: { id: applicationId },
-      data: {
-        status: "approved",
-        reviewedByUserId: reviewerId,
-        reviewedAt: new Date(),
-      },
-    });
-
     return vendor;
-  });
+  } catch (err) {
+    log.error("application.approve_failed", { applicationId, reviewerId, err });
+    throw err;
+  }
 }
 
 export async function rejectApplication(applicationId: string, reviewerId: string, notes?: string) {
-  return prisma.vendorApplication.update({
+  const updated = await prisma.vendorApplication.update({
     where: { id: applicationId },
     data: {
       status: "rejected",
@@ -108,6 +129,12 @@ export async function rejectApplication(applicationId: string, reviewerId: strin
       reviewNotes: notes,
     },
   });
+  log.info("application.rejected", {
+    applicationId,
+    reviewerId,
+    hasNotes: Boolean(notes),
+  });
+  return updated;
 }
 
 // Convenience used by demo auto-approve and the admin queue alike.
@@ -121,6 +148,11 @@ export async function autoApproveAsAdmin(applicationId: string) {
     select: { applicantUserId: true },
   }))?.applicantUserId;
   if (!reviewerId) throw new Error("No reviewer available for auto-approval");
+  log.warn("application.auto_approving", {
+    applicationId,
+    reviewerId,
+    selfReview: !admin,
+  });
   return approveApplication(applicationId, reviewerId);
 }
 
