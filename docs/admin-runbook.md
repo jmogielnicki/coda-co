@@ -86,6 +86,21 @@ vendor sees, you have two options:
 A proper "log in as this user" flow for support is on the list of things
 to build but not done.
 
+### Inviting a new vendor
+
+`/signup` is gated by a shared invite code. Anyone without the code
+sees a friendly "That invite code isn't valid" error and no account is
+created — that's the bot shield while we're still in demo mode.
+
+The current code is **`codaco-2026-invited`**. Hand it to the vendor
+along with the signup URL when you schedule a demo. Rotate it (in
+Vercel → Settings → Environment Variables → `INVITE_CODE`) if it leaks
+or after the demo phase ends.
+
+If `INVITE_CODE` is unset in Vercel, `/signup` is disabled entirely
+("Signup is currently disabled.") — fail-closed by design, so a
+misconfigured environment can't accidentally open signup to the world.
+
 ---
 
 ## Tour: the Database Viewer (`/admin`)
@@ -294,6 +309,7 @@ developer**, but it helps to know what they do.
 | Var                            | Effect when set                                       |
 |--------------------------------|-------------------------------------------------------|
 | `DEMO_AUTO_APPROVE_VENDORS=1`  | Auto-approves every vendor application on submission. Currently ON for the live demo. Turn off once real vendor review is needed. |
+| `INVITE_CODE`                  | Shared secret required at `/signup`. Current value: `codaco-2026-invited`. Unsetting it disables signup entirely (fail-closed). See **Inviting a new vendor** above. |
 | `DATABASE_URL`                 | The Neon Postgres connection string for **production**. Preview deploys get their own branch URL injected per-deployment by the Vercel-Neon integration — don't set `DATABASE_URL` in Preview scope manually. Changing the Production value points the site at a different database. |
 | `DATABASE_URL_UNPOOLED`        | Direct (non-pooled) Neon URL used by `prisma migrate deploy` (Neon's pgbouncer can't proxy migration DDL). Also injected by the Vercel-Neon integration; mirror any prod rotation of `DATABASE_URL` here. |
 | `AUTH_SECRET`                  | Signs session tokens. Changing it logs everyone out. |
