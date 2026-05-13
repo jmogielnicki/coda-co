@@ -8,8 +8,17 @@ import { normalizeSslmode } from "./connectionString";
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 function buildClient(): PrismaClient {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL is not set");
+  // Prefer the pooled URL (better for Vercel serverless concurrency),
+  // but fall back to the unpooled URL if only that's set. Without the
+  // fallback, an env-var misconfiguration that drops DATABASE_URL takes
+  // the whole site down — happened once when the Neon integration was
+  // initially wired up and only injected DATABASE_URL_UNPOOLED into the
+  // Production scope. The unpooled URL is a worse but functional
+  // runtime connection.
+  const url = process.env.DATABASE_URL ?? process.env.DATABASE_URL_UNPOOLED;
+  if (!url) {
+    throw new Error("Neither DATABASE_URL nor DATABASE_URL_UNPOOLED is set");
+  }
   const adapter = new PrismaPg({ connectionString: normalizeSslmode(url) });
   const client = new PrismaClient({ adapter });
   if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = client;
