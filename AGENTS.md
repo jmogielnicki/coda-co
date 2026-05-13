@@ -152,11 +152,17 @@ rows when you eventually need to delete them.
 Single Node script invoked by both `npm run build` and `npm run
 vercel-build`. Decides what to run from env vars, not the script name:
 
-| `DATABASE_URL` | `VERCEL_ENV` | What runs |
-|---|---|---|
-| unset | – | `next build` only (CI) |
-| set | `preview` | `next build` only (preview must NOT mutate prod DB) |
-| set | unset / `production` | `migrate deploy` + `db seed` + `next build` |
+| `DATABASE_URL` | What runs |
+|---|---|
+| unset | `next build` only (CI) |
+| set | `migrate deploy` + `db seed` + `next build` |
+
+Preview deploys hit the second row too: each preview gets its own
+Neon branch (via the Vercel-Neon integration) with a per-deployment
+`DATABASE_URL`, so migrations apply against the branch and never
+touch production. `DATABASE_URL_UNPOOLED` (also injected by the
+integration) is wired into `prisma.config.ts` as `directUrl` because
+Neon's pooler can't proxy migration DDL.
 
 This pattern is deliberate — earlier attempts using a `build` /
 `vercel-build` script split broke when Vercel's Build Command

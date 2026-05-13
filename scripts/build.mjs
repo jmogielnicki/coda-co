@@ -6,13 +6,13 @@
 // Project Settings → Build Command override being set correctly.
 //
 // Rules:
-//   - DATABASE_URL unset (e.g. CI):           just `next build`
-//   - DATABASE_URL set, VERCEL_ENV=preview:   just `next build` (preview
-//     builds must NOT mutate the production DB — both for safety and to
-//     avoid racing on Prisma's migration advisory lock with the
-//     production build)
-//   - DATABASE_URL set, prod / local:         migrate + system seed,
-//                                             then `next build`
+//   - DATABASE_URL unset (e.g. CI):  just `next build`
+//   - DATABASE_URL set:              migrate + system seed, then build
+//
+// Preview deploys are no longer skipped: each preview gets its own
+// Neon branch (via the Vercel-Neon integration) with a per-deployment
+// DATABASE_URL, so migrate deploy applies against the branch and
+// never touches production.
 //
 // Note: `db:mock` is intentionally NOT part of this chain — it wipes the
 // DB and is only safe as a one-shot bootstrap. It was here temporarily
@@ -29,13 +29,10 @@ function run(cmd) {
 }
 
 const hasDb = Boolean(process.env.DATABASE_URL);
-const isPreview = process.env.VERCEL_ENV === "preview";
 
-if (hasDb && !isPreview) {
+if (hasDb) {
   run("prisma migrate deploy");
   run("prisma db seed");
-} else if (hasDb && isPreview) {
-  console.log("[build] VERCEL_ENV=preview; skipping Prisma migrate/seed");
 } else {
   console.log("[build] DATABASE_URL not set; skipping Prisma steps");
 }

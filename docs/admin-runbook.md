@@ -294,7 +294,8 @@ developer**, but it helps to know what they do.
 | Var                            | Effect when set                                       |
 |--------------------------------|-------------------------------------------------------|
 | `DEMO_AUTO_APPROVE_VENDORS=1`  | Auto-approves every vendor application on submission. Currently ON for the live demo. Turn off once real vendor review is needed. |
-| `DATABASE_URL`                 | The Neon Postgres connection string. Changing this points the site at a different database. |
+| `DATABASE_URL`                 | The Neon Postgres connection string for **production**. Preview deploys get their own branch URL injected per-deployment by the Vercel-Neon integration — don't set `DATABASE_URL` in Preview scope manually. Changing the Production value points the site at a different database. |
+| `DATABASE_URL_UNPOOLED`        | Direct (non-pooled) Neon URL used by `prisma migrate deploy` (Neon's pgbouncer can't proxy migration DDL). Also injected by the Vercel-Neon integration; mirror any prod rotation of `DATABASE_URL` here. |
 | `AUTH_SECRET`                  | Signs session tokens. Changing it logs everyone out. |
 | `ALLOW_MOCK_SEED=1`            | Bypasses the safety guard that blocks `db:mock` in production. Should NOT be set in production env vars. (Even if it is, the build doesn't call `db:mock`, so it's inert — but tidier to remove it.) |
 
