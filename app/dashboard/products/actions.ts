@@ -6,11 +6,8 @@ import { del, put } from "@vercel/blob";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { normalizeSlug } from "@/lib/api/applications";
-import {
-  extensionForMime,
-  isOwnedBlobUrl,
-  validateImageFile,
-} from "@/lib/images";
+import { isOwnedBlobUrl, processUploadedImage } from "@/lib/images";
+import { rateLimit } from "@/lib/rate-limit";
 import {
   MAX_GALLERY_IMAGES,
   type ActionError,
@@ -190,7 +187,18 @@ async function requireOwnedProduct(productId: string) {
     select: { id: true, slug: true, coverImageUrl: true },
   });
   if (!product) throw new Error("Not your product");
-  return product;
+  return { ...product, vendorId };
+}
+
+function checkUploadRateLimit(vendorId: string): ActionError | null {
+  const limited = rateLimit(`upload:${vendorId}`, {
+    limit: 30,
+    windowMs: 60 * 60 * 1000,
+  });
+  if (!limited.ok) {
+    return { ok: false, error: "Too many uploads. Try again later." };
+  }
+  return null;
 }
 
 export async function updateProductCover(
@@ -203,15 +211,14 @@ export async function updateProductCover(
   if (!(photo instanceof File) || photo.size === 0) {
     return { ok: false, error: "Pick a photo first." };
   }
-  const problem = validateImageFile(photo);
-  if (problem) return { ok: false, error: problem.message };
+  const blocked = checkUploadRateLimit(product.vendorId);
+  if (blocked) return blocked;
+  const processed = await processUploadedImage(photo);
+  if (!processed.ok) return { ok: false, error: processed.error };
 
-  const ext = extensionForMime(photo.type);
+  const { buffer, contentType, ext } = processed.image;
   const key = `products/${product.slug}/cover-${Date.now()}.${ext}`;
-  const blob = await put(key, photo, {
-    access: "public",
-    contentType: photo.type,
-  });
+  const blob = await put(key, buffer, { access: "public", contentType });
 
   await prisma.product.update({
     where: { id: product.id },
@@ -243,8 +250,6 @@ export async function addProductGalleryImage(
   if (!(photo instanceof File) || photo.size === 0) {
     return { ok: false, error: "Pick a photo first." };
   }
-  const problem = validateImageFile(photo);
-  if (problem) return { ok: false, error: problem.message };
 
   const count = await prisma.productImage.count({
     where: { productId: product.id },
@@ -256,12 +261,14 @@ export async function addProductGalleryImage(
     };
   }
 
-  const ext = extensionForMime(photo.type);
+  const blocked = checkUploadRateLimit(product.vendorId);
+  if (blocked) return blocked;
+  const processed = await processUploadedImage(photo);
+  if (!processed.ok) return { ok: false, error: processed.error };
+
+  const { buffer, contentType, ext } = processed.image;
   const key = `products/${product.slug}/gallery-${Date.now()}.${ext}`;
-  const blob = await put(key, photo, {
-    access: "public",
-    contentType: photo.type,
-  });
+  const blob = await put(key, buffer, { access: "public", contentType });
 
   const max = await prisma.productImage.aggregate({
     where: { productId: product.id },

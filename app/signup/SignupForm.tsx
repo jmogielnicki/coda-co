@@ -29,6 +29,18 @@ export function SignupForm({ next }: { next: string }) {
       </label>
 
       <label className="block">
+        <span className="block text-[12px] font-medium text-ch mb-1.5">Invite code</span>
+        <input
+          name="inviteCode"
+          type="text"
+          required
+          autoComplete="off"
+          className={inputCls}
+          placeholder="From your CodaCo contact"
+        />
+      </label>
+
+      <label className="block">
         <span className="block text-[12px] font-medium text-ch mb-1.5">Email</span>
         <input
           name="email"
