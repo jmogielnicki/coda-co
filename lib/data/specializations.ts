@@ -1,7 +1,6 @@
 export const SPECIALIZATIONS = [
   "EOL planning",
   "Grief support",
-  "Perinatal loss",
   "Dementia",
   "Home-centered dying",
   "Legacy work",
@@ -13,6 +12,9 @@ export const SPECIALIZATIONS = [
   "Green burial",
   "Funerals",
   "Cleaning + organization",
+  "Somatic therapies",
+  "Sliding scale available",
+  "Virtual services",
 ] as const;
 
 export type Specialization = (typeof SPECIALIZATIONS)[number];
