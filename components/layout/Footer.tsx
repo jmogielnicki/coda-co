@@ -24,7 +24,7 @@ export function Footer() {
             <FooterLink href="/shop?category=urns">Urns &amp; vessels</FooterLink>
             <FooterLink href="/shop?category=jewelry">Ash jewelry</FooterLink>
             <FooterLink href="/shop?category=shrouds">Burial shrouds</FooterLink>
-            <FooterLink href="/shop?category=planning">Planning docs</FooterLink>
+            <FooterLink href="/light-and-dark">Grief meets humor</FooterLink>
           </FooterColumn>
 
           {/* Services column */}

@@ -53,8 +53,7 @@ export async function Nav({ active }: NavProps) {
       <ul className="flex gap-6 items-center list-none">
         {link("Shop goods", "/shop", "shop")}
         {link("Find services", "/services", "services")}
-        {link("Books", "/books", "books")}
-        {link("Grief meets humor", "/light-and-dark", "light")}
+        {link("Bookshop", "/books", "books")}
         {link("List with us", "/list-with-us", "list")}
         {session?.user ? (
           <SignedInControls user={session.user} hasVendorProfile={vendor != null} />
