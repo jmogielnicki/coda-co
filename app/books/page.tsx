@@ -137,7 +137,7 @@ export default function BooksPage() {
               Honest, beautifully written guides for the journey
             </p>
           </div>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(158px,1fr))] gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {books.map((b) => (
               <div
                 key={b.title}
