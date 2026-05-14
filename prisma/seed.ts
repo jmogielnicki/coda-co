@@ -25,16 +25,20 @@ const PRODUCT_TYPES = [
 ];
 
 const SERVICE_TYPES = [
-  { slug: "doula", name: "Death doula" },
+  { slug: "doula", name: "End of life doula" },
   { slug: "attorney", name: "Estate attorney" },
   { slug: "cleaner", name: "Death cleaning" },
   { slug: "celebrant", name: "Funeral celebrant" },
-  { slug: "organizer", name: "EOL organizer" },
+  { slug: "organizer", name: "End of life organizer" },
   { slug: "grief", name: "Grief counselor" },
   { slug: "home-funeral", name: "Home funeral guide" },
   { slug: "green-burial", name: "Green burial" },
   { slug: "cafe", name: "Death cafe" },
-  { slug: "life-celebration", name: "Celebration of life planner" },
+  { slug: "life-celebration", name: "Event planner" },
+  { slug: "somatic-practitioner", name: "Somatic practitioner (yoga, massage)" },
+  { slug: "mediator", name: "Mediator" },
+  { slug: "spiritual-support", name: "Spiritual support" },
+  { slug: "other", name: "Other" },
 ];
 
 async function main() {

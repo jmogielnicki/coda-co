@@ -112,7 +112,11 @@ export type ServiceType =
   | "home-funeral"
   | "green-burial"
   | "cafe"
-  | "life-celebration";
+  | "life-celebration"
+  | "somatic-practitioner"
+  | "mediator"
+  | "spiritual-support"
+  | "other";
 
 export type ServiceLocationType =
   | "unknown"

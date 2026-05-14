@@ -1,16 +1,20 @@
 import type { ServiceLocationType, ServiceType, Vendor } from "@/lib/types";
 
 const SERVICE_TYPE_LABELS: Record<ServiceType, string> = {
-  doula: "Death doula",
+  doula: "End of life doula",
   attorney: "Estate attorney",
   cleaner: "Death cleaning",
   celebrant: "Funeral celebrant",
-  organizer: "EOL organizer",
+  organizer: "End of life organizer",
   grief: "Grief counselor",
   "home-funeral": "Home funeral guide",
   "green-burial": "Green burial",
   cafe: "Death cafe",
-  "life-celebration": "Celebration of life planner",
+  "life-celebration": "Event planner",
+  "somatic-practitioner": "Somatic practitioner (yoga, massage)",
+  mediator: "Mediator",
+  "spiritual-support": "Spiritual support",
+  other: "Other",
 };
 
 export function serviceTypeLabel(type: ServiceType | string): string {
