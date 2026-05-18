@@ -60,7 +60,7 @@ export default function AboutPage() {
               <>
                 Death is part of life.
                 <br />
-                Support shouldn&apos;t be hard to find.
+                Support should be easy to find.
               </>
             }
           />

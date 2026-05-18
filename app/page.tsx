@@ -140,7 +140,7 @@ export default async function LandingPage() {
         <h1 className="font-serif italic text-[52px] font-light leading-[1.12] text-ch mb-5">
           Death is a part of life.
           <br />
-          <span className="text-tr">Support shouldn&apos;t be hard to find.</span>
+          <span className="text-tr">Support should be easy to find.</span>
         </h1>
         <p className="text-[15px] text-cm max-w-[560px] mx-auto leading-[1.78] mb-8">
           Carefully chosen goods, caring guides, and expert support when you
