@@ -143,8 +143,8 @@ export default async function LandingPage() {
           <span className="text-tr">Support should be easy to find.</span>
         </h1>
         <p className="text-[15px] text-cm max-w-[560px] mx-auto leading-[1.78] mb-8">
-          Carefully chosen goods, caring guides, and expert support when you
-          need it most.
+          Carefully curated end-of-life goods, services, and planning
+          resources.
         </p>
 
         <HeroSearch />
