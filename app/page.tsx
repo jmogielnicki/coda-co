@@ -9,9 +9,9 @@ import { getServices } from "@/lib/api/services";
 import { getHomeFeaturedVendors } from "@/lib/api/vendors";
 
 export const metadata: Metadata = {
-  title: "CodaCo — A curated marketplace for death and dying",
+  title: "CodaCo — Curated end-of-life goods, services & planning resources",
   description:
-    "CodaCo connects you with thoughtfully curated goods, local services and expert resources to help you approach death — yours or someone you love — with grace and intention.",
+    "Curated end-of-life goods, services, and planning resources — find vetted providers and thoughtful tools to approach death, grief, and farewells with intention.",
 };
 
 const categories = [
