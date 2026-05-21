@@ -30,7 +30,7 @@ one for prospective vendors (practitioners and makers).
 
 ### Branch fork
 
-**I see myself as someone who…**
+**This interests me because…**
 
 - **I'm looking for support** — I may be interested in services & goods
   for myself or someone else.
