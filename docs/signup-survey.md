@@ -255,10 +255,10 @@ truly worth your time and money?**
 
 - Email [required]
 - ☐ Yes, it's okay to email me when CodaCo launches.
-- ☐ Yes, it's okay to create a draft vendor profile for me when we
-  launch, based on your public website and social profiles. (You'll
+- ☐ Yes, it's okay to create a draft vendor profile for me when CodaCo
+  launches, based on my public website and social profiles. (You'll
   absolutely have a chance to review it and choose whether you'd like
-  to be listed.)
+  to be listed at that time.)
 
 [Submit]
 
