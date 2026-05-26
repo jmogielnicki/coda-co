@@ -251,7 +251,7 @@ export default async function PublicHomepage() {
             eyebrow="A small ask"
             eyebrowTone="sg"
             title="Help us get this right."
-            subtitle="A short, anonymous survey · about 5 minutes"
+            subtitle="A short survey · about 5 minutes"
             subtitleTone="ink"
           />
           <p className="text-[15px] text-cm text-center leading-[1.78] mb-7 max-w-[520px] mx-auto">
