@@ -240,6 +240,38 @@ export default async function PublicHomepage() {
         </section>
       )}
 
+      <WaveDivider topColor="var(--color-white)" bottomColor="var(--color-sg-p)" />
+
+      {/* Survey CTA — the one intentionally-active link on this otherwise
+          inert preview page. Tally form opens in a new tab so visitors
+          keep their place on the teaser. */}
+      <section className="bg-sg-p px-10 pt-12 pb-14">
+        <Container width="narrow">
+          <SectionHeader
+            eyebrow="A small ask"
+            eyebrowTone="sg"
+            title="Help us get this right."
+            subtitle="A short, anonymous survey · about 5 minutes"
+            subtitleTone="ink"
+          />
+          <p className="text-[15px] text-cm text-center leading-[1.78] mb-7 max-w-[520px] mx-auto">
+            CodaCo is being shaped by the people who&apos;ll use it — those
+            planning ahead, caring for someone dying, or grieving a recent
+            loss. Your perspective directly influences what we build.
+          </p>
+          <div className="text-center">
+            <a
+              href="https://tally.so/r/kdkb6Z"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary btn-lg no-underline inline-flex"
+            >
+              Take the survey →
+            </a>
+          </div>
+        </Container>
+      </section>
+
       <StaticFooter />
     </div>
   );
@@ -249,7 +281,7 @@ function PreviewBanner() {
   return (
     <div className="bg-sg-p border-b border-sg-l text-center px-6 py-2.5">
       <p className="text-[12px] text-sg-d">
-        Preview · CodaCo is in private development. Links and buttons aren&apos;t active yet.
+        Preview · CodaCo is in private development. Launching publicly later this year.
       </p>
     </div>
   );
