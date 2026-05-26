@@ -257,7 +257,8 @@ export default async function PublicHomepage() {
           <p className="text-[15px] text-cm text-center leading-[1.78] mb-7 max-w-[520px] mx-auto">
             CodaCo is being shaped by the people who&apos;ll use it — those
             planning ahead, caring for someone dying, or grieving a recent
-            loss. Your perspective directly influences what we build.
+            loss, as well as practitioners and makers in the dying space.
+            Your perspective directly influences what we build.
           </p>
           <div className="text-center">
             <a
