@@ -29,7 +29,6 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
           <div className="text-center mb-7">
             <p className="text-[11px] tracking-[.14em] uppercase text-tr mb-1.5">CodaCo</p>
             <h1 className="font-serif text-[32px] font-light text-ch mb-1">Create an account</h1>
-            <p className="text-[13px] text-cl">Save your favorites and message providers.</p>
           </div>
           <SignupForm next={next} />
         </Container>
