@@ -233,7 +233,7 @@ export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption
                     {...field("pricingNotes")}
                   />
                 </FormField>
-                <FormField label="Specializations (select all that apply)">
+                <FormField label="Additional specializations (select all that apply)">
                   <div className="flex flex-wrap gap-2 mt-1">
                     {SPECIALIZATIONS.map((s) => (
                       <button
