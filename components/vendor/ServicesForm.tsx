@@ -306,11 +306,13 @@ export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption
 
                 <FormField label="Centered on">
                   <div className="text-[14px] text-ch">
-                    {data.city && data.state ? (
-                      `${data.city}, ${data.state}`
+                    {data.zip ? (
+                      data.city && data.state
+                        ? `${data.city}, ${data.state} ${data.zip}`
+                        : data.zip
                     ) : (
                       <span className="text-cl italic">
-                        Set your city and state in Step 1.
+                        Set your zip code in Step 1.
                       </span>
                     )}
                   </div>
