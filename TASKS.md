@@ -59,27 +59,23 @@ What's fake / disconnected today:
 What works: service `locationType` (virtual / in_person / both) is a real,
 functional filter via `getServices({ locationType })`.
 
-To make it real (rough scope — needs its own design pass before building):
+**Full design + phased build plan: `docs/geo-search-plan.md`.** The two
+up-front product decisions are locked there:
 
-- **Add geo data to `VendorProfile`.** Either store `lat`/`lng` directly
-  or geocode the existing `location` string at write time (signup /
-  profile edit). No coordinates exist anywhere today.
-- **Persist a service radius** column (and decide semantics: does a 30 mi
-  radius mean "I travel 30 mi from my base"? Combine with `locationType`
-  so virtual-only vendors always match.)
-- **Capture the viewer's location** — a location/zip input on the services
-  page (and/or browser geolocation), feeding a `near`/`zip` URL param.
-- **Distance filtering + sort.** Wire the `distance` param and "Nearest
-  first" through `VendorFilters` / `getVendors()`. Postgres + PostGIS (or
-  the `earthdistance`/`cube` extensions) can do radius queries in-DB; a
-  Haversine compute in app code is a lighter starting point given current
-  data volumes.
-- **Make `distanceMi` derived**, not stored — compute per request from
-  viewer + vendor coordinates.
+- **Matching model: vendor-radius.** A vendor shows up only if the buyer
+  falls within the vendor's declared service radius (virtual-only vendors
+  always match). So "Fort Collins → Boulder" inclusion keys off the
+  *vendor's* radius, optionally narrowed by the buyer's distance pills.
+- **Scope: US-only**, geocoded offline via the Census ZCTA centroid table —
+  vendors enter a **service ZIP** (no street address), no paid geocoding
+  API. ±1–3 mi centroid precision is negligible at 5–50 mi radii.
 
-Decision needed up front: does "Fort Collins → Boulder/Denver" inclusion
-key off the *viewer's* radius preference (distance pills), the *vendor's*
-declared service radius, or both? That choice drives the schema.
+Three phases (see the doc for code-level detail): (1) schema
+(`serviceZip` / `serviceRadiusMi` / derived `lat`/`lng`) + offline ZIP
+geocoding helper; (2) wire onboarding to persist ZIP + radius; (3)
+buyer-side location input, radius matching, distance sort, and making
+`distanceMi` a derived per-request value. App-side Haversine for v1;
+PostGIS is the documented upgrade path.
 
 ## Smaller gaps
 
