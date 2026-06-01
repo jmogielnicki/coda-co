@@ -195,26 +195,19 @@ migration `20260601100000_add_vendor_profile_extras`) already touches
   lat / lng, so `serviceZip` / `lat` / `lng` remain net-new. The migration
   chain is clean (generate the geo migration with a later timestamp on the
   post-merge `main`).
-- **`service_radius` (theirs) vs `serviceRadiusMi` (this plan).** Theirs is
-  free-form `TEXT` ("25 mile radius") for *display* on the profile card;
-  this plan needs a numeric radius for *matching*. Don't ship both as
-  independent sources of truth. Decision pending — see below.
+- **`service_radius` (theirs) vs `serviceRadiusMi` (this plan).**
+  **Decided: structured source of truth + derived label.** Add
+  `serviceRadiusMi Int?` as the single matching input, render the
+  profile-card display string from it via a small formatter (e.g.
+  `"25 mile radius"`), and **retire the free-form `service_radius` TEXT
+  column** the vendor-launch branch added. Migration step (post-merge):
+  add `serviceRadiusMi`, backfill it by parsing the existing
+  `service_radius` text where present, then drop `service_radius`. The
+  public display stays byte-for-byte identical via the formatter.
 - **`distanceMi`.** Their branch keeps and extends it. The earlier "remove
   the column" step is therefore deferred: in Phase 3 compute distance per
   request from coordinates, and only retire the stored column once nothing
   reads it.
-
-### Open decision — radius representation
-
-Once both branches are on `main`, pick one:
-
-1. **Structured source of truth + derived label (recommended).** Add
-   `serviceRadiusMi Int?` as the matching input; render the
-   profile-card string from it (a small formatter), and retire the
-   free-form `service_radius` TEXT. One source of truth, display stays
-   identical.
-2. **Keep both, populate in parallel.** Less refactor now, but two columns
-   for one concept — they will drift.
 
 ## Out of scope for v1
 
