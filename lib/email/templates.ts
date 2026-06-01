@@ -1,8 +1,16 @@
 // Transactional email templates for the vendor application flow.
-// Each builder returns the subject + html + text body; the caller passes
-// them to sendEmail() with the recipient.
+// Each template has a pure `buildXxxEmail` (returns subject + html +
+// text) and a thin `sendXxxEmail` wrapper that calls sendEmail. Keeping
+// the build step pure means /admin/email-preview can render the same
+// payloads without actually sending.
 
 import { sendEmail, type SendResult } from "./client";
+
+export interface EmailPayload {
+  subject: string;
+  html: string;
+  text: string;
+}
 
 // Falls back to a path-only link when BASE_URL isn't set. Production
 // should always have BASE_URL configured (Vercel sets VERCEL_URL but
@@ -44,9 +52,9 @@ export interface ApplicationSubmittedArgs {
   kind: "goods" | "services" | "both";
 }
 
-export async function sendApplicationSubmittedEmail(
+export function buildApplicationSubmittedEmail(
   args: ApplicationSubmittedArgs,
-): Promise<SendResult> {
+): EmailPayload {
   const greeting = args.toName ? `Hi ${args.toName},` : "Hi,";
   const subject = "We've received your CodaCo application";
   const kindLabel =
@@ -75,7 +83,13 @@ export async function sendApplicationSubmittedEmail(
     <p style="margin:0;font-size:15px;">— The CodaCo team</p>
   `);
 
-  return sendEmail({ to: args.toEmail, subject, html, text });
+  return { subject, html, text };
+}
+
+export async function sendApplicationSubmittedEmail(
+  args: ApplicationSubmittedArgs,
+): Promise<SendResult> {
+  return sendEmail({ to: args.toEmail, ...buildApplicationSubmittedEmail(args) });
 }
 
 export interface ApplicationApprovedArgs {
@@ -85,9 +99,9 @@ export interface ApplicationApprovedArgs {
   vendorSlug: string;
 }
 
-export async function sendApplicationApprovedEmail(
+export function buildApplicationApprovedEmail(
   args: ApplicationApprovedArgs,
-): Promise<SendResult> {
+): EmailPayload {
   const greeting = args.toName ? `Hi ${args.toName},` : "Hi,";
   const subject = `You're approved on CodaCo`;
   const dashboard = dashboardUrl();
@@ -127,7 +141,13 @@ export async function sendApplicationApprovedEmail(
     <p style="margin:0;font-size:15px;">— The CodaCo team</p>
   `);
 
-  return sendEmail({ to: args.toEmail, subject, html, text });
+  return { subject, html, text };
+}
+
+export async function sendApplicationApprovedEmail(
+  args: ApplicationApprovedArgs,
+): Promise<SendResult> {
+  return sendEmail({ to: args.toEmail, ...buildApplicationApprovedEmail(args) });
 }
 
 export interface ApplicationRejectedArgs {
@@ -138,9 +158,9 @@ export interface ApplicationRejectedArgs {
   notes?: string;
 }
 
-export async function sendApplicationRejectedEmail(
+export function buildApplicationRejectedEmail(
   args: ApplicationRejectedArgs,
-): Promise<SendResult> {
+): EmailPayload {
   const greeting = args.toName ? `Hi ${args.toName},` : "Hi,";
   const subject = "Update on your CodaCo application";
 
@@ -179,7 +199,13 @@ export async function sendApplicationRejectedEmail(
     <p style="margin:0;font-size:15px;">— The CodaCo team</p>
   `);
 
-  return sendEmail({ to: args.toEmail, subject, html, text });
+  return { subject, html, text };
+}
+
+export async function sendApplicationRejectedEmail(
+  args: ApplicationRejectedArgs,
+): Promise<SendResult> {
+  return sendEmail({ to: args.toEmail, ...buildApplicationRejectedEmail(args) });
 }
 
 // Basic HTML-escape — applicant-supplied strings render unescaped

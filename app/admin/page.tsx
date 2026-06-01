@@ -69,12 +69,20 @@ export default async function AdminPage() {
               <span className="text-cl">No authentication — development only.</span>
             </p>
           </div>
-          <a
-            href="/admin/applications"
-            className="btn-secondary btn-sm no-underline shrink-0"
-          >
-            Vendor applications →
-          </a>
+          <div className="flex flex-col gap-2 shrink-0">
+            <a
+              href="/admin/applications"
+              className="btn-secondary btn-sm no-underline"
+            >
+              Vendor applications →
+            </a>
+            <a
+              href="/admin/email-preview"
+              className="btn-secondary btn-sm no-underline"
+            >
+              Email preview →
+            </a>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-7">
