@@ -6,6 +6,7 @@ import {
   type ImageUploaderHandle,
 } from "@/components/ui/ImageUploader";
 import { SPECIALIZATIONS } from "@/lib/data/specializations";
+import { LIFE_STAGES } from "@/lib/format/lifeStage";
 import { updateVendorProfile, type ProfileFormState } from "./actions";
 
 interface ProfileFormProps {
@@ -19,6 +20,10 @@ interface ProfileFormProps {
   currentServiceDays: string | null;
   currentServiceHours: string | null;
   currentSpecializations: string[];
+  currentZip: string | null;
+  currentServiceDescription: string | null;
+  currentPricingNotes: string | null;
+  currentLifeStages: string[];
 }
 
 const initial: ProfileFormState = { status: "idle" };
@@ -37,15 +42,26 @@ export function ProfileForm({
   currentServiceDays,
   currentServiceHours,
   currentSpecializations,
+  currentZip,
+  currentServiceDescription,
+  currentPricingNotes,
+  currentLifeStages,
 }: ProfileFormProps) {
   const uploaderRef = useRef<ImageUploaderHandle>(null);
   // Chip toggles drive local state; hidden inputs at submit time
-  // serialize the selected set back into FormData under the
-  // "specializations" name (server reads via formData.getAll()).
+  // serialize the selected set back into FormData (server reads via
+  // formData.getAll()).
   const [specs, setSpecs] = useState<string[]>(currentSpecializations);
+  const [stages, setStages] = useState<string[]>(currentLifeStages);
 
   function toggleSpec(s: string) {
     setSpecs((prev) =>
+      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s],
+    );
+  }
+
+  function toggleStage(s: string) {
+    setStages((prev) =>
       prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s],
     );
   }
@@ -113,6 +129,28 @@ export function ProfileForm({
         </Field>
       </Section>
 
+      <Section title="Service description" subtitle="A short overview of what you offer, shown above the list of specific services on your public profile.">
+        <Field label="Description">
+          <textarea
+            name="serviceDescription"
+            defaultValue={currentServiceDescription ?? ""}
+            className={`${inputCls} min-h-[120px] resize-y`}
+            placeholder="Describe your usual services, including any packages that you offer."
+          />
+        </Field>
+      </Section>
+
+      <Section title="Pricing notes" subtitle="Free-form pricing context. Shown alongside your services on the public profile.">
+        <Field label="Notes">
+          <textarea
+            name="pricingNotes"
+            defaultValue={currentPricingNotes ?? ""}
+            className={`${inputCls} min-h-[120px] resize-y`}
+            placeholder={`Please list detailed information about your pricing. Examples: "Hourly rates range from $55–125/hour. Sliding scale available." Also please list prices or price ranges for packages that you offer.`}
+          />
+        </Field>
+      </Section>
+
       <Section title="Contact links" subtitle="Shown below the 'Send a message' button. Leave any field blank to hide it.">
         <Field label="Website URL">
           <input
@@ -160,7 +198,48 @@ export function ProfileForm({
         ))}
       </Section>
 
+      <Section title="Life stages" subtitle="Which phases of the end-of-life journey your practice serves. Drives the chip filters on the public /services page.">
+        <div className="flex flex-wrap gap-2">
+          {LIFE_STAGES.map((s) => {
+            const active = stages.includes(s.value);
+            return (
+              <button
+                key={s.value}
+                type="button"
+                onClick={() => toggleStage(s.value)}
+                className={[
+                  "px-3 py-1.5 rounded-full text-[12px] border transition-all cursor-pointer",
+                  active
+                    ? "bg-sg text-white border-sg"
+                    : "bg-white text-cm border-line-bold hover:border-sg",
+                ].join(" ")}
+              >
+                {s.label}
+              </button>
+            );
+          })}
+        </div>
+        {stages.map((s) => (
+          <input key={s} type="hidden" name="lifeStages" value={s} />
+        ))}
+      </Section>
+
       <Section title="Service area & availability" subtitle="Shown on your public profile's service-area card. Leave blank to hide a row.">
+        <Field label="Zip">
+          <input
+            type="text"
+            name="zip"
+            defaultValue={currentZip ?? ""}
+            className={inputCls}
+            inputMode="numeric"
+            autoComplete="postal-code"
+            maxLength={10}
+            placeholder="11201"
+          />
+          <span className="block text-[11px] text-cl mt-1">
+            Used to center your services on the map and sort by radius.
+          </span>
+        </Field>
         <Field label="Radius">
           <input
             type="text"

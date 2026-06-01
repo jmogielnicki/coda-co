@@ -16,6 +16,10 @@ export interface ApplicationDraft {
   location: string;
   planId: SubscriptionPlanId;
   specializations: string[];
+  zip: string | null;
+  serviceDescription: string | null;
+  pricingNotes: string | null;
+  lifeStages: string[];
 }
 
 // Slug must be URL-safe and unique. We strip everything but lowercase
@@ -40,6 +44,10 @@ export async function createApplication(draft: ApplicationDraft) {
       location: draft.location,
       planId: draft.planId,
       specializations: draft.specializations,
+      zip: draft.zip,
+      serviceDescription: draft.serviceDescription,
+      pricingNotes: draft.pricingNotes,
+      lifeStages: draft.lifeStages,
       status: "submitted",
     },
   });
@@ -93,6 +101,10 @@ export async function approveApplication(applicationId: string, reviewerId: stri
           kind: app.kind,
           verified: false,
           specializations: app.specializations,
+          zip: app.zip,
+          serviceDescription: app.serviceDescription,
+          pricingNotes: app.pricingNotes,
+          lifeStages: app.lifeStages,
         },
       });
 

@@ -115,6 +115,10 @@ async function main() {
         serviceFormats: v.serviceFormats,
         serviceDays: v.serviceDays,
         serviceHours: v.serviceHours,
+        zip: v.zip,
+        serviceDescription: v.serviceDescription,
+        pricingNotes: v.pricingNotes,
+        specializations: v.specializations,
         user: { connect: { id: user.id } },
       },
     });

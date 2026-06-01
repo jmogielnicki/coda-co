@@ -10,6 +10,13 @@ import { processUploadedImage } from "@/lib/images.server";
 import { log } from "@/lib/log";
 import { rateLimit } from "@/lib/rate-limit";
 
+const VALID_LIFE_STAGES = new Set<string>([
+  "planning-ahead",
+  "active-dying",
+  "post-death",
+  "throughout",
+]);
+
 const TONES = ["sage", "terracotta"] as const;
 type Tone = (typeof TONES)[number];
 
@@ -83,6 +90,18 @@ export async function updateVendorProfile(
         .filter(isValidSpecialization),
     ),
   );
+  const lifeStages = Array.from(
+    new Set(
+      formData
+        .getAll("lifeStages")
+        .map((v) => String(v))
+        .filter((s) => VALID_LIFE_STAGES.has(s)),
+    ),
+  );
+
+  const zip = emptyToNull(formData.get("zip"));
+  const serviceDescription = emptyToNull(formData.get("serviceDescription"));
+  const pricingNotes = emptyToNull(formData.get("pricingNotes"));
 
   const photo = formData.get("photo");
   const hasNewPhoto = photo instanceof File && photo.size > 0;
@@ -117,6 +136,10 @@ export async function updateVendorProfile(
       serviceDays,
       serviceHours,
       specializations,
+      zip,
+      serviceDescription,
+      pricingNotes,
+      lifeStages,
       ...(nextPhotoUrl !== undefined ? { photoSrc: nextPhotoUrl } : {}),
     },
   });

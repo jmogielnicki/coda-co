@@ -34,7 +34,18 @@ interface SubmitInput {
   // Curated tags the applicant picked on Step 2. Validated against
   // the canonical list — anything unrecognized is dropped silently.
   specializations?: string[];
+  zip?: string;
+  serviceDescription?: string;
+  pricingNotes?: string;
+  lifeStages?: string[];
 }
+
+const VALID_LIFE_STAGES = new Set<string>([
+  "planning-ahead",
+  "active-dying",
+  "post-death",
+  "throughout",
+]);
 
 // Returns a unique slug by appending -2, -3, … if the seed collides.
 async function uniqueSlug(seed: string): Promise<string> {
@@ -75,11 +86,18 @@ async function submit(input: SubmitInput): Promise<ApplicationFormState> {
 
   const slug = await uniqueSlug(input.displayName);
 
-  // Drop anything not in the canonical list; de-dupe just in case the
+  // Drop anything not in the canonical lists; de-dupe just in case the
   // client sent the same tag twice.
   const specializations = Array.from(
     new Set((input.specializations ?? []).filter(isValidSpecialization)),
   );
+  const lifeStages = Array.from(
+    new Set((input.lifeStages ?? []).filter((s) => VALID_LIFE_STAGES.has(s))),
+  );
+
+  const zip = input.zip?.trim() || null;
+  const serviceDescription = input.serviceDescription?.trim() || null;
+  const pricingNotes = input.pricingNotes?.trim() || null;
 
   const app = await createApplication({
     applicantUserId: session.user.id,
@@ -90,6 +108,10 @@ async function submit(input: SubmitInput): Promise<ApplicationFormState> {
     location: `${input.city.trim()}, ${input.state.trim()}`,
     planId: input.planId,
     specializations,
+    zip,
+    serviceDescription,
+    pricingNotes,
+    lifeStages,
   });
 
   // Demo auto-approve: a single env flag flips the admin queue off so a

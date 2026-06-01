@@ -42,6 +42,10 @@ function toVendor(v: DbVendor): Vendor {
     serviceFormats: v.serviceFormats ?? undefined,
     serviceDays: v.serviceDays ?? undefined,
     serviceHours: v.serviceHours ?? undefined,
+    zip: v.zip ?? undefined,
+    serviceDescription: v.serviceDescription ?? undefined,
+    pricingNotes: v.pricingNotes ?? undefined,
+    specializations: v.specializations,
   };
 }
 

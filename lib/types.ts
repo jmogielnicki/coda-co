@@ -103,6 +103,10 @@ export interface Vendor {
   serviceFormats?: string;
   serviceDays?: string;
   serviceHours?: string;
+  zip?: string;
+  serviceDescription?: string;
+  pricingNotes?: string;
+  specializations: string[];
 }
 
 export interface VendorWithRating extends Vendor {

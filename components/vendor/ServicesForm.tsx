@@ -492,6 +492,10 @@ export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption
                       state: data.state,
                       planId: plan,
                       specializations: data.specializations,
+                      zip: data.zip,
+                      serviceDescription: data.serviceDescription,
+                      pricingNotes: data.pricingNotes,
+                      lifeStages: data.lifeStages,
                     });
                     if (result?.error) setSubmitError(result.error);
                   });

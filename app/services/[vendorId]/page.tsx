@@ -11,6 +11,7 @@ import { getServices } from "@/lib/api/services";
 import { getVendor } from "@/lib/api/vendors";
 import { getVendorReviews } from "@/lib/api/vendor-reviews";
 import { formatMonthYear } from "@/lib/format/date";
+import { lifeStageLabel } from "@/lib/format/lifeStage";
 import { serviceTypeLabel } from "@/lib/format/vendor";
 
 interface PageProps {
@@ -104,6 +105,14 @@ export default async function VendorProfilePage({ params }: PageProps) {
                     CodaCo verified
                   </span>
                 )}
+                {vendor.lifeStages.map((s) => (
+                  <span
+                    key={s}
+                    className="text-[10px] tracking-[.06em] uppercase bg-tr-p text-tr-d border border-tr-l px-2.5 py-0.5 rounded-full"
+                  >
+                    {lifeStageLabel(s)}
+                  </span>
+                ))}
               </div>
               {primaryType && (
                 <div className="text-[11px] tracking-[.14em] uppercase text-tr mb-3">
@@ -156,6 +165,11 @@ export default async function VendorProfilePage({ params }: PageProps) {
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white rounded-[10px] p-6 border border-line">
+              {vendor.serviceDescription && (
+                <p className="text-[13px] text-cm leading-relaxed mb-5 whitespace-pre-line">
+                  {vendor.serviceDescription}
+                </p>
+              )}
               <div className="text-[11px] tracking-[.08em] uppercase text-cl mb-3">
                 Services offered
               </div>
@@ -170,6 +184,16 @@ export default async function VendorProfilePage({ params }: PageProps) {
                   </li>
                 ))}
               </ul>
+              {vendor.pricingNotes && (
+                <>
+                  <div className="text-[11px] tracking-[.08em] uppercase text-cl mb-1">
+                    Pricing
+                  </div>
+                  <p className="text-[13px] text-cm leading-relaxed mb-5 whitespace-pre-line">
+                    {vendor.pricingNotes}
+                  </p>
+                </>
+              )}
               {vendor.credentials && (
                 <>
                   <div className="text-[11px] tracking-[.08em] uppercase text-cl mb-1">
