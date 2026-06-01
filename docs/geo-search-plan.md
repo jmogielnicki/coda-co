@@ -74,7 +74,7 @@ post-launch concern. ZIP-centroid + radius is the standard v1 approach.
 
 | Phase | Description                                                  | Status      |
 |-------|--------------------------------------------------------------|-------------|
-| 1     | Schema + offline ZIP geocoding (vendor base coordinates)     | ⏳ Not started |
+| 1     | Schema + offline ZIP geocoding (vendor base coordinates)     | 🔨 Geocoding helper landed; **schema/migration deferred** until concurrent vendor-DB work merges to `main` (avoids a divergent Prisma migration chain) |
 | 2     | Vendor onboarding: capture service ZIP + radius              | ⏳ Not started |
 | 3     | Buyer-side: location input, radius matching, distance sort   | ⏳ Not started |
 
@@ -99,18 +99,20 @@ The data foundation. No user-visible change; proves the geocoding pipeline.
 Run `npx prisma migrate dev --name geo-search-fields` (needs a local
 Postgres + shadow DB — see AGENTS.md "Local DB for migration generation").
 
-### ZIP geocoding helper
+### ZIP geocoding helper — ✅ landed
 
-- Vendor the Census ZCTA centroid dataset as a static asset (CSV/JSON under
-  `data/` or generated into a TS lookup at build). ~33k `zip → {lat, lng}`
-  rows; small enough to ship.
-- New `lib/geo/zip.ts`:
-  - `zipToCentroid(zip: string): { lat: number; lng: number } | null`
-  - `haversineMi(a: LatLng, b: LatLng): number`
-  - `isValidUsZip(raw: string): boolean` (5-digit; tolerate ZIP+4 by
-    truncating).
-- Keep this pure and dependency-free so it runs in both server actions and
-  API code.
+- `lib/geo/zip.ts` — pure, dependency-free helpers usable from server
+  actions and API code: `isValidUsZip`, `normalizeZip`, `zipToCentroid`,
+  `haversineMi`, `zipDistanceMi`. All return `null` on a miss rather than
+  guessing a point.
+- `lib/geo/zcta-data.ts` — the `zip → [lat, lng]` table. Currently a
+  **verified seed subset** (the mock-vendor cities). Replaced by the full
+  ~33k-row national table via the generator below before launch.
+- `scripts/build-zcta.mjs` — generates `zcta-data.ts` from the Census ZCTA
+  gazetteer. Must run in a **network-enabled environment** (the CI/build
+  sandbox blocks outbound fetches), then commit the result.
+- `scripts/verify-geo.ts` — `npx tsx scripts/verify-geo.ts` smoke test
+  (no test-framework dependency added — none exists in the repo yet).
 
 ### Backfill
 
