@@ -58,6 +58,7 @@ export default async function VendorProfilePage() {
             currentServiceFormats={vendor.serviceFormats}
             currentServiceDays={vendor.serviceDays}
             currentServiceHours={vendor.serviceHours}
+            currentSpecializations={vendor.specializations}
           />
         </Container>
       </section>

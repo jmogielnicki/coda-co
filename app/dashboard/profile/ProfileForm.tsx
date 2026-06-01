@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState, useCallback, useRef } from "react";
+import { useActionState, useCallback, useRef, useState } from "react";
 import {
   ImageUploader,
   type ImageUploaderHandle,
 } from "@/components/ui/ImageUploader";
+import { SPECIALIZATIONS } from "@/lib/data/specializations";
 import { updateVendorProfile, type ProfileFormState } from "./actions";
 
 interface ProfileFormProps {
@@ -17,6 +18,7 @@ interface ProfileFormProps {
   currentServiceFormats: string | null;
   currentServiceDays: string | null;
   currentServiceHours: string | null;
+  currentSpecializations: string[];
 }
 
 const initial: ProfileFormState = { status: "idle" };
@@ -34,8 +36,19 @@ export function ProfileForm({
   currentServiceFormats,
   currentServiceDays,
   currentServiceHours,
+  currentSpecializations,
 }: ProfileFormProps) {
   const uploaderRef = useRef<ImageUploaderHandle>(null);
+  // Chip toggles drive local state; hidden inputs at submit time
+  // serialize the selected set back into FormData under the
+  // "specializations" name (server reads via formData.getAll()).
+  const [specs, setSpecs] = useState<string[]>(currentSpecializations);
+
+  function toggleSpec(s: string) {
+    setSpecs((prev) =>
+      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s],
+    );
+  }
 
   // Pull the cropped Blob from the uploader and swap it into FormData
   // before the server sees the request. The native file input would
@@ -119,6 +132,32 @@ export function ProfileForm({
             placeholder="@yourhandle"
           />
         </Field>
+      </Section>
+
+      <Section title="Specializations" subtitle="Pick the tags clients can find you by. Same list that powers the search filter on the /services page.">
+        <div className="flex flex-wrap gap-2">
+          {SPECIALIZATIONS.map((s) => {
+            const active = specs.includes(s);
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={() => toggleSpec(s)}
+                className={[
+                  "px-3 py-1.5 rounded-full text-[12px] border transition-all cursor-pointer",
+                  active
+                    ? "bg-sg text-white border-sg"
+                    : "bg-white text-cm border-line-bold hover:border-sg",
+                ].join(" ")}
+              >
+                {s}
+              </button>
+            );
+          })}
+        </div>
+        {specs.map((s) => (
+          <input key={s} type="hidden" name="specializations" value={s} />
+        ))}
       </Section>
 
       <Section title="Service area & availability" subtitle="Shown on your public profile's service-area card. Leave blank to hide a row.">

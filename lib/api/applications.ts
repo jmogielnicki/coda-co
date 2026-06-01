@@ -15,6 +15,7 @@ export interface ApplicationDraft {
   proposedBio: string;
   location: string;
   planId: SubscriptionPlanId;
+  specializations: string[];
 }
 
 // Slug must be URL-safe and unique. We strip everything but lowercase
@@ -38,6 +39,7 @@ export async function createApplication(draft: ApplicationDraft) {
       proposedBio: draft.proposedBio,
       location: draft.location,
       planId: draft.planId,
+      specializations: draft.specializations,
       status: "submitted",
     },
   });
@@ -90,6 +92,7 @@ export async function approveApplication(applicationId: string, reviewerId: stri
           location: app.location,
           kind: app.kind,
           verified: false,
+          specializations: app.specializations,
         },
       });
 

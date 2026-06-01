@@ -160,6 +160,11 @@ model VendorProfile {
   serviceDays    String? @map("service_days")
   serviceHours   String? @map("service_hours")
 
+  // Curated tag list from lib/data/specializations.ts. Drives the
+  // /services filter chips — vendors declare what they specialize in,
+  // clients filter to find them. Stored as a TEXT[] mirroring lifeStages.
+  specializations String[] @default([])
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -226,6 +231,9 @@ model VendorApplication {
   reviewedByUserId    String?            @map("reviewed_by_user_id")
   reviewedAt          DateTime?          @map("reviewed_at")
   reviewNotes         String?            @map("review_notes")
+  // Specializations the applicant declared. Copied to vendor_profile
+  // on approval — same shape, same canonical list.
+  specializations     String[]           @default([])
   createdAt           DateTime           @default(now()) @map("created_at")
   updatedAt           DateTime           @updatedAt @map("updated_at")
 

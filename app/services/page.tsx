@@ -10,6 +10,7 @@ import { WaveDivider } from "@/components/ui/WaveDivider";
 import { getServices } from "@/lib/api/services";
 import { getServiceTypes } from "@/lib/api/serviceTypes";
 import { getVendors } from "@/lib/api/vendors";
+import { parseSpecializationsParam } from "@/lib/data/specializations";
 import { parseLifeStageParam } from "@/lib/format/lifeStage";
 import type { Service, ServiceLocationType, ServiceType } from "@/lib/types";
 
@@ -26,6 +27,7 @@ interface ServicesPageProps {
     locationType?: string;
     verified?: string;
     lifeStage?: string;
+    specializations?: string;
   }>;
 }
 
@@ -36,13 +38,20 @@ const VALID_LOCATION_TYPES = new Set<ServiceLocationType>([
 ]);
 
 export default async function ServicesPage({ searchParams }: ServicesPageProps) {
-  const { type, minRating, locationType: locParam, verified, lifeStage } =
-    await searchParams;
+  const {
+    type,
+    minRating,
+    locationType: locParam,
+    verified,
+    lifeStage,
+    specializations: specsParam,
+  } = await searchParams;
 
   const serviceType = (type ?? undefined) as ServiceType | undefined;
   const locationType = locParam && VALID_LOCATION_TYPES.has(locParam as ServiceLocationType)
     ? (locParam as ServiceLocationType)
     : undefined;
+  const specializations = parseSpecializationsParam(specsParam);
 
   const [matchedServices, allServices, allVendors, serviceTypes] = await Promise.all([
     getServices({ serviceType, locationType }),
@@ -51,6 +60,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
       verified: verified === "1" ? true : undefined,
       lifeStage: parseLifeStageParam(lifeStage),
       minRating: minRating ? parseFloat(minRating) : undefined,
+      specializations,
     }),
     getServiceTypes(),
   ]);
@@ -75,7 +85,8 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
     locationType != null ||
     minRating != null ||
     verified === "1" ||
-    lifeStage != null;
+    lifeStage != null ||
+    (specializations != null && specializations.length > 0);
 
   return (
     <>

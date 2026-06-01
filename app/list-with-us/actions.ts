@@ -8,6 +8,7 @@ import {
   createApplication,
   normalizeSlug,
 } from "@/lib/api/applications";
+import { isValidSpecialization } from "@/lib/data/specializations";
 import { prisma } from "@/lib/db";
 import { sendApplicationSubmittedEmail } from "@/lib/email/templates";
 import { log } from "@/lib/log";
@@ -30,6 +31,9 @@ interface SubmitInput {
   city: string;
   state: string;
   planId: SubscriptionPlanId;
+  // Curated tags the applicant picked on Step 2. Validated against
+  // the canonical list — anything unrecognized is dropped silently.
+  specializations?: string[];
 }
 
 // Returns a unique slug by appending -2, -3, … if the seed collides.
@@ -71,6 +75,12 @@ async function submit(input: SubmitInput): Promise<ApplicationFormState> {
 
   const slug = await uniqueSlug(input.displayName);
 
+  // Drop anything not in the canonical list; de-dupe just in case the
+  // client sent the same tag twice.
+  const specializations = Array.from(
+    new Set((input.specializations ?? []).filter(isValidSpecialization)),
+  );
+
   const app = await createApplication({
     applicantUserId: session.user.id,
     kind: input.kind,
@@ -79,6 +89,7 @@ async function submit(input: SubmitInput): Promise<ApplicationFormState> {
     proposedBio: input.bio.trim(),
     location: `${input.city.trim()}, ${input.state.trim()}`,
     planId: input.planId,
+    specializations,
   });
 
   // Demo auto-approve: a single env flag flips the admin queue off so a

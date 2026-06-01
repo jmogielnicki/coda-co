@@ -28,6 +28,15 @@ export function ServiceFilters({ serviceTypes }: { serviceTypes: ServiceTypeOpti
 
   const activeType = get("type");
   const activeDist = get("distance");
+  const rawSpecs = get("specializations");
+  const activeSpecs = rawSpecs ? rawSpecs.split(",").map((s) => s.trim()).filter(Boolean) : [];
+
+  function toggleSpec(value: string) {
+    const next = activeSpecs.includes(value)
+      ? activeSpecs.filter((v) => v !== value)
+      : [...activeSpecs, value];
+    setParam("specializations", next.join(","));
+  }
   const activeRating = get("minRating");
   const activeLocation = get("locationType");
 
@@ -113,8 +122,13 @@ export function ServiceFilters({ serviceTypes }: { serviceTypes: ServiceTypeOpti
       <FilterDivider />
 
       <FilterSection heading="Specializations">
-        {SPECIALIZATIONS.map((s, i) => (
-          <FilterCheck key={s} label={s} checked={i === 0} onChange={() => {}} />
+        {SPECIALIZATIONS.map((s) => (
+          <FilterCheck
+            key={s}
+            label={s}
+            checked={activeSpecs.includes(s)}
+            onChange={() => toggleSpec(s)}
+          />
         ))}
       </FilterSection>
 

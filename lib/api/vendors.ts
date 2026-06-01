@@ -13,6 +13,10 @@ export interface VendorFilters {
   verified?: boolean;
   ids?: string[];
   lifeStage?: LifeStage | LifeStage[];
+  // OR semantics — vendor matches if any of their specializations are
+  // in this list. Already-validated against the canonical list by the
+  // caller (lib/data/specializations.parseSpecializationsParam).
+  specializations?: string[];
 }
 
 type DbVendor = Prisma.VendorProfileGetPayload<{}>;
@@ -90,6 +94,9 @@ export async function getVendors(filters: VendorFilters = {}): Promise<VendorWit
   if (filters.ids) where.slug = { in: filters.ids };
   if (filters.lifeStage) {
     where.lifeStages = { hasSome: expandLifeStageFilter(filters.lifeStage) };
+  }
+  if (filters.specializations && filters.specializations.length > 0) {
+    where.specializations = { hasSome: filters.specializations };
   }
 
   const rows = await prisma.vendorProfile.findMany({ where, orderBy: { createdAt: "asc" } });

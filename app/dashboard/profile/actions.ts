@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { del, put } from "@vercel/blob";
 import { requireVendor } from "@/app/dashboard/lib";
+import { isValidSpecialization } from "@/lib/data/specializations";
 import { prisma } from "@/lib/db";
 import { isOwnedBlobUrl } from "@/lib/images";
 import { processUploadedImage } from "@/lib/images.server";
@@ -70,6 +71,19 @@ export async function updateVendorProfile(
   const serviceDays = emptyToNull(formData.get("serviceDays"));
   const serviceHours = emptyToNull(formData.get("serviceHours"));
 
+  // Hidden inputs in the form each carry one selected spec; getAll
+  // collects them. Drop anything not in the canonical list (the client
+  // can only have made it onto an unknown value through tampering) and
+  // de-dupe.
+  const specializations = Array.from(
+    new Set(
+      formData
+        .getAll("specializations")
+        .map((v) => String(v))
+        .filter(isValidSpecialization),
+    ),
+  );
+
   const photo = formData.get("photo");
   const hasNewPhoto = photo instanceof File && photo.size > 0;
 
@@ -102,6 +116,7 @@ export async function updateVendorProfile(
       serviceFormats,
       serviceDays,
       serviceHours,
+      specializations,
       ...(nextPhotoUrl !== undefined ? { photoSrc: nextPhotoUrl } : {}),
     },
   });

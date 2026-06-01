@@ -491,6 +491,7 @@ export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption
                       city: data.city,
                       state: data.state,
                       planId: plan,
+                      specializations: data.specializations,
                     });
                     if (result?.error) setSubmitError(result.error);
                   });
