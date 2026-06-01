@@ -19,10 +19,12 @@ export interface ApplicationFormState {
 
 const VALID_KINDS = new Set<ApplicationKind>(["goods", "services", "both"]);
 const VALID_PLANS = new Set<SubscriptionPlanId>(["starter", "standard", "pro"]);
-// Mirrors the maxLength on the bio textarea in ServicesForm /
-// GoodsForm. Server-side enforcement is what actually keeps a
+// Mirrors the maxLength on the corresponding textareas in ServicesForm
+// / GoodsForm. Server-side enforcement is what actually keeps a
 // copy-paste or scripted client from overrunning the column.
 const BIO_MAX = 500;
+const DESC_MAX = 500;
+const NOTES_MAX = 500;
 
 interface SubmitInput {
   kind: Exclude<ApplicationKind, "unknown">;
@@ -73,8 +75,27 @@ async function submit(input: SubmitInput): Promise<ApplicationFormState> {
   if (!input.city.trim() || !input.state.trim()) {
     return { error: "Add a city and state." };
   }
+  if (!input.bio.trim()) {
+    return { error: "Tell clients a bit about you (the 'About you' field)." };
+  }
   if (input.bio.length > BIO_MAX) {
     return { error: `Bio is too long — keep it under ${BIO_MAX} characters.` };
+  }
+  // serviceDescription/pricingNotes are sent by the services form only.
+  // Goods leaves them undefined; we skip both checks in that case.
+  if (input.serviceDescription !== undefined) {
+    if (!input.serviceDescription.trim()) {
+      return { error: "Add a service description." };
+    }
+    if (input.serviceDescription.length > DESC_MAX) {
+      return { error: `Service description is too long — keep it under ${DESC_MAX} characters.` };
+    }
+  }
+  if (
+    input.pricingNotes !== undefined &&
+    input.pricingNotes.length > NOTES_MAX
+  ) {
+    return { error: `Pricing notes are too long — keep them under ${NOTES_MAX} characters.` };
   }
 
   const session = await auth();

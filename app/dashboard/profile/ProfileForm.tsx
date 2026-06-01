@@ -31,6 +31,11 @@ const initial: ProfileFormState = { status: "idle" };
 const inputCls =
   "w-full border border-line-bold rounded-[8px] px-3 py-2.5 text-[14px] text-ch bg-white outline-none focus:border-tr transition-colors";
 
+// Server enforces these in actions.ts. Keep in sync.
+const BIO_MAX = 500;
+const DESC_MAX = 500;
+const NOTES_MAX = 500;
+
 export function ProfileForm({
   currentPhotoSrc,
   currentTone,
@@ -53,6 +58,15 @@ export function ProfileForm({
   // formData.getAll()).
   const [specs, setSpecs] = useState<string[]>(currentSpecializations);
   const [stages, setStages] = useState<string[]>(currentLifeStages);
+
+  // Character-count state for the three capped textareas. We keep the
+  // textareas uncontrolled (defaultValue) so React doesn't have to
+  // mirror their full value — only the length goes through state.
+  const [bioLen, setBioLen] = useState(currentBio.length);
+  const [descLen, setDescLen] = useState(
+    (currentServiceDescription ?? "").length,
+  );
+  const [notesLen, setNotesLen] = useState((currentPricingNotes ?? "").length);
 
   function toggleSpec(s: string) {
     setSpecs((prev) =>
@@ -119,24 +133,36 @@ export function ProfileForm({
       </fieldset>
 
       <Section title="About" subtitle="Shown at the top of your public profile. Use blank lines to break into paragraphs.">
-        <Field label="Bio">
+        <Field label="Bio" required>
           <textarea
             name="bio"
             defaultValue={currentBio}
             className={`${inputCls} min-h-[140px] resize-y`}
             placeholder="Tell clients about your practice, your background, and how you work."
+            maxLength={BIO_MAX}
+            required
+            onChange={(e) => setBioLen(e.target.value.length)}
           />
+          <div className="text-[11px] text-cl mt-1 text-right tabular-nums">
+            {bioLen} / {BIO_MAX}
+          </div>
         </Field>
       </Section>
 
       <Section title="Service description" subtitle="A short overview of what you offer, shown above the list of specific services on your public profile.">
-        <Field label="Description">
+        <Field label="Description" required>
           <textarea
             name="serviceDescription"
             defaultValue={currentServiceDescription ?? ""}
             className={`${inputCls} min-h-[120px] resize-y`}
             placeholder="Describe your usual services, including any packages that you offer."
+            maxLength={DESC_MAX}
+            required
+            onChange={(e) => setDescLen(e.target.value.length)}
           />
+          <div className="text-[11px] text-cl mt-1 text-right tabular-nums">
+            {descLen} / {DESC_MAX}
+          </div>
         </Field>
       </Section>
 
@@ -147,7 +173,12 @@ export function ProfileForm({
             defaultValue={currentPricingNotes ?? ""}
             className={`${inputCls} min-h-[120px] resize-y`}
             placeholder={`Please list detailed information about your pricing. Examples: "Hourly rates range from $55–125/hour. Sliding scale available." Also please list prices or price ranges for packages that you offer.`}
+            maxLength={NOTES_MAX}
+            onChange={(e) => setNotesLen(e.target.value.length)}
           />
+          <div className="text-[11px] text-cl mt-1 text-right tabular-nums">
+            {notesLen} / {NOTES_MAX}
+          </div>
         </Field>
       </Section>
 
@@ -321,10 +352,21 @@ function Section({
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <label className="block">
-      <span className="block text-[12px] font-medium text-ch mb-1.5">{label}</span>
+      <span className="block text-[12px] font-medium text-ch mb-1.5">
+        {label}
+        {required && <span className="text-tr ml-0.5">*</span>}
+      </span>
       {children}
     </label>
   );

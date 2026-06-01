@@ -17,6 +17,13 @@ const VALID_LIFE_STAGES = new Set<string>([
   "throughout",
 ]);
 
+// Server-side caps on the three textarea fields. Mirrors the
+// maxLength + counter values on ProfileForm and the equivalents on
+// the application form / submit action — keep all in sync.
+const BIO_MAX = 500;
+const DESC_MAX = 500;
+const NOTES_MAX = 500;
+
 const TONES = ["sage", "terracotta"] as const;
 type Tone = (typeof TONES)[number];
 
@@ -71,7 +78,39 @@ export async function updateVendorProfile(
     return { status: "error", error: "Website URL must start with http:// or https://." };
   }
 
-  const bio = emptyToNull(formData.get("bio")) ?? "";
+  const bioRaw = String(formData.get("bio") ?? "");
+  if (!bioRaw.trim()) {
+    return { status: "error", error: "Add a short bio." };
+  }
+  if (bioRaw.length > BIO_MAX) {
+    return {
+      status: "error",
+      error: `Bio is too long — keep it under ${BIO_MAX} characters.`,
+    };
+  }
+  const bio = bioRaw.trim();
+
+  const descRaw = String(formData.get("serviceDescription") ?? "");
+  if (!descRaw.trim()) {
+    return { status: "error", error: "Add a service description." };
+  }
+  if (descRaw.length > DESC_MAX) {
+    return {
+      status: "error",
+      error: `Service description is too long — keep it under ${DESC_MAX} characters.`,
+    };
+  }
+  const serviceDescription = descRaw.trim();
+
+  const notesRaw = String(formData.get("pricingNotes") ?? "");
+  if (notesRaw.length > NOTES_MAX) {
+    return {
+      status: "error",
+      error: `Pricing notes are too long — keep them under ${NOTES_MAX} characters.`,
+    };
+  }
+  const pricingNotes = notesRaw.trim() || null;
+
   const instagramHandle = normalizeInstagram(formData.get("instagramHandle"));
   const serviceRadius = emptyToNull(formData.get("serviceRadius"));
   const serviceFormats = emptyToNull(formData.get("serviceFormats"));
@@ -100,8 +139,6 @@ export async function updateVendorProfile(
   );
 
   const zip = emptyToNull(formData.get("zip"));
-  const serviceDescription = emptyToNull(formData.get("serviceDescription"));
-  const pricingNotes = emptyToNull(formData.get("pricingNotes"));
 
   const photo = formData.get("photo");
   const hasNewPhoto = photo instanceof File && photo.size > 0;

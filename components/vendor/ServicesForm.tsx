@@ -26,9 +26,11 @@ const HOURS = [
   "Evening (5–9p)",
 ];
 
-// Server-side limit lives on the application action — keep this in
+// Server-side limits live on the application action — keep these in
 // sync if either side changes.
 const BIO_MAX = 500;
+const DESC_MAX = 500;
+const NOTES_MAX = 500;
 
 interface FormData {
   firstName: string;
@@ -208,30 +210,40 @@ export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption
                     ))}
                   </select>
                 </FormField>
-                <FormField label="About you">
+                <FormField label="About you" required>
                   <textarea
                     className={`${inputCls} min-h-[100px] resize-y`}
                     placeholder="A short bio to tell clients and other vendors who you are. Feel free to include quirks or specifics about you that are truly unique."
                     maxLength={BIO_MAX}
+                    required
                     {...field("bio")}
                   />
                   <div className="text-[11px] text-cl mt-1 text-right tabular-nums">
                     {data.bio.length} / {BIO_MAX}
                   </div>
                 </FormField>
-                <FormField label="Service description">
+                <FormField label="Service description" required>
                   <textarea
                     className={`${inputCls} min-h-[120px] resize-y`}
                     placeholder="Describe your usual services, including any packages that you offer."
+                    maxLength={DESC_MAX}
+                    required
                     {...field("serviceDescription")}
                   />
+                  <div className="text-[11px] text-cl mt-1 text-right tabular-nums">
+                    {data.serviceDescription.length} / {DESC_MAX}
+                  </div>
                 </FormField>
                 <FormField label="Pricing notes">
                   <textarea
                     className={`${inputCls} min-h-[120px] resize-y`}
                     placeholder={`Please list detailed information about your pricing. Examples: "Hourly rates range from $55–125/hour. Sliding scale available." Also please list prices or price ranges for packages that you offer.`}
+                    maxLength={NOTES_MAX}
                     {...field("pricingNotes")}
                   />
+                  <div className="text-[11px] text-cl mt-1 text-right tabular-nums">
+                    {data.pricingNotes.length} / {NOTES_MAX}
+                  </div>
                 </FormField>
                 <FormField label="Additional specializations (select all that apply)">
                   <div className="flex flex-wrap gap-2 mt-1">
@@ -519,10 +531,21 @@ export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption
   );
 }
 
-function FormField({ label, children }: { label: string; children: React.ReactNode }) {
+function FormField({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <div className="mb-4">
-      <label className="block text-[12px] font-medium text-ch mb-1.5">{label}</label>
+      <label className="block text-[12px] font-medium text-ch mb-1.5">
+        {label}
+        {required && <span className="text-tr ml-0.5">*</span>}
+      </label>
       {children}
     </div>
   );
