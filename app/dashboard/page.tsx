@@ -14,11 +14,13 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   const { vendor } = await requireVendor();
 
-  const [productCount, draftCount, serviceCount] = await Promise.all([
-    prisma.product.count({ where: { vendorId: vendor.id, status: "published" } }),
-    prisma.product.count({ where: { vendorId: vendor.id, status: "draft" } }),
-    prisma.service.count({ where: { vendorId: vendor.id } }),
-  ]);
+  const [productCount, draftProductCount, serviceCount, draftServiceCount] =
+    await Promise.all([
+      prisma.product.count({ where: { vendorId: vendor.id, status: "published" } }),
+      prisma.product.count({ where: { vendorId: vendor.id, status: "draft" } }),
+      prisma.service.count({ where: { vendorId: vendor.id, status: "published" } }),
+      prisma.service.count({ where: { vendorId: vendor.id, status: "draft" } }),
+    ]);
 
   const subscription = vendor.subscriptions[0];
 
@@ -42,25 +44,40 @@ export default async function DashboardPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-7">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-7">
             <DashStat label="Published products" value={productCount} />
-            <DashStat label="Draft products" value={draftCount} />
-            <DashStat label="Services" value={serviceCount} />
+            <DashStat label="Draft products" value={draftProductCount} />
+            <DashStat label="Published services" value={serviceCount} />
+            <DashStat label="Draft services" value={draftServiceCount} />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <DashCard
               title="Your products"
               body={
-                productCount + draftCount === 0
+                productCount + draftProductCount === 0
                   ? "Add your first product so buyers can find it."
-                  : `${productCount + draftCount} total. Edit, publish, and adjust stock.`
+                  : `${productCount + draftProductCount} total. Edit, publish, and adjust stock.`
               }
               href="/dashboard/products"
               cta={
-                productCount + draftCount === 0
+                productCount + draftProductCount === 0
                   ? "Create a product →"
                   : "Manage products →"
+              }
+            />
+            <DashCard
+              title="Your services"
+              body={
+                serviceCount + draftServiceCount === 0
+                  ? "Add your first service so clients can find you."
+                  : `${serviceCount + draftServiceCount} total. Edit, publish, and adjust pricing.`
+              }
+              href="/dashboard/services"
+              cta={
+                serviceCount + draftServiceCount === 0
+                  ? "Create a service →"
+                  : "Manage services →"
               }
             />
             <DashCard
