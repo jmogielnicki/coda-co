@@ -41,6 +41,7 @@ interface FormData {
   website: string;
   city: string;
   state: string;
+  zip: string;
   bio: string;
   serviceType: string;
   serviceDescription: string;
@@ -70,6 +71,7 @@ export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption
     website: "",
     city: "",
     state: "",
+    zip: "",
     bio: "",
     serviceType: serviceTypes[0]?.slug ?? "",
     serviceDescription: "",
@@ -168,7 +170,7 @@ export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption
                 <FormField label="Facebook page (optional)">
                   <input className={inputCls} placeholder="facebook.com/yourpage" {...field("facebook")} />
                 </FormField>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-[2fr_1fr_1fr] gap-4">
                   <FormField label="City">
                     <input className={inputCls} placeholder="Brooklyn" {...field("city")} />
                   </FormField>
@@ -178,6 +180,16 @@ export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption
                         <option key={s}>{s}</option>
                       ))}
                     </select>
+                  </FormField>
+                  <FormField label="Zip">
+                    <input
+                      className={inputCls}
+                      inputMode="numeric"
+                      autoComplete="postal-code"
+                      maxLength={10}
+                      placeholder="11201"
+                      {...field("zip")}
+                    />
                   </FormField>
                 </div>
               </>
