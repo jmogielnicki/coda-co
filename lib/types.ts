@@ -189,8 +189,13 @@ export interface Plan {
   name: string;
   price: number | null;
   period: "month" | null;
+  // Discounted annual price, when offered alongside the monthly tier.
+  priceYearly?: number | null;
+  // Free-trial label shown in place of the price (e.g. "Free for 3 months").
+  trial?: string;
   features: string[];
   popular: boolean;
+  // Empty string hides the line on the plan card.
   transactionFee: string;
   targetType: "goods" | "services" | "both";
 }

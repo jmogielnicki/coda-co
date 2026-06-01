@@ -51,9 +51,20 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
                 )}
                 <div className="text-[18px] font-medium text-ch mb-1">{plan.name}</div>
                 <div className="font-serif text-[32px] font-light text-tr mb-4">
-                  {plan.price == null ? "Free" : `$${plan.price}`}
-                  {plan.period && (
-                    <span className="text-[14px] text-cl font-sans">/{plan.period}</span>
+                  {plan.trial ? (
+                    <span className="text-[22px]">{plan.trial}</span>
+                  ) : (
+                    <>
+                      {plan.price == null ? "Free" : `$${plan.price}`}
+                      {plan.period && (
+                        <span className="text-[14px] text-cl font-sans">/{plan.period}</span>
+                      )}
+                      {plan.priceYearly != null && (
+                        <div className="text-[13px] text-cl font-sans mt-1">
+                          or ${plan.priceYearly}/year
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
                 <ul className="space-y-2 mb-5">
@@ -64,9 +75,11 @@ export default async function PlanPage({ searchParams }: PlanPageProps) {
                     </li>
                   ))}
                 </ul>
-                <div className="text-[11px] text-cl border-t border-line pt-3">
-                  {plan.transactionFee}
-                </div>
+                {plan.transactionFee && (
+                  <div className="text-[11px] text-cl border-t border-line pt-3">
+                    {plan.transactionFee}
+                  </div>
+                )}
                 <Link
                   href="/list-with-us/confirm"
                   className={[

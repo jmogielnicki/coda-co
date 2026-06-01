@@ -363,22 +363,35 @@ export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption
                     {
                       id: "starter" as const,
                       name: "Starter",
-                      price: "Free",
-                      features: ["1 service profile", "CodaCo messaging", "Basic visibility"],
+                      price: "Free for 3 mo",
+                      features: [
+                        "Service profile",
+                        "CodaCo messaging",
+                        "Direct client payments through CodaCo",
+                      ],
                       popular: false,
                     },
                     {
                       id: "standard" as const,
                       name: "Standard",
-                      price: "$12/mo",
-                      features: ["Unlimited profiles", "Verified badge", "Client reviews", "Priority search"],
+                      price: "$14/mo or $150/yr",
+                      features: [
+                        "Everything in Starter",
+                        "Verified badge (pending CodaCo verification)",
+                        "Client reviews",
+                      ],
                       popular: true,
                     },
                     {
                       id: "pro" as const,
                       name: "Pro",
-                      price: "$29/mo",
-                      features: ["Featured placement", "Advanced analytics", "Priority support", "Team accounts"],
+                      price: "$29/mo or $320/yr",
+                      features: [
+                        "Everything in Standard",
+                        "Unlimited service profiles",
+                        "Priority support",
+                        "Direct scheduling through CodaCo",
+                      ],
                       popular: false,
                     },
                   ].map((p) => {

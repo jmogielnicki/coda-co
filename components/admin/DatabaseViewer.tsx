@@ -459,6 +459,8 @@ function PlansTab({ plans }: { plans: Plan[] }) {
               <Th>Target Type</Th>
               <Th>Price</Th>
               <Th>Period</Th>
+              <Th>Yearly</Th>
+              <Th>Trial</Th>
               <Th>Popular</Th>
               <Th>Transaction Fee</Th>
               <Th>Features</Th>
@@ -466,7 +468,7 @@ function PlansTab({ plans }: { plans: Plan[] }) {
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <EmptyRow cols={8} />
+              <EmptyRow cols={10} />
             ) : (
               filtered.map((p) => (
                 <Tr key={`${p.id}-${p.targetType}`}>
@@ -477,8 +479,10 @@ function PlansTab({ plans }: { plans: Plan[] }) {
                   </Td>
                   <Td mono>{p.price === null ? 'Free' : `$${p.price}`}</Td>
                   <Td>{p.period ?? '—'}</Td>
+                  <Td mono>{p.priceYearly != null ? `$${p.priceYearly}` : '—'}</Td>
+                  <Td>{p.trial ?? '—'}</Td>
                   <Td><BoolCell value={p.popular} /></Td>
-                  <Td>{p.transactionFee}</Td>
+                  <Td>{p.transactionFee || '—'}</Td>
                   <Td max>{p.features.join(' · ')}</Td>
                 </Tr>
               ))
