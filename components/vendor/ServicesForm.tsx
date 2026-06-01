@@ -44,6 +44,7 @@ interface FormData {
   bio: string;
   serviceType: string;
   serviceDescription: string;
+  pricingNotes: string;
   specializations: string[];
   lifeStages: LifeStage[];
   radius: string;
@@ -72,6 +73,7 @@ export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption
     bio: "",
     serviceType: serviceTypes[0]?.slug ?? "",
     serviceDescription: "",
+    pricingNotes: "",
     specializations: [],
     lifeStages: [],
     radius: "15 mi",
@@ -210,6 +212,13 @@ export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption
                     className={`${inputCls} min-h-[120px] resize-y`}
                     placeholder="Describe your usual services, including any packages that you offer."
                     {...field("serviceDescription")}
+                  />
+                </FormField>
+                <FormField label="Pricing notes">
+                  <textarea
+                    className={`${inputCls} min-h-[120px] resize-y`}
+                    placeholder={`Please list detailed information about your pricing. Examples: "Hourly rates range from $55–125/hour. Sliding scale available." Also please list prices or price ranges for packages that you offer.`}
+                    {...field("pricingNotes")}
                   />
                 </FormField>
                 <FormField label="Specializations (select all that apply)">
