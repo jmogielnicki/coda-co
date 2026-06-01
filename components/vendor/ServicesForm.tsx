@@ -26,6 +26,10 @@ const HOURS = [
   "Evening (5–9p)",
 ];
 
+// Server-side limit lives on the application action — keep this in
+// sync if either side changes.
+const BIO_MAX = 500;
+
 interface FormData {
   firstName: string;
   lastName: string;
@@ -174,13 +178,6 @@ export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption
                     </select>
                   </FormField>
                 </div>
-                <FormField label="About you (shown on your profile)">
-                  <textarea
-                    className={`${inputCls} min-h-[100px] resize-y`}
-                    placeholder="Your background, approach, and what clients can expect…"
-                    {...field("bio")}
-                  />
-                </FormField>
               </>
             )}
 
@@ -197,10 +194,21 @@ export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption
                     ))}
                   </select>
                 </FormField>
+                <FormField label="About you">
+                  <textarea
+                    className={`${inputCls} min-h-[100px] resize-y`}
+                    placeholder="A short bio to tell clients and other vendors who you are. Feel free to include quirks or specifics about you that are truly unique."
+                    maxLength={BIO_MAX}
+                    {...field("bio")}
+                  />
+                  <div className="text-[11px] text-cl mt-1 text-right tabular-nums">
+                    {data.bio.length} / {BIO_MAX}
+                  </div>
+                </FormField>
                 <FormField label="Service description">
                   <textarea
                     className={`${inputCls} min-h-[120px] resize-y`}
-                    placeholder="Describe what you offer, your approach, typical session structure, pricing, etc."
+                    placeholder="Describe your usual services, including any packages that you offer."
                     {...field("serviceDescription")}
                   />
                 </FormField>

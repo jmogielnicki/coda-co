@@ -18,6 +18,10 @@ export interface ApplicationFormState {
 
 const VALID_KINDS = new Set<ApplicationKind>(["goods", "services", "both"]);
 const VALID_PLANS = new Set<SubscriptionPlanId>(["starter", "standard", "pro"]);
+// Mirrors the maxLength on the bio textarea in ServicesForm /
+// GoodsForm. Server-side enforcement is what actually keeps a
+// copy-paste or scripted client from overrunning the column.
+const BIO_MAX = 500;
 
 interface SubmitInput {
   kind: Exclude<ApplicationKind, "unknown">;
@@ -53,6 +57,9 @@ async function submit(input: SubmitInput): Promise<ApplicationFormState> {
   if (!input.displayName.trim()) return { error: "Tell us your shop or practice name." };
   if (!input.city.trim() || !input.state.trim()) {
     return { error: "Add a city and state." };
+  }
+  if (input.bio.length > BIO_MAX) {
+    return { error: `Bio is too long — keep it under ${BIO_MAX} characters.` };
   }
 
   const session = await auth();
