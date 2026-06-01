@@ -32,6 +32,55 @@ plan using Vercel Blob; full scope in `docs/images-plan.md`. Phase 1
 (vendor headshot) is the suggested starting point and not blocked by
 Phase E.
 
+## Geographic vendor search (not started)
+
+Today there is **no real proximity search**. Several UI affordances imply
+it but are inert, and the schema lacks the data to support it. A Fort
+Collins visitor sees every vendor (Boulder, Denver, anywhere) ordered by
+signup date, with a hardcoded, viewer-independent "X mi away" label. None
+of distance ranking, neighboring-city inclusion, or radius-based
+eligibility works.
+
+What's fake / disconnected today:
+
+- **Distance filter pills** (`5/15/30/50 mi`, `Virtual only`) in
+  `components/services/ServiceFilters.tsx` set a `distance` URL param,
+  but `app/services/page.tsx` never reads it (only `type`, `minRating`,
+  `locationType`, `verified`, `lifeStage`).
+- **"Nearest first" sort** in `app/services/page.tsx` is a `<select>`
+  option with no `value`/`onChange` — purely decorative. Real sort is
+  `orderBy: { createdAt: "asc" }` in `getVendors()` (`lib/api/vendors.ts`).
+- **Vendor "service radius"** picked during onboarding in
+  `components/vendor/ServicesForm.tsx` is never persisted — there's no
+  radius column on `VendorProfile`.
+- **`distanceMi`** (`prisma/schema.prisma`) is a seeded mock value, not
+  computed relative to the viewer.
+
+What works: service `locationType` (virtual / in_person / both) is a real,
+functional filter via `getServices({ locationType })`.
+
+To make it real (rough scope — needs its own design pass before building):
+
+- **Add geo data to `VendorProfile`.** Either store `lat`/`lng` directly
+  or geocode the existing `location` string at write time (signup /
+  profile edit). No coordinates exist anywhere today.
+- **Persist a service radius** column (and decide semantics: does a 30 mi
+  radius mean "I travel 30 mi from my base"? Combine with `locationType`
+  so virtual-only vendors always match.)
+- **Capture the viewer's location** — a location/zip input on the services
+  page (and/or browser geolocation), feeding a `near`/`zip` URL param.
+- **Distance filtering + sort.** Wire the `distance` param and "Nearest
+  first" through `VendorFilters` / `getVendors()`. Postgres + PostGIS (or
+  the `earthdistance`/`cube` extensions) can do radius queries in-DB; a
+  Haversine compute in app code is a lighter starting point given current
+  data volumes.
+- **Make `distanceMi` derived**, not stored — compute per request from
+  viewer + vendor coordinates.
+
+Decision needed up front: does "Fort Collins → Boulder/Denver" inclusion
+key off the *viewer's* radius preference (distance pills), the *vendor's*
+declared service radius, or both? That choice drives the schema.
+
 ## Smaller gaps
 
 - **No password reset / change UI.** Every user is stuck with the password
