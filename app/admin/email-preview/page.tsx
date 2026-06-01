@@ -3,12 +3,9 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { Container } from "@/components/ui/Container";
-import {
-  buildApplicationApprovedEmail,
-  buildApplicationRejectedEmail,
-  buildApplicationSubmittedEmail,
-  type EmailPayload,
-} from "@/lib/email/templates";
+import type { EmailPayload } from "@/lib/email/templates";
+import { buildSample, type TemplateKey } from "./fixtures";
+import { TestSendForm } from "./TestSendForm";
 
 export const metadata: Metadata = {
   title: "Email preview — Admin | CodaCo",
@@ -16,18 +13,8 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-// Realistic fixture used across every template. Picked once so every
-// preview shares the same "Jane / Earthen Studio" narrative — easier to
-// scan visual differences between templates.
-const FIXTURE = {
-  toEmail: "jane@example.com",
-  toName: "Jane Mitchell",
-  displayName: "Earthen Studio",
-  vendorSlug: "earthen-studio",
-};
-
 interface PreviewSection {
-  key: string;
+  key: TemplateKey;
   title: string;
   sentWhen: string;
   editFn: string;
@@ -41,10 +28,7 @@ const SECTIONS: PreviewSection[] = [
     sentWhen:
       "After a vendor submits an application on the manual-review path. Suppressed when DEMO_AUTO_APPROVE_VENDORS=1.",
     editFn: "buildApplicationSubmittedEmail",
-    payload: buildApplicationSubmittedEmail({
-      ...FIXTURE,
-      kind: "services",
-    }),
+    payload: buildSample("submitted"),
   },
   {
     key: "approved",
@@ -52,9 +36,7 @@ const SECTIONS: PreviewSection[] = [
     sentWhen:
       "After an admin (or auto-approve) approves the application. Fires from approveApplication, so admin-queue and auto-approve paths both send it.",
     editFn: "buildApplicationApprovedEmail",
-    payload: buildApplicationApprovedEmail({
-      ...FIXTURE,
-    }),
+    payload: buildSample("approved"),
   },
   {
     key: "rejected",
@@ -62,11 +44,7 @@ const SECTIONS: PreviewSection[] = [
     sentWhen:
       "After an admin rejects the application. The optional reviewer note is rendered inline (the example here uses a sample note).",
     editFn: "buildApplicationRejectedEmail",
-    payload: buildApplicationRejectedEmail({
-      ...FIXTURE,
-      notes:
-        "Thanks for applying — we're not currently accepting applications in your specialty, but please reach out again in a few months.",
-    }),
+    payload: buildSample("rejected"),
   },
 ];
 
@@ -74,6 +52,8 @@ export default async function AdminEmailPreviewPage() {
   const session = await auth();
   if (!session?.user) redirect("/login?next=/admin/email-preview");
   if (session.user.role !== "admin") redirect("/");
+
+  const defaultTestEmail = session.user.email ?? "";
 
   return (
     <>
@@ -93,13 +73,14 @@ export default async function AdminEmailPreviewPage() {
             <p className="text-[13px] text-cl mt-1.5">
               Read-only renderings of every transactional email, using sample data.
               Edit copy in <code className="text-ch bg-pl px-1 py-0.5 rounded">lib/email/templates.ts</code>,
-              then refresh this page.
+              then refresh this page. Each block also has a &quot;Send a test&quot; form so you can
+              see the email in a real inbox.
             </p>
           </div>
 
           <div className="space-y-8">
             {SECTIONS.map((s) => (
-              <PreviewBlock key={s.key} section={s} />
+              <PreviewBlock key={s.key} section={s} defaultTestEmail={defaultTestEmail} />
             ))}
           </div>
         </Container>
@@ -108,7 +89,13 @@ export default async function AdminEmailPreviewPage() {
   );
 }
 
-function PreviewBlock({ section }: { section: PreviewSection }) {
+function PreviewBlock({
+  section,
+  defaultTestEmail,
+}: {
+  section: PreviewSection;
+  defaultTestEmail: string;
+}) {
   return (
     <div className="bg-white rounded-[10px] border border-line p-6">
       <div className="mb-4">
@@ -145,6 +132,8 @@ function PreviewBlock({ section }: { section: PreviewSection }) {
           {section.payload.text}
         </pre>
       </details>
+
+      <TestSendForm templateKey={section.key} defaultEmail={defaultTestEmail} />
     </div>
   );
 }
