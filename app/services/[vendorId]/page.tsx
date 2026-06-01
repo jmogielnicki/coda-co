@@ -27,105 +27,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-interface TeamMember {
-  initials: string;
-  name: string;
-  role: string;
-  bio: string;
-  photoSrc?: string;
-  photoTone?: "sage" | "terracotta";
+// Splits bio on blank lines so vendors can write multi-paragraph bios
+// in the dashboard's single textarea and have them render as proper
+// paragraphs here.
+function bioParagraphs(bio: string): string[] {
+  return bio
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
 }
-
-interface Offering {
-  title: string;
-  desc: string;
-}
-
-interface VendorExtras {
-  longBio: string;
-  team?: TeamMember[];
-  offerings?: Offering[];
-  serviceArea: {
-    radius: string;
-    formats: string;
-    days: string;
-    hours: string;
-  };
-  contact?: {
-    email?: string;
-    phone?: string;
-    website?: string;
-    instagram?: string;
-  };
-}
-
-const VENDOR_EXTRAS: Record<string, VendorExtras> = {
-  "threshold-wellness": {
-    longBio:
-      "Threshold Wellness is a Boulder-based collective of three certified end-of-life doulas. We bring decades of combined experience in nursing, hospice care, and grief work to families navigating illness, dying, and bereavement.\n\nWe practice on a sliding scale because deathcare should never be rationed by ability to pay. Sessions can be virtual, in-home, or in a hospital or facility — wherever you need us.",
-    team: [
-      {
-        initials: "HP",
-        name: "Helen Park, RN, INELDA",
-        role: "Hospital & home transitions",
-        bio: "Twenty years as an oncology nurse before training as a death doula. Helen leads our medical-facility work and supports families navigating ICU and hospice handoffs.",
-        photoTone: "sage",
-      },
-      {
-        initials: "MO",
-        name: "Marisol Ortega, CEND",
-        role: "Cultural & ceremonial customs",
-        bio: "Bilingual Spanish/English. Marisol brings ten years of bereavement and ceremony work, with a focus on multi-generational and multi-faith families.",
-        photoTone: "terracotta",
-      },
-      {
-        initials: "RL",
-        name: "Rae Linville, INELDA",
-        role: "Dementia & family communication",
-        bio: "Specializes in supporting families when a loved one has dementia or is no longer able to participate in their own end-of-life decisions.",
-        photoTone: "sage",
-      },
-    ],
-    offerings: [
-      {
-        title: "Advance care planning",
-        desc: "One to two sessions, in-home or virtual. We help you write a living will and document wishes.",
-      },
-      {
-        title: "Active dying support",
-        desc: "Bedside companionship and family coaching during the active phase of dying — at home, in a facility, or in hospital.",
-      },
-      {
-        title: "Vigil sitting",
-        desc: "Overnight or daytime presence so family members can rest. We sit with the dying person.",
-      },
-      {
-        title: "Bereavement check-ins",
-        desc: "Six months of follow-up calls and visits after a death. Available individually or as a family.",
-      },
-      {
-        title: "Group circles",
-        desc: "Monthly group circles for grieving families, hosted at our Boulder studio. Free to attend.",
-      },
-      {
-        title: "Family communication",
-        desc: "Facilitated family conversations and gentle mediation when relatives disagree about care or rituals.",
-      },
-    ],
-    serviceArea: {
-      radius: "25 mile radius",
-      formats: "In-home, hospital/facility, and virtual",
-      days: "Tue–Fri primary; weekends by arrangement",
-      hours: "Morning, afternoon, and evening sessions",
-    },
-    contact: {
-      email: "hello@thresholdwellness.co",
-      phone: "(303) 555-0142",
-      website: "thresholdwellness.co",
-      instagram: "@thresholdwellness",
-    },
-  },
-};
 
 export default async function VendorProfilePage({ params }: PageProps) {
   const { vendorId } = await params;
@@ -136,17 +46,32 @@ export default async function VendorProfilePage({ params }: PageProps) {
   ]);
   if (!vendor) notFound();
 
-  const extras = VENDOR_EXTRAS[vendorId];
   const primaryType = vendorServices[0]?.serviceType;
 
+  // Derive a default "Formats" string from the union of the vendor's
+  // services' location types. The vendor's own serviceFormats string
+  // overrides this when set.
   const inPerson = vendorServices.some(
     (s) => s.locationType === "in_person" || s.locationType === "both",
   );
   const virtual = vendorServices.some(
     (s) => s.locationType === "virtual" || s.locationType === "both",
   );
+  const derivedFormats = [inPerson && "In-home", virtual && "Virtual"]
+    .filter(Boolean)
+    .join(" · ");
+  const formats = vendor.serviceFormats ?? (derivedFormats || null);
 
-  const lastTintBeforeContact = vendorReviewList.length > 0 ? "var(--color-tr-vp)" : "var(--color-sg-vp)";
+  const paragraphs = bioParagraphs(vendor.bio);
+  const hasReviews = vendorReviewList.length > 0;
+
+  // Instagram display: prepend "@" for the visible label, keep handle
+  // raw on the link path.
+  const instagramHandle = vendor.instagramHandle ?? null;
+  const instagramLabel = instagramHandle ? `@${instagramHandle}` : null;
+  const instagramUrl = instagramHandle
+    ? `https://instagram.com/${instagramHandle}`
+    : null;
 
   return (
     <>
@@ -207,94 +132,18 @@ export default async function VendorProfilePage({ params }: PageProps) {
               </div>
             </div>
           </div>
-          <p className="text-[14px] leading-[1.7] text-cm">{vendor.bio}</p>
+          {paragraphs.map((p, i) => (
+            <p
+              key={i}
+              className={`text-[14px] leading-[1.7] text-cm ${i < paragraphs.length - 1 ? "mb-4" : ""}`}
+            >
+              {p}
+            </p>
+          ))}
         </Container>
       </section>
 
-      {extras && (
-        <>
-          <WaveDivider topColor="var(--color-white)" bottomColor="var(--color-tr-vp)" />
-
-          {/* About + team */}
-          <section className="bg-tr-vp px-10 pt-2 pb-16">
-            <Container width="mid">
-              <SectionHeader
-                eyebrow="About the practice"
-                title="Who we are"
-                className="mb-6"
-              />
-              <p className="text-[14px] leading-[1.8] text-ink whitespace-pre-line max-w-[640px] mx-auto text-center mb-10">
-                {extras.longBio}
-              </p>
-              {extras.team && (
-                <div className="grid-auto-200">
-                  {extras.team.map((member) => (
-                    <div
-                      key={member.initials}
-                      className="bg-white rounded-[10px] p-5 border border-line"
-                    >
-                      <div className="flex items-center gap-3 mb-3">
-                        <VendorPhoto
-                          src={member.photoSrc}
-                          alt={member.name}
-                          initials={member.initials}
-                          size="md"
-                          tone={member.photoTone}
-                        />
-                        <div className="min-w-0">
-                          <div className="text-[14px] font-medium text-ch truncate">
-                            {member.name}
-                          </div>
-                          <div className="text-[11px] tracking-[.08em] uppercase text-cl">
-                            {member.role}
-                          </div>
-                        </div>
-                      </div>
-                      <p className="text-[13px] text-cm leading-relaxed">{member.bio}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Container>
-          </section>
-
-          {extras.offerings && (
-            <>
-              <WaveDivider topColor="var(--color-tr-vp)" bottomColor="var(--color-white)" />
-
-              {/* Offerings */}
-              <section className="bg-white px-10 pt-4 pb-16">
-                <Container width="mid">
-                  <SectionHeader
-                    eyebrow="What we offer"
-                    eyebrowTone="sg"
-                    title="Services we provide"
-                    className="mb-8"
-                  />
-                  <div className="grid-auto-200">
-                    {extras.offerings.map((o) => (
-                      <div
-                        key={o.title}
-                        className="bg-pl border border-line rounded-[10px] p-5"
-                      >
-                        <div className="text-[14px] font-medium text-ch mb-1">{o.title}</div>
-                        <p className="text-[13px] text-cm leading-relaxed">{o.desc}</p>
-                      </div>
-                    ))}
-                  </div>
-                </Container>
-              </section>
-            </>
-          )}
-        </>
-      )}
-
-      <WaveDivider
-        topColor={
-          extras && !extras.offerings ? "var(--color-tr-vp)" : "var(--color-white)"
-        }
-        bottomColor="var(--color-sg-vp)"
-      />
+      <WaveDivider topColor="var(--color-white)" bottomColor="var(--color-sg-vp)" />
 
       {/* Services + service area */}
       <section className="bg-sg-vp px-10 pt-4 pb-16">
@@ -337,20 +186,15 @@ export default async function VendorProfilePage({ params }: PageProps) {
               </div>
               <dl className="text-[13px] space-y-2.5">
                 <ProfileRow label="Located in">{vendor.location}</ProfileRow>
-                {extras?.serviceArea.radius && (
-                  <ProfileRow label="Radius">{extras.serviceArea.radius}</ProfileRow>
+                {vendor.serviceRadius && (
+                  <ProfileRow label="Radius">{vendor.serviceRadius}</ProfileRow>
                 )}
-                <ProfileRow label="Formats">
-                  {extras?.serviceArea.formats ??
-                    [inPerson && "In-home", virtual && "Virtual"]
-                      .filter(Boolean)
-                      .join(" · ")}
-                </ProfileRow>
-                {extras?.serviceArea.days && (
-                  <ProfileRow label="Days">{extras.serviceArea.days}</ProfileRow>
+                {formats && <ProfileRow label="Formats">{formats}</ProfileRow>}
+                {vendor.serviceDays && (
+                  <ProfileRow label="Days">{vendor.serviceDays}</ProfileRow>
                 )}
-                {extras?.serviceArea.hours && (
-                  <ProfileRow label="Hours">{extras.serviceArea.hours}</ProfileRow>
+                {vendor.serviceHours && (
+                  <ProfileRow label="Hours">{vendor.serviceHours}</ProfileRow>
                 )}
               </dl>
             </div>
@@ -358,7 +202,7 @@ export default async function VendorProfilePage({ params }: PageProps) {
         </Container>
       </section>
 
-      {vendorReviewList.length > 0 && (
+      {hasReviews && (
         <>
           <WaveDivider topColor="var(--color-sg-vp)" bottomColor="var(--color-tr-vp)" />
 
@@ -397,7 +241,10 @@ export default async function VendorProfilePage({ params }: PageProps) {
         </>
       )}
 
-      <WaveDivider topColor={lastTintBeforeContact} bottomColor="var(--color-white)" />
+      <WaveDivider
+        topColor={hasReviews ? "var(--color-tr-vp)" : "var(--color-sg-vp)"}
+        bottomColor="var(--color-white)"
+      />
 
       {/* Contact CTA */}
       <section className="bg-white px-10 pt-4 pb-16">
@@ -416,19 +263,29 @@ export default async function VendorProfilePage({ params }: PageProps) {
                 Browse other providers
               </Link>
             </div>
-            {extras?.contact && (
+            {(vendor.websiteUrl || instagramLabel) && (
               <div className="text-[12px] text-cm pt-4 border-t border-tr-p mt-5 flex flex-wrap gap-x-3 gap-y-1 justify-center">
-                {extras.contact.email && <span>{extras.contact.email}</span>}
-                {extras.contact.phone && <span>· {extras.contact.phone}</span>}
-                {extras.contact.website && (
-                  <span>
-                    ·{" "}
-                    <a className="text-tr no-underline hover:underline">
-                      {extras.contact.website}
-                    </a>
-                  </span>
+                {vendor.websiteUrl && (
+                  <a
+                    href={vendor.websiteUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-tr no-underline hover:underline"
+                  >
+                    {vendor.websiteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                  </a>
                 )}
-                {extras.contact.instagram && <span>· {extras.contact.instagram}</span>}
+                {vendor.websiteUrl && instagramLabel && <span>·</span>}
+                {instagramLabel && instagramUrl && (
+                  <a
+                    href={instagramUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-tr no-underline hover:underline"
+                  >
+                    {instagramLabel}
+                  </a>
+                )}
               </div>
             )}
           </div>

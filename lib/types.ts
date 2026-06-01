@@ -95,6 +95,14 @@ export interface Vendor {
   memberSince?: string;
   photoSrc?: string;
   photoTone?: "sage" | "terracotta";
+  // Public profile extras — all optional. Vendors fill them in from
+  // the dashboard; the public profile renders only what's set.
+  websiteUrl?: string;
+  instagramHandle?: string;
+  serviceRadius?: string;
+  serviceFormats?: string;
+  serviceDays?: string;
+  serviceHours?: string;
 }
 
 export interface VendorWithRating extends Vendor {

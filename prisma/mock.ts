@@ -109,6 +109,12 @@ async function main() {
         memberSince: v.memberSince ? new Date(v.memberSince) : null,
         photoSrc: v.photoSrc,
         photoTone: v.photoTone,
+        websiteUrl: v.websiteUrl,
+        instagramHandle: v.instagramHandle,
+        serviceRadius: v.serviceRadius,
+        serviceFormats: v.serviceFormats,
+        serviceDays: v.serviceDays,
+        serviceHours: v.serviceHours,
         user: { connect: { id: user.id } },
       },
     });

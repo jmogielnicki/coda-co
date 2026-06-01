@@ -144,6 +144,22 @@ model VendorProfile {
   photoSrc    String?   @map("photo_src")
   photoTone   String?   @map("photo_tone")
 
+  // Public contact links — vendor-editable, shown in the contact CTA at
+  // the bottom of the public profile. Both optional; render only the
+  // ones the vendor fills in. instagramHandle is the raw handle (no @).
+  websiteUrl      String? @map("website_url")
+  instagramHandle String? @map("instagram_handle")
+
+  // Service-area display fields shown on the public profile's "Services
+  // & service area" card. Free-form text so vendors can phrase them
+  // naturally ("25 mile radius", "Tue–Fri primary"). All optional.
+  // serviceFormats overrides the formats string otherwise derived from
+  // the vendor's services.locationType values.
+  serviceRadius  String? @map("service_radius")
+  serviceFormats String? @map("service_formats")
+  serviceDays    String? @map("service_days")
+  serviceHours   String? @map("service_hours")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

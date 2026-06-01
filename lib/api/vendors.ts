@@ -32,6 +32,12 @@ function toVendor(v: DbVendor): Vendor {
     memberSince: v.memberSince ? v.memberSince.toISOString().slice(0, 10) : undefined,
     photoSrc: v.photoSrc ?? undefined,
     photoTone: (v.photoTone as Vendor["photoTone"]) ?? undefined,
+    websiteUrl: v.websiteUrl ?? undefined,
+    instagramHandle: v.instagramHandle ?? undefined,
+    serviceRadius: v.serviceRadius ?? undefined,
+    serviceFormats: v.serviceFormats ?? undefined,
+    serviceDays: v.serviceDays ?? undefined,
+    serviceHours: v.serviceHours ?? undefined,
   };
 }
 
