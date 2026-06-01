@@ -9,6 +9,8 @@ import {
   normalizeSlug,
 } from "@/lib/api/applications";
 import { prisma } from "@/lib/db";
+import { sendApplicationSubmittedEmail } from "@/lib/email/templates";
+import { log } from "@/lib/log";
 
 export interface ApplicationFormState {
   error?: string;
@@ -18,7 +20,7 @@ const VALID_KINDS = new Set<ApplicationKind>(["goods", "services", "both"]);
 const VALID_PLANS = new Set<SubscriptionPlanId>(["starter", "standard", "pro"]);
 
 interface SubmitInput {
-  kind: ApplicationKind;
+  kind: Exclude<ApplicationKind, "unknown">;
   displayName: string;
   bio: string;
   city: string;
@@ -74,10 +76,28 @@ async function submit(input: SubmitInput): Promise<ApplicationFormState> {
 
   // Demo auto-approve: a single env flag flips the admin queue off so a
   // prospect can sign up and have a working dashboard in under a minute.
-  // Off in production. The admin queue still works either way.
+  // Off in production. The admin queue still works either way. The
+  // approval email fires from approveApplication, so we deliberately do
+  // NOT also send the "we got it" email here — back-to-back submitted +
+  // approved emails in seconds is confusing.
   if (process.env.DEMO_AUTO_APPROVE_VENDORS === "1") {
     await autoApproveAsAdmin(app.id);
     redirect("/dashboard");
+  }
+
+  // Manual-review path: confirm receipt by email. Best-effort — never
+  // fail the submission because Resend hiccuped.
+  const emailResult = await sendApplicationSubmittedEmail({
+    toEmail: session.user.email!,
+    toName: session.user.name ?? null,
+    displayName: input.displayName.trim(),
+    kind: input.kind,
+  });
+  if (!emailResult.ok) {
+    log.warn("application.submitted_email_failed", {
+      applicationId: app.id,
+      err: emailResult.error,
+    });
   }
 
   redirect("/list-with-us/confirm");
