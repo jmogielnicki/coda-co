@@ -4,6 +4,7 @@ import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { Container } from "@/components/ui/Container";
 import { prisma } from "@/lib/db";
 import { requireVendor } from "../lib";
+import { createBlankService } from "./actions";
 
 export const metadata: Metadata = {
   title: "Your services — CodaCo",
@@ -58,9 +59,11 @@ export default async function VendorServicesPage() {
               <p className="text-[11px] tracking-[.14em] uppercase text-tr mb-1.5">Vendor</p>
               <h1 className="font-serif text-[32px] font-light text-ch">Your services</h1>
             </div>
-            <Link href="/dashboard/services/new" className="btn-primary btn-md no-underline">
-              + Add service
-            </Link>
+            <form action={createBlankService}>
+              <button type="submit" className="btn-primary btn-md">
+                + Add service
+              </button>
+            </form>
           </div>
 
           <div className="bg-white rounded-[10px] border border-line overflow-hidden">
@@ -82,12 +85,11 @@ export default async function VendorServicesPage() {
                       <p className="text-[14px] text-cm mb-3">
                         You haven&apos;t added any services yet.
                       </p>
-                      <Link
-                        href="/dashboard/services/new"
-                        className="btn-primary btn-sm no-underline"
-                      >
-                        Add your first service →
-                      </Link>
+                      <form action={createBlankService} className="inline-block">
+                        <button type="submit" className="btn-primary btn-sm">
+                          Add your first service →
+                        </button>
+                      </form>
                     </td>
                   </tr>
                 ) : (

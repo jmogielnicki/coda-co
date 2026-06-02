@@ -38,7 +38,6 @@ const ALLOWLIST = new Set([
   "app/dashboard/products/new/page.tsx::section-header",
   "app/dashboard/products/[id]/page.tsx::section-header",
   "app/dashboard/services/page.tsx::section-header",
-  "app/dashboard/services/new/page.tsx::section-header",
   "app/dashboard/services/[id]/page.tsx::section-header",
   "app/dashboard/profile/page.tsx::section-header",
   "app/admin/applications/page.tsx::section-header",

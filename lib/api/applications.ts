@@ -20,6 +20,10 @@ export interface ApplicationDraft {
   serviceDescription: string | null;
   pricingNotes: string | null;
   lifeStages: string[];
+  // Captured for services applications so approveApplication can
+  // auto-create the vendor's first draft Service. Null for goods.
+  serviceTypeSlug: string | null;
+  serviceLocationType: "unknown" | "virtual" | "in_person" | "both";
 }
 
 // Slug must be URL-safe and unique. We strip everything but lowercase
@@ -48,6 +52,8 @@ export async function createApplication(draft: ApplicationDraft) {
       serviceDescription: draft.serviceDescription,
       pricingNotes: draft.pricingNotes,
       lifeStages: draft.lifeStages,
+      serviceTypeSlug: draft.serviceTypeSlug,
+      serviceLocationType: draft.serviceLocationType,
       status: "submitted",
     },
   });
@@ -116,6 +122,52 @@ export async function approveApplication(applicationId: string, reviewerId: stri
           status: "active",
         },
       });
+
+      // Auto-create the vendor's first draft Service from the data
+      // already captured in the application. Skipped for goods-only
+      // applicants (no service type) and silently skipped if the
+      // captured serviceTypeSlug doesn't resolve — better to land in
+      // the dashboard with no services than to fail the whole approval.
+      if (
+        (app.kind === "services" || app.kind === "both") &&
+        app.serviceTypeSlug
+      ) {
+        const serviceType = await tx.serviceType.findUnique({
+          where: { slug: app.serviceTypeSlug },
+        });
+        if (serviceType) {
+          const baseSlug = `${vendor.slug}-${serviceType.slug}`;
+          let serviceSlug = baseSlug;
+          let n = 2;
+          while (
+            await tx.service.findUnique({
+              where: { slug: serviceSlug },
+              select: { id: true },
+            })
+          ) {
+            serviceSlug = `${baseSlug}-${n++}`;
+          }
+          await tx.service.create({
+            data: {
+              vendorId: vendor.id,
+              serviceTypeId: serviceType.id,
+              slug: serviceSlug,
+              // Placeholder — the dropdown label is generic ("End of
+              // life doula"); vendors typically rename to something
+              // specific ("Vigil sitting") in the editor.
+              title: serviceType.name,
+              description: app.serviceDescription ?? "",
+              locationType: app.serviceLocationType,
+              // The application form collects free-form pricing notes,
+              // not a structured fixed/hourly amount. Vendor picks the
+              // real model + price in the editor before publishing.
+              pricingModel: "quote",
+              currency: "USD",
+              status: "draft",
+            },
+          });
+        }
+      }
 
       await tx.vendorApplication.update({
         where: { id: applicationId },

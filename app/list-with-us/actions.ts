@@ -40,6 +40,11 @@ interface SubmitInput {
   serviceDescription?: string;
   pricingNotes?: string;
   lifeStages?: string[];
+  // Services form only — used by approveApplication to auto-create
+  // the vendor's first draft Service from data they already gave us.
+  serviceTypeSlug?: string;
+  inHome?: boolean;
+  virtual?: boolean;
 }
 
 const VALID_LIFE_STAGES = new Set<string>([
@@ -48,6 +53,18 @@ const VALID_LIFE_STAGES = new Set<string>([
   "post-death",
   "throughout",
 ]);
+
+type ServiceLocation = "unknown" | "virtual" | "in_person" | "both";
+
+function deriveLocationType(
+  inHome: boolean | undefined,
+  virtual: boolean | undefined,
+): ServiceLocation {
+  if (inHome && virtual) return "both";
+  if (inHome) return "in_person";
+  if (virtual) return "virtual";
+  return "unknown";
+}
 
 // Returns a unique slug by appending -2, -3, … if the seed collides.
 async function uniqueSlug(seed: string): Promise<string> {
@@ -120,6 +137,22 @@ async function submit(input: SubmitInput): Promise<ApplicationFormState> {
   const serviceDescription = input.serviceDescription?.trim() || null;
   const pricingNotes = input.pricingNotes?.trim() || null;
 
+  // For services applicants, look up the picked service type so we
+  // only persist a slug that resolves at approval time. For goods, no
+  // service type is in play.
+  let serviceTypeSlug: string | null = null;
+  if (input.kind === "services" || input.kind === "both") {
+    const raw = input.serviceTypeSlug?.trim();
+    if (raw) {
+      const match = await prisma.serviceType.findUnique({
+        where: { slug: raw },
+        select: { slug: true },
+      });
+      serviceTypeSlug = match?.slug ?? null;
+    }
+  }
+  const serviceLocationType = deriveLocationType(input.inHome, input.virtual);
+
   const app = await createApplication({
     applicantUserId: session.user.id,
     kind: input.kind,
@@ -133,6 +166,8 @@ async function submit(input: SubmitInput): Promise<ApplicationFormState> {
     serviceDescription,
     pricingNotes,
     lifeStages,
+    serviceTypeSlug,
+    serviceLocationType,
   });
 
   // Demo auto-approve: a single env flag flips the admin queue off so a

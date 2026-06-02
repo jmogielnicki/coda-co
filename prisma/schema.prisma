@@ -243,15 +243,22 @@ model VendorApplication {
   // Specializations the applicant declared. Copied to vendor_profile
   // on approval — same shape, same canonical list.
   specializations     String[]           @default([])
-  // Same passthrough story for zip / service description / pricing
-  // notes / life stages: captured at application time, copied forward
-  // to the new vendor_profile row inside approveApplication.
-  zip                 String?            @map("zip")
-  serviceDescription  String?            @map("service_description")
-  pricingNotes        String?            @map("pricing_notes")
-  lifeStages          String[]           @default([]) @map("life_stages")
-  createdAt           DateTime           @default(now()) @map("created_at")
-  updatedAt           DateTime           @updatedAt @map("updated_at")
+  // Captured from the application form, editable later from the
+  // dashboard. zip is used by the future radius-sort feature;
+  // serviceDescription is a vendor-level "what I do" overview shown
+  // above the per-service list; pricingNotes is free-form pricing
+  // context that supplements each service's structured priceCents.
+  zip                String?              @map("zip")
+  serviceDescription String?              @map("service_description")
+  pricingNotes       String?              @map("pricing_notes")
+  lifeStages         String[]             @default([]) @map("life_stages")
+  // Captured so approval can auto-create the vendor's first draft
+  // Service row from their application data — no need for a second
+  // /dashboard/services/new form on the way in.
+  serviceTypeSlug    String?              @map("service_type_slug")
+  serviceLocationType ServiceLocationType @default(unknown) @map("service_location_type")
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
 
   applicant User  @relation("VendorApplicationsApplicant", fields: [applicantUserId], references: [id], onDelete: Cascade)
   reviewer  User? @relation("VendorApplicationsReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)

@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
-import { normalizeSlug } from "@/lib/api/applications";
 import type { ServiceLocationType, ServicePricingModel } from "@/lib/types";
 
 async function requireVendorId(): Promise<{ id: string; slug: string }> {
@@ -23,34 +22,37 @@ const PRICING_MODELS: ServicePricingModel[] = ["fixed", "hourly", "quote"];
 
 export type ServiceActionResult = { ok: true } | { ok: false; error: string };
 
-export async function createService(formData: FormData) {
+// "+ Add service" creates a blank draft and drops the vendor in the
+// editor — no intermediate form. We need *some* serviceType to satisfy
+// the FK, so we pick the first one alphabetically as a default; the
+// editor lets the vendor change it before publishing.
+export async function createBlankService() {
   const vendor = await requireVendorId();
-  const title = String(formData.get("title") ?? "").trim();
-  const serviceTypeSlug = String(formData.get("serviceType") ?? "");
-  const description = String(formData.get("description") ?? "").trim();
-  if (!title || !serviceTypeSlug) {
-    throw new Error("Title and service type are required");
+
+  const defaultType = await prisma.serviceType.findFirst({
+    orderBy: { name: "asc" },
+    select: { id: true, slug: true },
+  });
+  if (!defaultType) {
+    throw new Error("No service types seeded — run prisma db seed");
   }
 
-  const serviceType = await prisma.serviceType.findUnique({
-    where: { slug: serviceTypeSlug },
-  });
-  if (!serviceType) throw new Error(`Unknown service type: ${serviceTypeSlug}`);
-
-  const baseSlug = normalizeSlug(title) || `service-${Date.now()}`;
+  const baseSlug = `${vendor.slug}-service`;
   let slug = baseSlug;
   let n = 2;
-  while (await prisma.service.findUnique({ where: { slug }, select: { id: true } })) {
+  while (
+    await prisma.service.findUnique({ where: { slug }, select: { id: true } })
+  ) {
     slug = `${baseSlug}-${n++}`;
   }
 
   const service = await prisma.service.create({
     data: {
       vendorId: vendor.id,
-      serviceTypeId: serviceType.id,
+      serviceTypeId: defaultType.id,
       slug,
-      title,
-      description,
+      title: "",
+      description: "",
       status: "draft",
     },
   });

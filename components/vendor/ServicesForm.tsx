@@ -508,6 +508,9 @@ export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption
                       serviceDescription: data.serviceDescription,
                       pricingNotes: data.pricingNotes,
                       lifeStages: data.lifeStages,
+                      serviceTypeSlug: data.serviceType,
+                      inHome: data.inHome,
+                      virtual: data.virtual,
                     });
                     if (result?.error) setSubmitError(result.error);
                   });
