@@ -73,21 +73,19 @@ export default function AboutPage() {
               to compare.
             </p>
             <p>
-              We believe that death literacy matters. We believe that every
-              family deserves access to compassionate, qualified support,
-              regardless of geography or budget. And we believe that the
-              practitioners and makers who have dedicated their work to this
-              space deserve a dignified home to be found.
+              We believe that loss deserves to be met with care. When someone
+              is grieving a loss or preparing for one, finding the right
+              support shouldn&apos;t add to the weight they&apos;re already
+              carrying.
+            </p>
+            <p>
+              CodaCo Market exists to bring everything into one welcoming
+              place: the goods and services that help families navigate loss,
+              make sense of death and dying, and honor the people they love.
             </p>
           </div>
 
-          <p className="font-serif italic text-[26px] font-light text-tr-d text-center mt-6 mb-10 leading-[1.4]">
-            We believe death should be as familiar a part of life as
-            <br />
-            birth, marriage, and ordering pizza.
-          </p>
-
-          <ul className="space-y-3">
+          <ul className="space-y-3 mt-10">
             {principles.map((p) => (
               <li
                 key={p.lead}
