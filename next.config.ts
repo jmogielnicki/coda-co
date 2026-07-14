@@ -8,6 +8,12 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "*.public.blob.vercel-storage.com",
       },
+      {
+        // Book cover images on /books, keyed by ISBN.
+        protocol: "https",
+        hostname: "covers.openlibrary.org",
+        pathname: "/b/isbn/**",
+      },
     ],
   },
   experimental: {

@@ -155,7 +155,7 @@ export async function updateVariantPrice(variantId: string, price: number) {
 export async function setProductStatus(
   productId: string,
   status: "draft" | "published" | "archived",
-): Promise<ImageActionResult> {
+): Promise<ImageActionResult & { pendingReview?: boolean }> {
   const vendorId = await requireVendorId();
   const product = await prisma.product.findFirst({
     where: { id: productId, vendorId },
@@ -168,6 +168,27 @@ export async function setProductStatus(
   // a cover first.
   if (status === "published" && !product.coverImageUrl) {
     return { ok: false, error: "Add a cover photo before publishing." };
+  }
+
+  // First-listing review gate: until a vendor's first listing has been
+  // approved by CodaCo (listingsAutoApprove flips true at that point),
+  // a "publish" request parks the product in `pending_review` instead of
+  // going live. Trusted vendors publish straight through. See
+  // app/admin/listings for the approval side.
+  if (status === "published") {
+    const vendor = await prisma.vendorProfile.findUnique({
+      where: { id: vendorId },
+      select: { listingsAutoApprove: true },
+    });
+    if (!vendor?.listingsAutoApprove) {
+      await prisma.product.update({
+        where: { id: productId },
+        data: { status: "pending_review" },
+      });
+      revalidatePath(`/dashboard/products/${productId}`);
+      revalidatePath("/dashboard/products");
+      return { ok: true, pendingReview: true };
+    }
   }
 
   await prisma.product.update({

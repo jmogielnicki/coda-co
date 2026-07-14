@@ -3,39 +3,11 @@
 import { useState, useTransition } from "react";
 import { submitGoodsApplication } from "@/app/list-with-us/actions";
 import { StepsBar } from "@/components/ui/StepsBar";
-import { LIFE_STAGES } from "@/lib/format/lifeStage";
-import type { LifeStage } from "@/lib/types";
+import { normalizeZip } from "@/lib/geo/zip";
 
 type PlanId = "starter" | "standard" | "pro";
 
-const STEPS = [
-  { label: "Your profile" },
-  { label: "Your listing" },
-  { label: "Photos & pricing" },
-  { label: "Choose a plan" },
-];
-
-const CATEGORIES = [
-  "Urns & vessels",
-  "Ash jewelry",
-  "Burial shrouds",
-  "Planning documents",
-  "Memorial art & prints",
-  "Custom keepsakes",
-  "Gifts & humor",
-  "Other",
-];
-
-const TAGS = [
-  "Handmade",
-  "Ceramic",
-  "Eco-friendly",
-  "Ships anywhere",
-  "Local pickup",
-  "Custom / personalized",
-  "Made to order",
-  "Digital download",
-];
+const STEPS = [{ label: "Your shop" }, { label: "Choose a plan" }];
 
 interface FormData {
   firstName: string;
@@ -47,13 +19,8 @@ interface FormData {
   website: string;
   city: string;
   state: string;
+  zip: string;
   bio: string;
-  productName: string;
-  category: string;
-  description: string;
-  tags: string[];
-  lifeStages: LifeStage[];
-  basePrice: string;
 }
 
 export function GoodsForm() {
@@ -71,49 +38,30 @@ export function GoodsForm() {
     website: "",
     city: "",
     state: "",
+    zip: "",
     bio: "",
-    productName: "",
-    category: CATEGORIES[0],
-    description: "",
-    tags: [],
-    lifeStages: [],
-    basePrice: "",
   });
 
   function field(key: keyof FormData) {
     return {
-      value: data[key] as string,
+      value: data[key],
       onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
         setData((d) => ({ ...d, [key]: e.target.value })),
     };
   }
 
-  function toggleTag(tag: string) {
-    setData((d) => ({
-      ...d,
-      tags: d.tags.includes(tag) ? d.tags.filter((t) => t !== tag) : [...d.tags, tag],
-    }));
-  }
-
-  function toggleLifeStage(stage: LifeStage) {
-    setData((d) => ({
-      ...d,
-      lifeStages: d.lifeStages.includes(stage)
-        ? d.lifeStages.filter((x) => x !== stage)
-        : [...d.lifeStages, stage],
-    }));
-  }
+  const shopName =
+    data.companyName.trim() || `${data.firstName} ${data.lastName}`.trim();
 
   async function handleSubmit() {
     setSubmitError(null);
     startTransition(async () => {
-      const displayName =
-        data.companyName.trim() || `${data.firstName} ${data.lastName}`.trim();
       const result = await submitGoodsApplication({
-        displayName,
+        displayName: shopName,
         bio: data.bio,
         city: data.city,
         state: data.state,
+        zip: data.zip,
         planId: plan,
       });
       // The action redirects on success, so we only land here on a
@@ -133,10 +81,12 @@ export function GoodsForm() {
             {step === 0 && (
               <div className="bg-white rounded-[14px] border border-line p-8">
                 <h2 className="font-serif text-[24px] font-light text-ch mb-1">
-                  Step 1 — Your seller profile
+                  Step 1 — Set up your shop
                 </h2>
                 <p className="text-[13px] text-cl mb-6">
-                  This is how buyers will know and trust you. You can edit this at any time.
+                  This is how buyers will know and trust you. You can edit it any
+                  time, and you&apos;ll add your individual goods — with photos and
+                  prices — right after this.
                 </p>
 
                 <div className="grid grid-cols-2 gap-4 mb-4">
@@ -162,7 +112,7 @@ export function GoodsForm() {
                 <FormField label="Facebook page (optional)">
                   <input className={inputCls} placeholder="facebook.com/yourpage" {...field("facebook")} />
                 </FormField>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-[2fr_1fr_1fr] gap-4">
                   <FormField label="City">
                     <input className={inputCls} placeholder="Portland" {...field("city")} />
                   </FormField>
@@ -173,8 +123,18 @@ export function GoodsForm() {
                       ))}
                     </select>
                   </FormField>
+                  <FormField label="Zip" required>
+                    <input
+                      className={inputCls}
+                      inputMode="numeric"
+                      autoComplete="postal-code"
+                      maxLength={10}
+                      placeholder="97201"
+                      {...field("zip")}
+                    />
+                  </FormField>
                 </div>
-                <FormField label="About you (shown on your profile)">
+                <FormField label="About you (shown on your shop page)">
                   <textarea
                     className={`${inputCls} min-h-[100px] resize-y`}
                     placeholder="Tell buyers about yourself and your work…"
@@ -187,112 +147,7 @@ export function GoodsForm() {
             {step === 1 && (
               <div className="bg-white rounded-[14px] border border-line p-8">
                 <h2 className="font-serif text-[24px] font-light text-ch mb-1">
-                  Step 2 — Your listing
-                </h2>
-                <p className="text-[13px] text-cl mb-6">
-                  Describe your product clearly and warmly.
-                </p>
-
-                <FormField label="Product name">
-                  <input className={inputCls} placeholder="Hand-thrown ceramic urn, sage glaze" {...field("productName")} />
-                </FormField>
-                <FormField label="Category">
-                  <select className={inputCls} {...field("category")}>
-                    {CATEGORIES.map((c) => (
-                      <option key={c}>{c}</option>
-                    ))}
-                  </select>
-                </FormField>
-                <FormField label="Description">
-                  <textarea
-                    className={`${inputCls} min-h-[120px] resize-y`}
-                    placeholder="Describe your product — materials, process, sizing, what makes it special…"
-                    {...field("description")}
-                  />
-                </FormField>
-                <FormField label="Tags (select all that apply)">
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {TAGS.map((tag) => (
-                      <button
-                        key={tag}
-                        type="button"
-                        onClick={() => toggleTag(tag)}
-                        className={[
-                          "px-3 py-1.5 rounded-full text-[12px] border transition-all cursor-pointer",
-                          data.tags.includes(tag)
-                            ? "bg-tr text-white border-tr"
-                            : "bg-white text-cm border-[rgba(44,40,37,.2)] hover:border-tr",
-                        ].join(" ")}
-                      >
-                        {tag}
-                      </button>
-                    ))}
-                  </div>
-                </FormField>
-                <FormField label="Who is this for? (select all that apply)">
-                  <p className="text-[12px] text-cl mb-2 -mt-1">
-                    Helps buyers filter goods by where they are in the journey.
-                  </p>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {LIFE_STAGES.map((s) => (
-                      <button
-                        key={s.value}
-                        type="button"
-                        onClick={() => toggleLifeStage(s.value)}
-                        className={[
-                          "px-3 py-1.5 rounded-full text-[12px] border transition-all cursor-pointer",
-                          data.lifeStages.includes(s.value)
-                            ? "bg-tr text-white border-tr"
-                            : "bg-white text-cm border-line-bold hover:border-tr",
-                        ].join(" ")}
-                      >
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
-                </FormField>
-              </div>
-            )}
-
-            {step === 2 && (
-              <div className="bg-white rounded-[14px] border border-line p-8">
-                <h2 className="font-serif text-[24px] font-light text-ch mb-1">
-                  Step 3 — Photos &amp; pricing
-                </h2>
-                <p className="text-[13px] text-cl mb-6">
-                  Add photos and set your price. You can add variants after approval.
-                </p>
-
-                {/* Upload zone */}
-                <div className="border-2 border-dashed border-[rgba(44,40,37,.2)] rounded-[10px] p-8 text-center mb-6 cursor-pointer hover:border-tr transition-colors">
-                  <svg width="32" height="32" viewBox="0 0 32 32" fill="none" className="mx-auto mb-3">
-                    <path d="M6 22 L6 26 L26 26 L26 22" stroke="#9A9189" strokeWidth="1.5" strokeLinecap="round" />
-                    <path d="M16 6 L16 20" stroke="#9A9189" strokeWidth="1.5" strokeLinecap="round" />
-                    <path d="M10 12 L16 6 L22 12" stroke="#9A9189" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <p className="text-[13px] text-cl">Drop photos here or click to browse</p>
-                  <p className="text-[11px] text-cl mt-1">JPG, PNG up to 10MB each</p>
-                </div>
-
-                <FormField label="Base price ($)">
-                  <input
-                    className={inputCls}
-                    type="number"
-                    placeholder="145"
-                    {...field("basePrice")}
-                  />
-                </FormField>
-
-                <div className="bg-sg-vp rounded-[8px] px-4 py-3 text-[13px] text-cm border border-sg-p">
-                  You can add size variants and pricing tiers after your listing is approved.
-                </div>
-              </div>
-            )}
-
-            {step === 3 && (
-              <div className="bg-white rounded-[14px] border border-line p-8">
-                <h2 className="font-serif text-[24px] font-light text-ch mb-1">
-                  Step 4 — Choose a plan
+                  Step 2 — Choose a plan
                 </h2>
                 <p className="text-[13px] text-cl mb-6">
                   Start free. Upgrade anytime.
@@ -309,16 +164,9 @@ export function GoodsForm() {
                     },
                     {
                       id: "standard" as const,
-                      name: "Standard",
-                      price: "$12/mo",
-                      features: ["Unlimited listings", "Verified badge", "Customer reviews", "5% transaction fee"],
-                      popular: true,
-                    },
-                    {
-                      id: "pro" as const,
-                      name: "Pro",
-                      price: "$29/mo",
-                      features: ["Featured placement", "Analytics", "Priority support", "3% transaction fee"],
+                      name: "Storefront",
+                      price: "$28 one-time set-up",
+                      features: ["Unlimited listings", "Customer reviews", "5% transaction fee"],
                       popular: false,
                     },
                   ].map((p) => {
@@ -355,13 +203,22 @@ export function GoodsForm() {
                     );
                   })}
                 </div>
+
+                <div className="mt-5 bg-sg-vp rounded-[8px] px-4 py-3 text-[13px] text-cm border border-sg-p">
+                  After this, you&apos;ll add your goods from your dashboard. Your
+                  first listing is reviewed by our team before it goes live; every
+                  listing after that publishes instantly.
+                </div>
               </div>
             )}
 
             {/* Navigation */}
             <div className="flex justify-between mt-6">
               <button
-                onClick={() => setStep((s) => s - 1)}
+                onClick={() => {
+                  setSubmitError(null);
+                  setStep((s) => s - 1);
+                }}
                 disabled={step === 0}
                 className="px-6 py-2.5 rounded-full border border-[rgba(44,40,37,.2)] text-[13px] text-ink cursor-pointer hover:border-ch transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
@@ -369,7 +226,17 @@ export function GoodsForm() {
               </button>
               {step < STEPS.length - 1 ? (
                 <button
-                  onClick={() => setStep((s) => s + 1)}
+                  onClick={() => {
+                    // Zip is required and powers geo search — gate Step 1 so
+                    // the seller fixes it here rather than bouncing back from
+                    // the final submit.
+                    if (step === 0 && !normalizeZip(data.zip)) {
+                      setSubmitError("Enter a valid 5-digit zip code so buyers can find you.");
+                      return;
+                    }
+                    setSubmitError(null);
+                    setStep((s) => s + 1);
+                  }}
                   className="px-8 py-2.5 rounded-full bg-tr text-white text-[13px] cursor-pointer hover:bg-tr-d transition-colors"
                 >
                   Continue →
@@ -380,7 +247,7 @@ export function GoodsForm() {
                   disabled={pending}
                   className="px-8 py-2.5 rounded-full bg-tr text-white text-[13px] cursor-pointer hover:bg-tr-d transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {pending ? "Submitting…" : "Submit listing →"}
+                  {pending ? "Creating…" : "Create my shop →"}
                 </button>
               )}
             </div>
@@ -396,24 +263,20 @@ export function GoodsForm() {
           <div className="w-[220px] flex-shrink-0 hidden lg:block">
             <div className="bg-white rounded-[12px] border border-line p-4 sticky top-[88px]">
               <div className="text-[11px] tracking-[.08em] uppercase text-cl mb-3">
-                Listing preview
+                Shop preview
               </div>
-              <div
-                className="h-[90px] rounded-[8px] bg-tr-p flex items-center justify-center mb-3"
-              >
+              <div className="h-[90px] rounded-[8px] bg-tr-p flex items-center justify-center mb-3">
                 <svg width="32" height="38" viewBox="0 0 60 70" fill="none">
                   <path d="M30 8 C18 8 10 20 10 38 C10 52 18 62 30 62 C42 62 50 52 50 38 C50 20 42 8 30 8Z" stroke="#C1634F" strokeWidth="1.8" fill="none" />
                 </svg>
               </div>
               <div className="text-[13px] font-medium text-ch mb-1 truncate">
-                {data.productName || "Your product name"}
+                {shopName || "Your shop name"}
               </div>
-              <div className="text-[11px] text-cl mb-1 truncate">
-                {data.companyName || `${data.firstName} ${data.lastName}`.trim() || "Your shop name"}
+              <div className="text-[11px] text-cl truncate">
+                {[data.city.trim(), data.state.trim()].filter(Boolean).join(", ") ||
+                  "Your location"}
               </div>
-              {data.basePrice && (
-                <div className="text-[14px] font-medium text-tr">${data.basePrice}</div>
-              )}
             </div>
           </div>
         </div>
@@ -422,10 +285,21 @@ export function GoodsForm() {
   );
 }
 
-function FormField({ label, children }: { label: string; children: React.ReactNode }) {
+function FormField({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <div className="mb-4">
-      <label className="block text-[12px] font-medium text-ch mb-1.5">{label}</label>
+      <label className="block text-[12px] font-medium text-ch mb-1.5">
+        {label}
+        {required && <span className="text-tr ml-0.5">*</span>}
+      </label>
       {children}
     </div>
   );

@@ -24,7 +24,7 @@ interface ProductView {
   slug: string;
   title: string;
   description: string;
-  status: "draft" | "published" | "archived" | "unknown";
+  status: "draft" | "pending_review" | "published" | "archived" | "unknown";
   details: Record<string, unknown>;
   variants: Variant[];
   coverImageUrl: string | null;
@@ -45,7 +45,16 @@ function scalarDetailRows(details: Record<string, unknown>): DetailRow[] {
     .map(([key, value]) => ({ key, value }));
 }
 
-export function ProductEditor({ product }: { product: ProductView }) {
+export function ProductEditor({
+  product,
+  // True once this vendor's first listing has been approved — they can
+  // then publish straight to /shop. Until then, "publish" submits the
+  // listing to CodaCo for review.
+  canSelfPublish,
+}: {
+  product: ProductView;
+  canSelfPublish: boolean;
+}) {
   const [title, setTitle] = useState(product.title);
   const [description, setDescription] = useState(product.description);
   const [detailRows, setDetailRows] = useState<DetailRow[]>(() =>
@@ -104,11 +113,26 @@ export function ProductEditor({ product }: { product: ProductView }) {
     });
   }
 
-  function togglePublish() {
-    const next = product.status === "published" ? "draft" : "published";
+  // A "publish" request: for trusted vendors it goes live; for everyone
+  // else the server parks it in pending_review. Either way the page
+  // revalidates and re-renders with the new status, so we just surface
+  // any error here.
+  function requestGoLive() {
     setStatusError(null);
     startTransition(async () => {
-      const result = await setProductStatus(product.id, next);
+      const result = await setProductStatus(product.id, "published");
+      if (result.ok) {
+        setSavedAt(new Date().toLocaleTimeString());
+      } else {
+        setStatusError(result.error);
+      }
+    });
+  }
+
+  function returnToDraft() {
+    setStatusError(null);
+    startTransition(async () => {
+      const result = await setProductStatus(product.id, "draft");
       if (result.ok) {
         setSavedAt(new Date().toLocaleTimeString());
       } else {
@@ -134,7 +158,26 @@ export function ProductEditor({ product }: { product: ProductView }) {
   }
 
   const isPublished = product.status === "published";
-  const canPublish = isPublished || coverUrl !== null;
+  const isPending = product.status === "pending_review";
+  const hasCover = coverUrl !== null;
+  // The go-live action (publish or submit-for-review) needs a cover photo.
+  const goLiveLabel = canSelfPublish ? "Publish" : "Submit for review";
+
+  const statusMeta = isPublished
+    ? { label: "Published", cls: "bg-sg-p text-sg-d" }
+    : isPending
+      ? { label: "In review", cls: "bg-tr-p text-tr-d" }
+      : { label: "Draft", cls: "bg-pl2 text-cm" };
+
+  const statusBlurb = isPublished
+    ? "Live on /shop. Buyers can see this product."
+    : isPending
+      ? "Submitted to CodaCo for review. We'll email you when it's approved — usually a day or two. Withdraw it if you need to make changes."
+      : !hasCover
+        ? `Add a cover photo below before you can ${canSelfPublish ? "publish" : "submit for review"}.`
+        : canSelfPublish
+          ? "Draft only. Hidden from /shop until you publish."
+          : "Draft only. Submit it for review — CodaCo approves your first listing before it goes live. After that, your listings publish instantly.";
 
   return (
     <div className="space-y-6">
@@ -144,34 +187,43 @@ export function ProductEditor({ product }: { product: ProductView }) {
             <p className="text-[11px] tracking-[.08em] uppercase text-cl mb-0.5">Status</p>
             <span
               className={[
-                "inline-block text-[11px] font-medium px-2 py-0.5 rounded-full capitalize",
-                isPublished ? "bg-sg-p text-sg-d" : "bg-tr-p text-tr-d",
+                "inline-block text-[11px] font-medium px-2 py-0.5 rounded-full",
+                statusMeta.cls,
               ].join(" ")}
             >
-              {product.status}
+              {statusMeta.label}
             </span>
-            <p className="text-[12px] text-cl mt-1.5">
-              {isPublished
-                ? "Live on /shop. Buyers can see this product."
-                : canPublish
-                  ? "Draft only. Hidden from /shop until you publish."
-                  : "Add a cover photo below before you can publish."}
-            </p>
+            <p className="text-[12px] text-cl mt-1.5">{statusBlurb}</p>
           </div>
-          <button
-            type="button"
-            disabled={pending || !canPublish}
-            onClick={togglePublish}
-            className={[
-              "shrink-0 px-4 py-2 rounded-full text-[13px] font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed",
-              isPublished
-                ? "bg-pl2 text-cm hover:bg-pl"
-                : "bg-tr text-white hover:bg-tr-d",
-            ].join(" ")}
-            title={!canPublish ? "Add a cover photo first" : undefined}
-          >
-            {isPublished ? "Unpublish" : "Publish"}
-          </button>
+          {isPublished ? (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={returnToDraft}
+              className="shrink-0 px-4 py-2 rounded-full text-[13px] font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed bg-pl2 text-cm hover:bg-pl"
+            >
+              Unpublish
+            </button>
+          ) : isPending ? (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={returnToDraft}
+              className="shrink-0 px-4 py-2 rounded-full text-[13px] font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed bg-pl2 text-cm hover:bg-pl"
+            >
+              Withdraw
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={pending || !hasCover}
+              onClick={requestGoLive}
+              className="shrink-0 px-4 py-2 rounded-full text-[13px] font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed bg-tr text-white hover:bg-tr-d"
+              title={!hasCover ? "Add a cover photo first" : undefined}
+            >
+              {goLiveLabel}
+            </button>
+          )}
         </div>
         {statusError && (
           <p className="text-[12px] text-tr-d bg-tr-p border border-tr-l rounded px-2.5 py-1.5 mb-3">

@@ -14,13 +14,21 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   const { vendor } = await requireVendor();
 
-  const [productCount, draftProductCount, serviceCount, draftServiceCount] =
-    await Promise.all([
-      prisma.product.count({ where: { vendorId: vendor.id, status: "published" } }),
-      prisma.product.count({ where: { vendorId: vendor.id, status: "draft" } }),
-      prisma.service.count({ where: { vendorId: vendor.id, status: "published" } }),
-      prisma.service.count({ where: { vendorId: vendor.id, status: "draft" } }),
-    ]);
+  const [
+    productCount,
+    draftProductCount,
+    serviceCount,
+    draftServiceCount,
+    inquiryCount,
+    unreadInquiryCount,
+  ] = await Promise.all([
+    prisma.product.count({ where: { vendorId: vendor.id, status: "published" } }),
+    prisma.product.count({ where: { vendorId: vendor.id, status: "draft" } }),
+    prisma.service.count({ where: { vendorId: vendor.id, status: "published" } }),
+    prisma.service.count({ where: { vendorId: vendor.id, status: "draft" } }),
+    prisma.vendorInquiry.count({ where: { vendorId: vendor.id } }),
+    prisma.vendorInquiry.count({ where: { vendorId: vendor.id, readAt: null } }),
+  ]);
 
   const subscription = vendor.subscriptions[0];
 
@@ -85,6 +93,18 @@ export default async function DashboardPage() {
               body={`Edit your photo and bio — buyers see this at /services/${vendor.slug}.`}
               href="/dashboard/profile"
               cta="Edit profile →"
+            />
+            <DashCard
+              title={unreadInquiryCount > 0 ? `Messages (${unreadInquiryCount} new)` : "Messages"}
+              body={
+                inquiryCount === 0
+                  ? "No messages yet — clients can contact you from your profile."
+                  : unreadInquiryCount > 0
+                    ? `${unreadInquiryCount} unread of ${inquiryCount} total inquiries.`
+                    : `${inquiryCount} ${inquiryCount === 1 ? "inquiry" : "inquiries"}.`
+              }
+              href="/dashboard/messages"
+              cta="View messages →"
             />
           </div>
         </Container>

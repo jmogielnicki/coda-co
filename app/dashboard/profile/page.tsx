@@ -55,6 +55,7 @@ export default async function VendorProfilePage() {
             currentWebsiteUrl={vendor.websiteUrl}
             currentInstagramHandle={vendor.instagramHandle}
             currentServiceRadius={vendor.serviceRadius}
+            currentServiceRadiusMi={vendor.serviceRadiusMi}
             currentServiceFormats={vendor.serviceFormats}
             currentServiceDays={vendor.serviceDays}
             currentServiceHours={vendor.serviceHours}

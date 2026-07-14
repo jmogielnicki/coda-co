@@ -12,6 +12,7 @@ import { vendors } from "../lib/data/vendors";
 import { services } from "../lib/data/services";
 import { reviews } from "../lib/data/reviews";
 import { vendorReviews } from "../lib/data/vendor-reviews";
+import { inquiries } from "../lib/data/inquiries";
 import { normalizeSslmode } from "../lib/connectionString";
 
 config({ path: ".env" });
@@ -44,10 +45,12 @@ async function clear() {
   // work but being explicit makes the intent obvious.
   await prisma.productReview.deleteMany();
   await prisma.vendorReview.deleteMany();
+  await prisma.vendorInquiry.deleteMany();
   await prisma.productVariant.deleteMany();
   await prisma.product.deleteMany();
   await prisma.service.deleteMany();
   await prisma.subscription.deleteMany();
+  await prisma.vendorPayment.deleteMany();
   await prisma.vendorApplication.deleteMany();
   await prisma.vendorProfile.deleteMany();
   await prisma.session.deleteMany();
@@ -104,7 +107,6 @@ async function main() {
         verified: v.verified,
         initials: v.initials,
         credentials: v.credentials,
-        distanceMi: v.distanceMi,
         lifeStages: v.lifeStages,
         memberSince: v.memberSince ? new Date(v.memberSince) : null,
         photoSrc: v.photoSrc,
@@ -116,6 +118,7 @@ async function main() {
         serviceDays: v.serviceDays,
         serviceHours: v.serviceHours,
         zip: v.zip,
+        serviceRadiusMi: v.serviceRadiusMi,
         serviceDescription: v.serviceDescription,
         pricingNotes: v.pricingNotes,
         specializations: v.specializations,
@@ -224,11 +227,25 @@ async function main() {
     });
   }
 
+  for (const q of inquiries) {
+    const vendor = vendorBySlug.get(q.vendorId);
+    if (!vendor) throw new Error(`No vendor for inquiry (${q.vendorId})`);
+    await prisma.vendorInquiry.create({
+      data: {
+        vendorId: vendor.id,
+        clientName: q.clientName,
+        clientEmail: q.clientEmail,
+        message: q.message,
+        readAt: q.read ? new Date() : null,
+      },
+    });
+  }
+
   console.log(
     `Mock data: ${vendorBySlug.size + 1} users (1 admin + ${vendorBySlug.size} vendors), ` +
       `${productBySlug.size} products, ` +
       `${services.length} services, ${reviews.length} product reviews, ` +
-      `${vendorReviews.length} vendor reviews.`,
+      `${vendorReviews.length} vendor reviews, ${inquiries.length} inquiries.`,
   );
   console.log(
     `Sign in with admin: ${ADMIN_EMAIL} / ${DEV_PASSWORD}`,

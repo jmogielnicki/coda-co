@@ -11,11 +11,27 @@ export const metadata: Metadata = {
     "Guidance for people navigating death and dying for the first time.",
 };
 
-const sections = [
+interface StartSection {
+  eyebrow: string;
+  heading: string;
+  body: string;
+  bodyLink?: { label: string; href: string };
+  bodyAfter?: string;
+  links: { label: string; href: string }[];
+  bg: string;
+  accent: string;
+}
+
+const sections: StartSection[] = [
   {
     eyebrow: "First 24–48 hours",
     heading: "If someone just died",
-    body: "You don't have to do anything immediately except be present. If the death was expected and at home, you have time. If it was sudden or unattended, contact emergency services. There is no rush to call a funeral home in the first hour.\n\nWhen you are ready, here are some services that may be helpful:",
+    body: "You don't have to do anything immediately except be present. If the death was expected and at home, you have time. If it was sudden or unattended, contact emergency services. There is no rush to call a funeral home in the first hour.",
+    bodyLink: {
+      label: "What to do when someone has died →",
+      href: "/guidance",
+    },
+    bodyAfter: "When you are ready, here are some services that may be helpful:",
     links: [
       { label: "Find a death doula near me →", href: "/services?type=doula" },
       { label: "Find a home funeral guide →", href: "/services?type=home-funeral" },
@@ -136,6 +152,25 @@ export default function WhereToStartPage() {
                 >
                   {section.body}
                 </p>
+                {section.bodyLink && (
+                  <p className="mb-5">
+                    <Link
+                      href={section.bodyLink.href}
+                      className={`text-[13px] ${section.accent} border-b border-dotted border-current pb-px hover:opacity-80 transition-opacity no-underline`}
+                    >
+                      {section.bodyLink.label}
+                    </Link>
+                  </p>
+                )}
+                {section.bodyAfter && (
+                  <p
+                    className={`text-[14px] leading-[1.8] mb-5 ${
+                      section.bg === "bg-tr-vp" ? "text-ink" : "text-cm"
+                    }`}
+                  >
+                    {section.bodyAfter}
+                  </p>
+                )}
                 <div className="flex flex-wrap gap-3">
                   {section.links.map((l) => (
                     <Link

@@ -9,7 +9,6 @@ import { FilterDivider } from "@/components/ui/filters/FilterDivider";
 import type { ServiceTypeOption } from "@/lib/api/serviceTypes";
 import { SPECIALIZATIONS } from "@/lib/data/specializations";
 
-const DISTANCES = ["5 mi", "15 mi", "30 mi", "50 mi", "Virtual only"];
 const RATINGS = [
   { value: "", label: "Any" },
   { value: "3", label: "3+" },
@@ -27,7 +26,6 @@ export function ServiceFilters({ serviceTypes }: { serviceTypes: ServiceTypeOpti
   const { get, setParam, toggleBool, clearAll } = useFilterParams();
 
   const activeType = get("type");
-  const activeDist = get("distance");
   const rawSpecs = get("specializations");
   const activeSpecs = rawSpecs ? rawSpecs.split(",").map((s) => s.trim()).filter(Boolean) : [];
 
@@ -60,21 +58,6 @@ export function ServiceFilters({ serviceTypes }: { serviceTypes: ServiceTypeOpti
               label={t.name}
               active={activeType === t.slug}
               onClick={() => setParam("type", activeType === t.slug ? "" : t.slug)}
-            />
-          ))}
-        </FilterPillGroup>
-      </FilterSection>
-
-      <FilterDivider />
-
-      <FilterSection heading="Distance">
-        <FilterPillGroup>
-          {DISTANCES.map((d) => (
-            <FilterPill
-              key={d}
-              label={d}
-              active={activeDist === d}
-              onClick={() => setParam("distance", activeDist === d ? "" : d)}
             />
           ))}
         </FilterPillGroup>

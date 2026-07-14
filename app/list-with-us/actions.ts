@@ -9,8 +9,12 @@ import {
   normalizeSlug,
 } from "@/lib/api/applications";
 import { isValidSpecialization } from "@/lib/data/specializations";
+import { normalizeZip, parseRadiusLabel } from "@/lib/geo/zip";
 import { prisma } from "@/lib/db";
-import { sendApplicationSubmittedEmail } from "@/lib/email/templates";
+import {
+  sendApplicationSubmittedEmail,
+  sendListYourGoodsEmail,
+} from "@/lib/email/templates";
 import { log } from "@/lib/log";
 
 export interface ApplicationFormState {
@@ -37,6 +41,9 @@ interface SubmitInput {
   // the canonical list — anything unrecognized is dropped silently.
   specializations?: string[];
   zip?: string;
+  // Services form only — the chosen service-radius pill ("15 mi",
+  // "Virtual only"). Parsed to a numeric mileage server-side.
+  radius?: string;
   serviceDescription?: string;
   pricingNotes?: string;
   lifeStages?: string[];
@@ -92,6 +99,12 @@ async function submit(input: SubmitInput): Promise<ApplicationFormState> {
   if (!input.city.trim() || !input.state.trim()) {
     return { error: "Add a city and state." };
   }
+  // Zip is required for every applicant — it drives the geographic
+  // search filter (zip + radius for services; location for goods).
+  const normalizedZip = normalizeZip(input.zip);
+  if (!normalizedZip) {
+    return { error: "Add a valid 5-digit zip code so buyers can find you." };
+  }
   if (!input.bio.trim()) {
     return { error: "Tell clients a bit about you (the 'About you' field)." };
   }
@@ -133,7 +146,8 @@ async function submit(input: SubmitInput): Promise<ApplicationFormState> {
     new Set((input.lifeStages ?? []).filter((s) => VALID_LIFE_STAGES.has(s))),
   );
 
-  const zip = input.zip?.trim() || null;
+  const zip = normalizedZip ?? (input.zip?.trim() || null);
+  const serviceRadiusMi = parseRadiusLabel(input.radius);
   const serviceDescription = input.serviceDescription?.trim() || null;
   const pricingNotes = input.pricingNotes?.trim() || null;
 
@@ -163,12 +177,35 @@ async function submit(input: SubmitInput): Promise<ApplicationFormState> {
     planId: input.planId,
     specializations,
     zip,
+    serviceRadiusMi,
     serviceDescription,
     pricingNotes,
     lifeStages,
     serviceTypeSlug,
     serviceLocationType,
   });
+
+  // Pure goods shops are self-serve: we don't review the shop page itself,
+  // only the vendor's first product listing (see the per-listing review
+  // gate in app/admin/listings + setProductStatus). Auto-approve silently
+  // so the maker lands straight in their dashboard, then send the
+  // "list your goods" welcome/nudge instead of the generic approval email.
+  // Services / both still go through manual review below.
+  if (input.kind === "goods") {
+    await autoApproveAsAdmin(app.id, { notify: false });
+    const nudge = await sendListYourGoodsEmail({
+      toEmail: session.user.email!,
+      toName: session.user.name ?? null,
+      displayName: input.displayName.trim(),
+    });
+    if (!nudge.ok) {
+      log.warn("application.list_goods_email_failed", {
+        applicationId: app.id,
+        err: nudge.error,
+      });
+    }
+    redirect("/dashboard");
+  }
 
   // Demo auto-approve: a single env flag flips the admin queue off so a
   // prospect can sign up and have a working dashboard in under a minute.

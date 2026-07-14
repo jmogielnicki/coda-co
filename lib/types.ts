@@ -100,6 +100,11 @@ export interface Vendor {
   websiteUrl?: string;
   instagramHandle?: string;
   serviceRadius?: string;
+  // Numeric service radius in miles, driving the geographic search
+  // filter (paired with `zip`). Undefined for vendors with no
+  // geographic service area. `distanceMi` is the *derived* distance
+  // from a given searcher — computed per-query, never persisted.
+  serviceRadiusMi?: number;
   serviceFormats?: string;
   serviceDays?: string;
   serviceHours?: string;
@@ -200,7 +205,7 @@ export interface Plan {
   id: "starter" | "standard" | "pro";
   name: string;
   price: number | null;
-  period: "month" | null;
+  period: "month" | "year" | null;
   // Discounted annual price, when offered alongside the monthly tier.
   priceYearly?: number | null;
   // Free-trial label shown in place of the price (e.g. "Free for 3 months").
@@ -210,6 +215,15 @@ export interface Plan {
   // Empty string hides the line on the plan card.
   transactionFee: string;
   targetType: "goods" | "services" | "both";
+  // How the plan is billed — drives which Stripe object the checkout
+  // creates (a PaymentIntent for `one_time`, a Subscription for
+  // `recurring`, nothing for `free`). The display `price`/`period`
+  // above stay for the marketing cards; billing logic reads these.
+  billingType: "free" | "recurring" | "one_time";
+  // The charge amount in cents, present for plans that cost money.
+  // `one_time` plans charge this once at signup (the Storefront set-up
+  // fee); `recurring` plans charge it per `period`. Null/omitted for free.
+  amountCents?: number | null;
 }
 
 export interface CartItem {

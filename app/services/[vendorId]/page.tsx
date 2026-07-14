@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
+import { ContactVendorForm } from "@/components/services/ContactVendorForm";
 import { Container } from "@/components/ui/Container";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Stars } from "@/components/ui/Stars";
@@ -136,7 +137,9 @@ export default async function VendorProfilePage({ params }: PageProps) {
                 className="text-[13px]"
               />
               <div className="flex flex-wrap gap-3 items-center mt-5">
-                <button className="btn-primary btn-md">Contact ↗</button>
+                <a href="#contact" className="btn-primary btn-md no-underline">
+                  Contact ↗
+                </a>
                 <button className="btn-ghost btn-md">Save</button>
               </div>
             </div>
@@ -271,20 +274,22 @@ export default async function VendorProfilePage({ params }: PageProps) {
       />
 
       {/* Contact CTA */}
-      <section className="bg-white px-10 pt-4 pb-16">
+      <section id="contact" className="bg-white px-10 pt-4 pb-16 scroll-mt-24">
         <Container width="narrow">
-          <div className="bg-tr-vp border border-tr-p rounded-[14px] p-8 text-center">
-            <h2 className="font-serif text-[26px] font-light text-ch mb-3">
-              Reach out to {vendor.name}
-            </h2>
-            <p className="text-[13px] text-ink max-w-[420px] mx-auto mb-6 leading-[1.75]">
-              Send a message and the team will respond within 1–2 business days. Initial calls
-              are free.
-            </p>
-            <div className="flex gap-3 justify-center flex-wrap mb-2">
-              <button className="btn-primary btn-md">Send a message →</button>
-              <Link href="/services" className="btn-ghost btn-md no-underline">
-                Browse other providers
+          <div className="bg-tr-vp border border-tr-p rounded-[14px] p-8">
+            <div className="text-center">
+              <h2 className="font-serif text-[26px] font-light text-ch mb-3">
+                Reach out to {vendor.name}
+              </h2>
+              <p className="text-[13px] text-ink max-w-[420px] mx-auto mb-6 leading-[1.75]">
+                Send a message and {vendor.name} will reply straight to your email. Initial
+                calls are free.
+              </p>
+            </div>
+            <ContactVendorForm vendorSlug={vendor.id} vendorName={vendor.name} />
+            <div className="text-center mt-4">
+              <Link href="/services" className="text-[13px] text-tr no-underline hover:underline">
+                Browse other providers →
               </Link>
             </div>
             {(vendor.websiteUrl || instagramLabel) && (

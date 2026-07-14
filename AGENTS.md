@@ -230,6 +230,26 @@ filter component.
 - `lib/format/date.ts` — `formatMonthYear(iso)` (renders `"2025-03-12"` as `"March 2025"`; pass-through for non-ISO inputs).
 - `lib/format/lifeStage.ts` — `LIFE_STAGES` (label/value pairs), `lifeStageLabel(stage)`, `parseLifeStageParam(raw)` (parses a comma-separated URL param into a typed array), `matchesLifeStage(entryStages, filter)` accepts a single stage or a list (OR semantics), with `throughout`-tagged entries matching any specific-stage filter.
 
+### Geographic search filter (`lib/geo/`)
+
+The `/services` location filter uses **vendor-service-area** semantics: a
+vendor surfaces for a searcher whose zip falls within the vendor's
+`zip` + `serviceRadiusMi` circle. Driven by `getVendors({ near })` — the
+`near` URL param carries the searcher's zip (set by the `LocationSearch`
+client component). Vendors with no zip *or* no `serviceRadiusMi`
+(virtual / nationwide / incomplete) are **not** geo-bound and always
+surface; `distanceMi` is computed per-query and attached for display
+(never persisted — the mock data no longer seeds it). Distances come
+from the bundled `zipcodes` US zip-centroid dataset.
+
+- `lib/geo/zip.ts` — **pure, client-safe.** `normalizeZip(raw)` (pulls a
+  5-digit zip out of bare / zip+4 / free-text input), `parseRadiusLabel(label)`
+  ("15 mi" → `15`, "Virtual only" → `null`). Import this from client
+  components — **never** `lib/geo` (it bundles the ~2MB dataset).
+- `lib/geo/index.ts` — **server-only.** Re-exports the pure helpers plus
+  `isKnownZip(zip)` and `milesBetweenZips(a, b)` (zip-centroid distance in
+  miles, `null` if either zip is unknown).
+
 ### `@layer components` classes (`app/globals.css`)
 
 Use these directly in JSX when a primitive isn't a fit (e.g., one-off

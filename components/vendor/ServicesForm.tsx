@@ -4,7 +4,9 @@ import { useState, useTransition } from "react";
 import { submitServicesApplication } from "@/app/list-with-us/actions";
 import { StepsBar } from "@/components/ui/StepsBar";
 import type { ServiceTypeOption } from "@/lib/api/serviceTypes";
+import { planPriceLabel, servicePlanIncludes, servicePlans } from "@/lib/data/plans";
 import { SPECIALIZATIONS } from "@/lib/data/specializations";
+import { normalizeZip } from "@/lib/geo/zip";
 import { LIFE_STAGES } from "@/lib/format/lifeStage";
 import type { LifeStage } from "@/lib/types";
 
@@ -183,7 +185,7 @@ export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption
                       ))}
                     </select>
                   </FormField>
-                  <FormField label="Zip">
+                  <FormField label="Zip" required>
                     <input
                       className={inputCls}
                       inputMode="numeric"
@@ -401,43 +403,18 @@ export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption
                   Step 4 — Choose a plan
                 </h2>
                 <p className="text-[13px] text-cl mb-6">Start free. Upgrade anytime.</p>
+                <div className="border border-line-strong rounded-[10px] bg-pl2 p-4 mb-4">
+                  <div className="text-[12px] font-medium text-ch mb-2">All plans include</div>
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+                    {servicePlanIncludes.map((f) => (
+                      <li key={f} className="text-[12px] text-cm flex items-center gap-1.5">
+                        <span className="text-sg">✓</span> {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
                 <div className="space-y-3">
-                  {[
-                    {
-                      id: "starter" as const,
-                      name: "Starter",
-                      price: "Free for 3 mo",
-                      features: [
-                        "Service profile",
-                        "CodaCo messaging",
-                        "Direct client payments through CodaCo",
-                      ],
-                      popular: false,
-                    },
-                    {
-                      id: "standard" as const,
-                      name: "Standard",
-                      price: "$14/mo or $150/yr",
-                      features: [
-                        "Everything in Starter",
-                        "Verified badge (pending CodaCo verification)",
-                        "Client reviews",
-                      ],
-                      popular: true,
-                    },
-                    {
-                      id: "pro" as const,
-                      name: "Pro",
-                      price: "$29/mo or $320/yr",
-                      features: [
-                        "Everything in Standard",
-                        "Unlimited service profiles",
-                        "Priority support",
-                        "Direct scheduling through CodaCo",
-                      ],
-                      popular: false,
-                    },
-                  ].map((p) => {
+                  {servicePlans.map((p) => {
                     const selected = plan === p.id;
                     return (
                       <button
@@ -451,7 +428,7 @@ export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption
                       >
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-[15px] font-medium text-ch">{p.name}</span>
-                          <span className="text-[15px] font-medium text-sg-d">{p.price}</span>
+                          <span className="text-[15px] font-medium text-sg-d">{planPriceLabel(p)}</span>
                           {p.popular && (
                             <span className="text-[10px] bg-sg text-white px-2 py-0.5 rounded-full">
                               Most popular
@@ -476,7 +453,10 @@ export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption
           {/* Navigation */}
           <div className="flex justify-between mt-6">
             <button
-              onClick={() => setStep((s) => s - 1)}
+              onClick={() => {
+                setSubmitError(null);
+                setStep((s) => s - 1);
+              }}
               disabled={step === 0}
               className="px-6 py-2.5 rounded-full border border-[rgba(44,40,37,.2)] text-[13px] text-cm cursor-pointer hover:border-ch transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
@@ -484,7 +464,17 @@ export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption
             </button>
             {step < STEPS.length - 1 ? (
               <button
-                onClick={() => setStep((s) => s + 1)}
+                onClick={() => {
+                  // Zip is required and powers geo search — gate Step 1 so
+                  // the applicant fixes it here rather than bouncing back
+                  // from the final submit.
+                  if (step === 0 && !normalizeZip(data.zip)) {
+                    setSubmitError("Enter a valid 5-digit zip code so clients can find you.");
+                    return;
+                  }
+                  setSubmitError(null);
+                  setStep((s) => s + 1);
+                }}
                 className="px-8 py-2.5 rounded-full bg-sg text-white text-[13px] cursor-pointer hover:bg-sg-d transition-colors"
               >
                 Continue →
@@ -505,6 +495,7 @@ export function ServicesForm({ serviceTypes }: { serviceTypes: ServiceTypeOption
                       planId: plan,
                       specializations: data.specializations,
                       zip: data.zip,
+                      radius: data.radius,
                       serviceDescription: data.serviceDescription,
                       pricingNotes: data.pricingNotes,
                       lifeStages: data.lifeStages,

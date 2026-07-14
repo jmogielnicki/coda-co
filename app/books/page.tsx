@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
+import { BooksGrid } from "@/components/BooksGrid";
 import { Container } from "@/components/ui/Container";
 
 export const metadata: Metadata = {
@@ -11,6 +12,8 @@ const books = [
   {
     title: "Briefly Perfectly Human",
     author: "Alua Arthur",
+    isbn: "9780063240063",
+    localCover: true,
     bg: "#8B4F42",
     desc: "Death doula Alua Arthur explores what it means to be alive through honest, moving encounters with the dying.",
     overlay: (
@@ -23,20 +26,10 @@ const books = [
     ),
   },
   {
-    title: "Smoke Gets in Your Eyes",
-    author: "Caitlin Doughty",
-    bg: "#3D5C47",
-    desc: "A mortician's dark, funny memoir challenging how Americans hide from death — and why we shouldn't.",
-    overlay: (
-      <svg width="100%" height="100%" viewBox="0 0 160 170">
-        <circle cx="80" cy="85" r="60" stroke="#fff" strokeWidth=".7" fill="none"/>
-        <circle cx="80" cy="85" r="35" stroke="#fff" strokeWidth=".5" fill="none"/>
-      </svg>
-    ),
-  },
-  {
     title: "Being Mortal",
     author: "Atul Gawande",
+    isbn: "9781250076229",
+    coverIsbn: "9781250081247",
     bg: "#4A4030",
     desc: "A physician's exploration of how medicine can better serve people at the end of life on their own terms.",
     overlay: (
@@ -49,6 +42,7 @@ const books = [
   {
     title: "When Breath Becomes Air",
     author: "Paul Kalanithi",
+    isbn: "9780812988406",
     bg: "#2C3A5A",
     desc: "A young neurosurgeon's luminous memoir, written as he faced his own terminal diagnosis.",
     overlay: (
@@ -59,8 +53,23 @@ const books = [
     ),
   },
   {
+    title: "Smoke Gets in Your Eyes",
+    author: "Caitlin Doughty",
+    isbn: "9780393351903",
+    bg: "#3D5C47",
+    desc: "A mortician's dark, funny memoir challenging how Americans hide from death — and why we shouldn't.",
+    overlay: (
+      <svg width="100%" height="100%" viewBox="0 0 160 170">
+        <circle cx="80" cy="85" r="60" stroke="#fff" strokeWidth=".7" fill="none"/>
+        <circle cx="80" cy="85" r="35" stroke="#fff" strokeWidth=".5" fill="none"/>
+      </svg>
+    ),
+  },
+  {
     title: "The Party of Your Life",
     author: "Erika Dillman",
+    isbn: "9781595800626",
+    localCover: true,
     bg: "#6B4561",
     desc: "A practical, surprisingly buoyant workbook for designing the funeral you actually want — and sparing the people you love a guessing game.",
     overlay: (
@@ -75,6 +84,8 @@ const books = [
   {
     title: "A Beginner's Guide to the End",
     author: "BJ Miller & Shoshana Berger",
+    isbn: "9781501157219",
+    localCover: true,
     bg: "#4A5A5C",
     desc: "A palliative-care physician and a writer team up on a thorough, compassionate field manual for everything dying asks of us.",
     overlay: (
@@ -94,6 +105,8 @@ const books = [
   {
     title: "Never Can Say Goodbye",
     author: "Darnell Lamont Walker",
+    isbn: "9780063421837",
+    localCover: true,
     bg: "#5C3A38",
     desc: "A working death doula's memoir of holding space at the bedside, and what the dying have to teach the rest of us about a peaceful end.",
     overlay: (
@@ -107,6 +120,7 @@ const books = [
   {
     title: "With the End in Mind",
     author: "Kathryn Mannix",
+    isbn: "9780316504478",
     bg: "#3F4D4A",
     desc: "A palliative-care doctor's gentle, story-rich case that a good death is still possible — and often nearer than we fear.",
     overlay: (
@@ -134,40 +148,11 @@ export default function BooksPage() {
               Books on death &amp; dying
             </h1>
             <p className="text-[13px] text-cl">
-              Honest, beautifully written guides for the journey
+              Honest, beautifully written guides for the journey. Handpicked for
+              you by the CodaCo team.
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {books.map((b) => (
-              <div
-                key={b.title}
-                className="bg-white border border-line rounded-[10px] overflow-hidden cursor-pointer transition-transform duration-200 hover:-translate-y-0.5"
-              >
-                <div
-                  className="h-[168px] flex items-end p-3.5 relative overflow-hidden"
-                  style={{ background: b.bg }}
-                >
-                  <div className="absolute inset-0 opacity-[.13]">{b.overlay}</div>
-                  <div className="relative z-10">
-                    <div className="font-serif text-[17px] font-normal text-white/95 leading-[1.2]">
-                      {b.title}
-                    </div>
-                    <div className="text-[11px] text-white/70 mt-1 italic">
-                      {b.author}
-                    </div>
-                  </div>
-                </div>
-                <div className="px-4 py-3">
-                  <div className="text-[12px] text-cm leading-[1.5] mb-1.5">
-                    {b.desc}
-                  </div>
-                  <span className="text-[12px] text-tr border-b border-dotted border-tr-l cursor-pointer">
-                    Find this book →
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <BooksGrid books={books} />
         </Container>
       </section>
     </>

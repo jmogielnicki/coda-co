@@ -60,6 +60,7 @@ export default async function VendorProductEditorPage({ params }: PageProps) {
           </div>
 
           <ProductEditor
+            canSelfPublish={vendor.listingsAutoApprove}
             product={{
               id: product.id,
               slug: product.slug,

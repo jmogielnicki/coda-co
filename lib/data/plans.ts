@@ -15,40 +15,34 @@ export const goodsPlans: Plan[] = [
     popular: false,
     transactionFee: "5% per sale",
     targetType: "goods",
+    billingType: "free",
   },
   {
     id: "standard",
-    name: "Standard",
-    price: 12,
-    period: "month",
+    name: "Storefront",
+    // One-time set-up fee, not a recurring subscription — `period: null`
+    // renders the price as a bare "$28" with no "/month" suffix.
+    price: 28,
+    period: null,
     features: [
+      "One-time set-up fee — no monthly cost",
       "Unlimited listings",
-      "Verified seller badge",
       "Customer reviews",
-      "Priority in search results",
-      "Sales analytics dashboard",
-    ],
-    popular: true,
-    transactionFee: "5% per sale",
-    targetType: "goods",
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    price: 29,
-    period: "month",
-    features: [
-      "Everything in Standard",
-      "Featured placement in categories",
-      "Reduced 3% transaction fee",
-      "Advanced analytics",
-      "Priority seller support",
-      "Early access to new features",
     ],
     popular: false,
-    transactionFee: "3% per sale",
+    transactionFee: "5% per sale",
     targetType: "goods",
+    billingType: "one_time",
+    amountCents: 2800,
   },
+];
+
+export const servicePlanIncludes = [
+  "Service profile",
+  "Verified badge (pending CodaCo approval)",
+  "CodaCo messaging",
+  "Direct client payments through CodaCo",
+  "Client reviews",
 ];
 
 export const servicePlans: Plan[] = [
@@ -59,43 +53,45 @@ export const servicePlans: Plan[] = [
     period: null,
     trial: "Free for 3 months",
     features: [
-      "Service profile",
-      "CodaCo messaging",
-      "Direct client payments through CodaCo",
+      "Risk free trial with all of the features",
+      "Then sign up for a monthly or annual plan",
     ],
     popular: false,
     transactionFee: "",
     targetType: "services",
+    billingType: "free",
   },
   {
     id: "standard",
-    name: "Standard",
-    price: 14,
+    name: "Monthly",
+    price: 15,
     period: "month",
-    priceYearly: 150,
-    features: [
-      "Everything in Starter",
-      "Verified badge (pending CodaCo verification)",
-      "Client reviews",
-    ],
+    features: ["Cancel any time"],
     popular: true,
     transactionFee: "",
     targetType: "services",
+    billingType: "recurring",
+    amountCents: 1400,
   },
   {
     id: "pro",
-    name: "Pro",
-    price: 29,
-    period: "month",
-    priceYearly: 320,
-    features: [
-      "Everything in Standard",
-      "Unlimited service profiles",
-      "Priority support",
-      "Direct scheduling through CodaCo",
-    ],
+    name: "Annual",
+    price: 160,
+    period: "year",
+    features: ["Save $20 vs. paying monthly", "Priority support"],
     popular: false,
     transactionFee: "",
     targetType: "services",
+    billingType: "recurring",
+    amountCents: 2900,
   },
 ];
+
+// Compact price label for a plan card ("Free for 3 months", "$15/mo",
+// "$160/yr"). Keeps the signup form and the standalone /plan page in sync.
+export function planPriceLabel(plan: Plan): string {
+  if (plan.trial) return plan.trial;
+  if (plan.price == null) return "Free";
+  const suffix = plan.period === "month" ? "/mo" : plan.period === "year" ? "/yr" : "";
+  return `$${plan.price}${suffix}`;
+}

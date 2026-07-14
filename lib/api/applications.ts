@@ -1,6 +1,7 @@
 import type { ApplicationKind, ApplicationStatus, SubscriptionPlanId } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { auth } from "@/auth";
+import { getPlan } from "@/lib/api/plans";
 import {
   sendApplicationApprovedEmail,
   sendApplicationRejectedEmail,
@@ -17,6 +18,10 @@ export interface ApplicationDraft {
   planId: SubscriptionPlanId;
   specializations: string[];
   zip: string | null;
+  // Numeric service radius in miles (parsed from the signup pill).
+  // Null = no geographic service area. Copied to vendor_profile on
+  // approval to drive the geographic search filter.
+  serviceRadiusMi: number | null;
   serviceDescription: string | null;
   pricingNotes: string | null;
   lifeStages: string[];
@@ -49,6 +54,7 @@ export async function createApplication(draft: ApplicationDraft) {
       planId: draft.planId,
       specializations: draft.specializations,
       zip: draft.zip,
+      serviceRadiusMi: draft.serviceRadiusMi,
       serviceDescription: draft.serviceDescription,
       pricingNotes: draft.pricingNotes,
       lifeStages: draft.lifeStages,
@@ -85,7 +91,15 @@ export async function getApplication(id: string) {
 // Approval is the only place a vendor_profile + subscription gets created
 // outside the mock script. We do both rows in one transaction so a half-
 // approved application can't leave a vendor without a subscription.
-export async function approveApplication(applicationId: string, reviewerId: string) {
+export async function approveApplication(
+  applicationId: string,
+  reviewerId: string,
+  // Self-serve goods shops auto-approve silently and send their own
+  // welcome/"list your goods" email instead — pass notify:false there so
+  // the applicant doesn't also get the generic "application approved" note.
+  opts: { notify?: boolean } = {},
+) {
+  const notify = opts.notify ?? true;
   try {
     const { vendor, applicant } = await prisma.$transaction(async (tx) => {
       const app = await tx.vendorApplication.findUnique({
@@ -108,6 +122,7 @@ export async function approveApplication(applicationId: string, reviewerId: stri
           verified: false,
           specializations: app.specializations,
           zip: app.zip,
+          serviceRadiusMi: app.serviceRadiusMi,
           serviceDescription: app.serviceDescription,
           pricingNotes: app.pricingNotes,
           lifeStages: app.lifeStages,
@@ -122,6 +137,24 @@ export async function approveApplication(applicationId: string, reviewerId: stri
           status: "active",
         },
       });
+
+      // If the chosen plan carries a one-time charge (today: the goods
+      // "Storefront" set-up fee), record it as a `pending` payment in the
+      // same transaction. The Stripe integration (next) settles it —
+      // sets the payment-intent id + paid_at and flips status to `paid`.
+      const plan = getPlan(subscriptionKind, app.planId);
+      if (plan?.billingType === "one_time" && (plan.amountCents ?? 0) > 0) {
+        await tx.vendorPayment.create({
+          data: {
+            vendorId: vendor.id,
+            planId: app.planId,
+            type: "setup_fee",
+            status: "pending",
+            amountCents: plan.amountCents!,
+            currency: "USD",
+          },
+        });
+      }
 
       // Auto-create the vendor's first draft Service from the data
       // already captured in the application. Skipped for goods-only
@@ -189,19 +222,22 @@ export async function approveApplication(applicationId: string, reviewerId: stri
 
     // Best-effort approval email — never roll the transaction back over
     // a transport failure. The vendor row is the source of truth; a
-    // missed email is a logged warning, not a broken approval.
-    const emailResult = await sendApplicationApprovedEmail({
-      toEmail: applicant.email,
-      toName: applicant.name ?? null,
-      displayName: vendor.displayName,
-      vendorSlug: vendor.slug,
-    });
-    if (!emailResult.ok) {
-      log.warn("application.approval_email_failed", {
-        applicationId,
-        vendorId: vendor.id,
-        err: emailResult.error,
+    // missed email is a logged warning, not a broken approval. Skipped
+    // when notify:false (self-serve goods sends its own welcome email).
+    if (notify) {
+      const emailResult = await sendApplicationApprovedEmail({
+        toEmail: applicant.email,
+        toName: applicant.name ?? null,
+        displayName: vendor.displayName,
+        vendorSlug: vendor.slug,
       });
+      if (!emailResult.ok) {
+        log.warn("application.approval_email_failed", {
+          applicationId,
+          vendorId: vendor.id,
+          err: emailResult.error,
+        });
+      }
     }
     return vendor;
   } catch (err) {
@@ -243,7 +279,10 @@ export async function rejectApplication(applicationId: string, reviewerId: strin
 }
 
 // Convenience used by demo auto-approve and the admin queue alike.
-export async function autoApproveAsAdmin(applicationId: string) {
+export async function autoApproveAsAdmin(
+  applicationId: string,
+  opts: { notify?: boolean } = {},
+) {
   // Find any admin to attribute the auto-approval to so the audit trail
   // shows it didn't happen out of nowhere. Falls back to the applicant's
   // own id only if no admin exists (dev edge case).
@@ -258,7 +297,7 @@ export async function autoApproveAsAdmin(applicationId: string) {
     reviewerId,
     selfReview: !admin,
   });
-  return approveApplication(applicationId, reviewerId);
+  return approveApplication(applicationId, reviewerId, opts);
 }
 
 export async function requireAdmin() {

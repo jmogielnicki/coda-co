@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
+import { LocationSearch } from "@/components/services/LocationSearch";
 import { ServiceFilters } from "@/components/services/ServiceFilters";
 import { ServiceGrid } from "@/components/services/ServiceGrid";
 import { Container } from "@/components/ui/Container";
@@ -10,6 +11,7 @@ import { WaveDivider } from "@/components/ui/WaveDivider";
 import { getServices } from "@/lib/api/services";
 import { getServiceTypes } from "@/lib/api/serviceTypes";
 import { getVendors } from "@/lib/api/vendors";
+import { isKnownZip } from "@/lib/geo";
 import { parseSpecializationsParam } from "@/lib/data/specializations";
 import { parseLifeStageParam } from "@/lib/format/lifeStage";
 import type { Service, ServiceLocationType, ServiceType } from "@/lib/types";
@@ -28,6 +30,7 @@ interface ServicesPageProps {
     verified?: string;
     lifeStage?: string;
     specializations?: string;
+    near?: string;
   }>;
 }
 
@@ -45,6 +48,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
     verified,
     lifeStage,
     specializations: specsParam,
+    near,
   } = await searchParams;
 
   const serviceType = (type ?? undefined) as ServiceType | undefined;
@@ -52,6 +56,9 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
     ? (locParam as ServiceLocationType)
     : undefined;
   const specializations = parseSpecializationsParam(specsParam);
+  // A `near` value that doesn't resolve to a known zip is treated as no
+  // filter (and flagged to the user) rather than emptying the page.
+  const nearActive = near != null && near !== "" && isKnownZip(near);
 
   const [matchedServices, allServices, allVendors, serviceTypes] = await Promise.all([
     getServices({ serviceType, locationType }),
@@ -61,6 +68,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
       lifeStage: parseLifeStageParam(lifeStage),
       minRating: minRating ? parseFloat(minRating) : undefined,
       specializations,
+      near,
     }),
     getServiceTypes(),
   ]);
@@ -69,6 +77,16 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
 
   const vendorIds = new Set(matchedServices.map((s) => s.vendorId));
   const vendors = allVendors.filter((v) => vendorIds.has(v.id));
+
+  // With a location active, default to nearest-first. Vendors with no
+  // measured distance (virtual / nationwide) sort to the end.
+  if (nearActive) {
+    vendors.sort(
+      (a, b) =>
+        (a.distanceMi ?? Number.POSITIVE_INFINITY) -
+        (b.distanceMi ?? Number.POSITIVE_INFINITY),
+    );
+  }
 
   // Group services by vendor for card display.
   const servicesByVendor = new Map<string, Service[]>();
@@ -86,6 +104,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
     minRating != null ||
     verified === "1" ||
     lifeStage != null ||
+    nearActive ||
     (specializations != null && specializations.length > 0);
 
   return (
@@ -113,23 +132,17 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
               placeholder="Service type…"
             />
           </div>
-          <div className="flex flex-1 min-w-[180px] border-[1.5px] border-line-bold rounded-[8px] overflow-hidden bg-white">
-            <div className="px-3 py-2.5 border-r border-line flex items-center">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                <circle cx="8" cy="7" r="3.5" stroke="#9A9189" strokeWidth="1.3" />
-                <path d="M8 10.5 L8 14" stroke="#9A9189" strokeWidth="1.3" strokeLinecap="round" />
-              </svg>
-            </div>
-            <input
-              className="flex-1 border-0 px-3.5 py-2.5 font-sans text-[13px] text-ch outline-none bg-transparent"
-              defaultValue="Boulder, CO 80301"
-              placeholder="Location…"
-            />
-          </div>
-          <button className="bg-tr text-white border-0 px-[22px] py-[11px] rounded-[8px] text-[13px] font-sans cursor-pointer hover:bg-tr-d transition-colors whitespace-nowrap">
-            Search
-          </button>
+          <Suspense>
+            <LocationSearch />
+          </Suspense>
         </Container>
+        {near != null && near !== "" && !nearActive && (
+          <Container width="mid" className="mt-2">
+            <p className="text-[12px] text-tr-d">
+              We couldn&apos;t find that zip code — showing all providers.
+            </p>
+          </Container>
+        )}
         <Container width="mid" className="mt-4">
           <Suspense>
             <LifeStageChips />
@@ -173,13 +186,6 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
 
             <ServiceGrid vendors={vendors} servicesByVendor={servicesByVendor} />
 
-            {totalProviders > filtered && (
-              <div className="text-center pt-2">
-                <a className="inline-block text-[13px] text-tr border-b border-dotted border-tr-l cursor-pointer hover:text-tr-d">
-                  Show {totalProviders - filtered} more results →
-                </a>
-              </div>
-            )}
             <div className="text-center mt-3">
               <Link
                 href="/where-to-start"

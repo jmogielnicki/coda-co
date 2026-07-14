@@ -113,6 +113,22 @@ export async function updateVendorProfile(
 
   const instagramHandle = normalizeInstagram(formData.get("instagramHandle"));
   const serviceRadius = emptyToNull(formData.get("serviceRadius"));
+
+  // Numeric search radius (miles). Blank -> null (no geographic service
+  // area). Reject non-integers / out-of-range so we never persist a
+  // value the search filter can't use.
+  const radiusRaw = emptyToNull(formData.get("serviceRadiusMi"));
+  let serviceRadiusMi: number | null = null;
+  if (radiusRaw != null) {
+    const n = Number(radiusRaw);
+    if (!Number.isInteger(n) || n < 0 || n > 500) {
+      return {
+        status: "error",
+        error: "Search radius must be a whole number of miles (0–500).",
+      };
+    }
+    serviceRadiusMi = n;
+  }
   const serviceFormats = emptyToNull(formData.get("serviceFormats"));
   const serviceDays = emptyToNull(formData.get("serviceDays"));
   const serviceHours = emptyToNull(formData.get("serviceHours"));
@@ -169,6 +185,7 @@ export async function updateVendorProfile(
       websiteUrl,
       instagramHandle,
       serviceRadius,
+      serviceRadiusMi,
       serviceFormats,
       serviceDays,
       serviceHours,

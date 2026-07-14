@@ -120,14 +120,15 @@ function StatusBadge({ status }: { status: string }) {
   const styles =
     status === "published"
       ? "bg-sg-p text-sg-d"
-      : status === "draft"
+      : status === "pending_review" || status === "draft"
         ? "bg-tr-p text-tr-d"
         : "bg-pl2 text-cm";
+  const label = status === "pending_review" ? "In review" : status;
   return (
     <span
       className={`inline-block text-[11px] font-medium px-2 py-0.5 rounded-full capitalize ${styles}`}
     >
-      {status}
+      {label}
     </span>
   );
 }

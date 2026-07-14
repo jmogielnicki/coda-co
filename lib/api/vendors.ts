@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { isKnownZip, milesBetweenZips } from "@/lib/geo";
 import type {
   LifeStage,
   Vendor,
@@ -17,6 +18,12 @@ export interface VendorFilters {
   // in this list. Already-validated against the canonical list by the
   // caller (lib/data/specializations.parseSpecializationsParam).
   specializations?: string[];
+  // Searcher's zip (or free text containing one). When set and
+  // resolvable, vendors with a declared service area (zip +
+  // serviceRadiusMi) are kept only if the searcher falls within their
+  // radius; their distance from the searcher is attached as distanceMi.
+  // Vendors without a service area (virtual / nationwide) always pass.
+  near?: string;
 }
 
 type DbVendor = Prisma.VendorProfileGetPayload<{}>;
@@ -39,6 +46,7 @@ function toVendor(v: DbVendor): Vendor {
     websiteUrl: v.websiteUrl ?? undefined,
     instagramHandle: v.instagramHandle ?? undefined,
     serviceRadius: v.serviceRadius ?? undefined,
+    serviceRadiusMi: v.serviceRadiusMi ?? undefined,
     serviceFormats: v.serviceFormats ?? undefined,
     serviceDays: v.serviceDays ?? undefined,
     serviceHours: v.serviceHours ?? undefined,
@@ -104,11 +112,32 @@ export async function getVendors(filters: VendorFilters = {}): Promise<VendorWit
   }
 
   const rows = await prisma.vendorProfile.findMany({ where, orderBy: { createdAt: "asc" } });
-  const augmented = await attachRatings(rows.map((v) => ({ dbId: v.id, vendor: toVendor(v) })));
-  if (filters.minRating != null) {
-    return augmented.filter((v) => v.rating >= filters.minRating!);
+  let results = await attachRatings(rows.map((v) => ({ dbId: v.id, vendor: toVendor(v) })));
+
+  // Geographic filter (vendor service-area semantics). Applied in JS
+  // rather than SQL because the distance lookup is a zip-centroid
+  // calculation. Only runs when the searcher's zip resolves — an
+  // unknown/blank zip is a no-op so the page never silently empties.
+  if (filters.near && isKnownZip(filters.near)) {
+    results = results.filter((v) => {
+      // No vendor zip → not geographically bound (virtual / nationwide
+      // / incomplete profile). Always surface.
+      if (!v.zip) return true;
+      const d = milesBetweenZips(filters.near, v.zip);
+      // Unknown vendor zip → can't measure, so don't hide them.
+      if (d == null) return true;
+      v.distanceMi = Math.round(d * 10) / 10;
+      // No declared radius → not bound to a service area; surface
+      // regardless of distance (but distance is now shown).
+      if (v.serviceRadiusMi == null) return true;
+      return d <= v.serviceRadiusMi;
+    });
   }
-  return augmented;
+
+  if (filters.minRating != null) {
+    results = results.filter((v) => v.rating >= filters.minRating!);
+  }
+  return results;
 }
 
 export async function getVendor(id: string): Promise<VendorWithRating | null> {

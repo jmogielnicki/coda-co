@@ -16,6 +16,7 @@ interface ProfileFormProps {
   currentWebsiteUrl: string | null;
   currentInstagramHandle: string | null;
   currentServiceRadius: string | null;
+  currentServiceRadiusMi: number | null;
   currentServiceFormats: string | null;
   currentServiceDays: string | null;
   currentServiceHours: string | null;
@@ -43,6 +44,7 @@ export function ProfileForm({
   currentWebsiteUrl,
   currentInstagramHandle,
   currentServiceRadius,
+  currentServiceRadiusMi,
   currentServiceFormats,
   currentServiceDays,
   currentServiceHours,
@@ -268,10 +270,26 @@ export function ProfileForm({
             placeholder="11201"
           />
           <span className="block text-[11px] text-cl mt-1">
-            Used to center your services on the map and sort by radius.
+            Paired with your search radius below to show you to nearby clients.
           </span>
         </Field>
-        <Field label="Radius">
+        <Field label="Search radius (miles)">
+          <input
+            type="number"
+            name="serviceRadiusMi"
+            defaultValue={currentServiceRadiusMi ?? ""}
+            className={inputCls}
+            inputMode="numeric"
+            min={0}
+            max={500}
+            placeholder="e.g. 25"
+          />
+          <span className="block text-[11px] text-cl mt-1">
+            Clients within this many miles of your zip will see you in
+            search. Leave blank if you work virtually or nationwide.
+          </span>
+        </Field>
+        <Field label="Radius (shown on profile)">
           <input
             type="text"
             name="serviceRadius"

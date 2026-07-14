@@ -5,6 +5,7 @@ import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { Container } from "@/components/ui/Container";
 import { listApplications } from "@/lib/api/applications";
 import { ApplicationRow } from "./ApplicationRow";
+import { ResendApprovalButton } from "./ResendApprovalButton";
 
 export const metadata: Metadata = {
   title: "Vendor applications — Admin | CodaCo",
@@ -98,12 +99,13 @@ export default async function AdminApplicationsPage() {
                   <Th>Applicant</Th>
                   <Th>Status</Th>
                   <Th>Decided</Th>
+                  <Th>Email</Th>
                 </Tr>
               </thead>
               <tbody>
                 {decided.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-10 text-center text-cm text-sm">
+                    <td colSpan={5} className="py-10 text-center text-cm text-sm">
                       Nothing decided yet.
                     </td>
                   </tr>
@@ -128,6 +130,13 @@ export default async function AdminApplicationsPage() {
                       </td>
                       <td className="px-4 py-3 align-top text-[12px] text-cm">
                         {app.reviewedAt?.toISOString().slice(0, 10) ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 align-top">
+                        {app.status === "approved" ? (
+                          <ResendApprovalButton applicationId={app.id} />
+                        ) : (
+                          <span className="text-cl">—</span>
+                        )}
                       </td>
                     </tr>
                   ))
